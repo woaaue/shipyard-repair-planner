@@ -1,0 +1,12 @@
+CREATE TABLE shipyards (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    street VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(15) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_shipyards_status ON shipyards(status);
