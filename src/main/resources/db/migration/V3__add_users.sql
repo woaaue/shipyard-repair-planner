@@ -7,9 +7,9 @@ CREATE TABLE users (
     patronymic VARCHAR(50),
     role VARCHAR(20) NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    dock_id INTEGER NOT NULL REFERENCES docks(id),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    dock_id INTEGER REFERENCES docks(id),
+    created_at DATE NOT NULL DEFAULT CURRENT_DATE,
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE INDEX idx_users_role ON users(role);

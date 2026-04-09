@@ -6,8 +6,8 @@ CREATE TABLE docks (
     max_draft INTEGER NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
     shipyard_id INTEGER NOT NULL REFERENCES shipyards(id),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATE NOT NULL DEFAULT CURRENT_DATE,
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE INDEX idx_docks_shipyard_id ON docks(shipyard_id);
