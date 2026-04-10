@@ -41,7 +41,7 @@ public class User {
     private boolean enabled;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dock_id", nullable = false)
+    @JoinColumn(name = "dock_id")
     private Dock dock;
 
     @Column(nullable = false)
