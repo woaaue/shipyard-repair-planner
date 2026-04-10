@@ -12,11 +12,11 @@ import lombok.Setter;
 public class DockDimensions {
 
     @Column(name = "max_length", nullable = false)
-    private int maxLength;
+    private Integer maxLength;
 
     @Column(name = "max_width", nullable = false)
-    private int maxWidth;
+    private Integer maxWidth;
 
     @Column(name = "max_draft", nullable = false)
-    private int maxDraft;
+    private Integer maxDraft;
 }
