@@ -12,6 +12,10 @@ public record CreateUserRequest(
         @ApacheEmail(message = "{user.email.invalid}")
         String email,
 
+        @NotBlank(message = "{user.password.blank}")
+        @Size(message = "{user.password.size}", min = 10)
+        String password,
+
         @NotBlank(message = "{user.firstname.blank}")
         @Size(message = "{user.firstname.size}", min = 2, max = 50)
         String firstname,
