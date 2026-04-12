@@ -4,6 +4,7 @@ import com.shipyard.repair.dto.user.CreateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.User;
+import com.shipyard.repair.exception.BadRequestException;
 import com.shipyard.repair.exception.DuplicateResourceException;
 import com.shipyard.repair.exception.ErrorCode;
 import com.shipyard.repair.exception.ResourceNotFoundException;
@@ -15,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +27,25 @@ public class UserServiceImpl implements UserService {
     private final DockRepository dockRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public UserResponse getUserById(Integer id) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+
+        return userRepository.findById(id)
+                .map(userMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND)
+        );
+    }
 
     @Override
     @Transactional
@@ -46,5 +68,19 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserById(Integer id) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+
+        if  (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        userRepository.deleteById(id);
     }
 }

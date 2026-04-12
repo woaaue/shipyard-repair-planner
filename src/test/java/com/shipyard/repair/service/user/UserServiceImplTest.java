@@ -4,6 +4,7 @@ import com.shipyard.repair.dto.user.CreateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.entity.User;
 import com.shipyard.repair.enums.UserRole;
+import com.shipyard.repair.exception.BadRequestException;
 import com.shipyard.repair.exception.DuplicateResourceException;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.mapper.user.UserMapper;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,6 +43,81 @@ public class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userServiceImpl;
+
+    @Test
+    void getAllUsers() {
+        User user1 = new User();
+        user1.setId(1);
+        user1.setEmail("ivan@mail.ru");
+        user1.setFirstName("Ivan");
+        user1.setLastName("Ivanov");
+        user1.setRole(UserRole.CLIENT);
+
+        User user2 = new User();
+        user2.setId(2);
+        user2.setEmail("petya@mail.ru");
+        user2.setFirstName("Petya");
+        user2.setLastName("Petrov");
+        user2.setRole(UserRole.WORKER);
+
+        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
+        when(userMapper.toResponse(user1)).thenReturn(new UserResponse(1, "ivan@mail.ru", "Ivan", "Ivanov", null, UserRole.CLIENT, null, LocalDate.now()));
+        when(userMapper.toResponse(user2)).thenReturn(new UserResponse(2, "petya@mail.ru", "Petya", "Petrov", null, UserRole.WORKER, null, LocalDate.now()));
+
+        List<UserResponse> result = userServiceImpl.getAllUsers();
+
+        assertEquals(2, result.size());
+        assertEquals("ivan@mail.ru", result.get(0).email());
+        assertEquals("petya@mail.ru", result.get(1).email());
+    }
+
+    @Test
+    void getUserById_success() {
+        User user = new User();
+        user.setId(1);
+
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userMapper.toResponse(user)).thenReturn(new UserResponse(1, null, null, null, null, UserRole.CLIENT, null, LocalDate.now()));
+
+        UserResponse result = userServiceImpl.getUserById(1);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void getUserById_null_id() {
+        assertThrows(BadRequestException.class, () -> userServiceImpl.getUserById(null));
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    void getUserById_not_found() {
+        when(userRepository.findById(999)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> userServiceImpl.getUserById(999));
+    }
+
+    @Test
+    void deleteUserById_success() {
+        when(userRepository.existsById(1)).thenReturn(true);
+
+        userServiceImpl.deleteUserById(1);
+
+        verify(userRepository).existsById(1);
+        verify(userRepository).deleteById(1);
+    }
+
+    @Test
+    void deleteUserById_null_id() {
+        assertThrows(BadRequestException.class, () -> userServiceImpl.deleteUserById(null));
+        verify(userRepository, never()).deleteById(1);
+    }
+
+    @Test
+    void deleteUserById_not_found() {
+        when(userRepository.existsById(999)).thenReturn(false);
+        assertThrows(ResourceNotFoundException.class, () -> userServiceImpl.deleteUserById(999));
+        verify(userRepository, never()).deleteById(any());
+    }
 
     @Test
     void createUser_success() {
