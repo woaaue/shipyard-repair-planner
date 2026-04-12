@@ -1,0 +1,19 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/users'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "worker@example.com",
+      "password": "StrongPass123",
+      "firstname": "Alex",
+      "lastname": "Ivanov",
+      "patronymic": "Petrovich",
+      "role": "WORKER",
+      "dockId": 1
+    }
