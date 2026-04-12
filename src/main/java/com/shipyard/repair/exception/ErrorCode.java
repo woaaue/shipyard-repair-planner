@@ -8,7 +8,12 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorCode {
     USER_NOT_FOUND("user.not.found"),
     USER_ALREADY_EXISTS("user.already.exists"),
-    DOCK_NOT_FOUND("dock.not.found");
+    DOCK_NOT_FOUND("dock.not.found"),
+    TYPE_MISMATCH("type.mismatch"),
+    MISSING_PARAMETER("missing.parameter"),
+    INVALID_JSON("invalid.json"),
+    BAD_REQUEST("bad.request"),
+    ID_IS_NULL("id.is.null"),;
 
     private final String messageCode;
 }
