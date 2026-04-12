@@ -2,7 +2,7 @@ package com.shipyard.repair.controller;
 
 import com.shipyard.repair.dto.user.CreateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
-import com.shipyard.repair.service.user.UserServiceImpl;
+import com.shipyard.repair.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,13 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userService.createUser(createUserRequest)
-        );
+                .body(userService.createUser(createUserRequest));
     }
 }

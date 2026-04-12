@@ -18,11 +18,11 @@ public record CreateUserRequest(
 
         @NotBlank(message = "{user.firstname.blank}")
         @Size(message = "{user.firstname.size}", min = 2, max = 50)
-        String firstname,
+        String firstName,
 
         @NotBlank(message = "{user.lastname.blank}")
         @Size(message = "{user.lastname.size}", min = 2, max = 50)
-        String lastname,
+        String lastName,
 
         String patronymic,
 
