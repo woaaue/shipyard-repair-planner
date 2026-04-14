@@ -9,6 +9,7 @@ public enum ErrorCode {
     USER_NOT_FOUND("user.not.found"),
     USER_ALREADY_EXISTS("user.already.exists"),
     DOCK_NOT_FOUND("dock.not.found"),
+    SHIPYARD_NOT_FOUND("shipyard.not.found"),
     TYPE_MISMATCH("type.mismatch"),
     MISSING_PARAMETER("missing.parameter"),
     INVALID_JSON("invalid.json"),
