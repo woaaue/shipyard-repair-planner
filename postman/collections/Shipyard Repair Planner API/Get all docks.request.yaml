@@ -1,0 +1,4 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/docks'
+order: 8000

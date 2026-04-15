@@ -1,0 +1,4 @@
+$kind: http-request
+method: DELETE
+url: '{{baseUrl}}/api/docks/{{dockId}}'
+order: 11000
