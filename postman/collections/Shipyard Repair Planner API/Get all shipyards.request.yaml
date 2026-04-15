@@ -1,0 +1,4 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/api/shipyards'
+order: 4000

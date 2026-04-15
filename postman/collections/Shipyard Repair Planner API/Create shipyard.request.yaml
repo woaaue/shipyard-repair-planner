@@ -1,0 +1,19 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/shipyards'
+order: 6000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Baltic Main Yard",
+      "shipyardAddress": {
+        "city": "Saint Petersburg",
+        "street": "Dock Street 12",
+        "postalCode": "190000"
+      },
+      "status": "ACTIVE"
+    }
