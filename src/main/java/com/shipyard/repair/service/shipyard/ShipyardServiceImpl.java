@@ -44,7 +44,7 @@ public class ShipyardServiceImpl implements ShipyardService {
     @Override
     @Transactional
     public ShipyardResponse createShipyard(CreateShipyardRequest createShipyardRequest) {
-        Shipyard shipyard = shipyardMapper.toDto(createShipyardRequest);
+        Shipyard shipyard = shipyardMapper.toEntity(createShipyardRequest);
         Shipyard savedShipyard = shipyardRepository.save(shipyard);
 
         return shipyardMapper.toDto(savedShipyard);
