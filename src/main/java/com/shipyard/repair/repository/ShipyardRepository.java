@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface ShipyardRepository extends JpaRepository<Shipyard, Integer> {
     Optional<Shipyard> findByName(String name);
+    boolean existsByName(String name);
 }

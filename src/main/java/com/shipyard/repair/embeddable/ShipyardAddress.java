@@ -3,9 +3,10 @@ package com.shipyard.repair.embeddable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
+import lombok.Setter;
 
 @Embeddable
-@Getter
+@Getter @Setter
 public class ShipyardAddress {
 
     @Column(nullable = false, length = 50)

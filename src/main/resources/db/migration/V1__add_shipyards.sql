@@ -1,6 +1,6 @@
 CREATE TABLE shipyards (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(50) NOT NULL UNIQUE,
     city VARCHAR(50) NOT NULL,
     street VARCHAR(100) NOT NULL,
     postal_code VARCHAR(15) NOT NULL,
