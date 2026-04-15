@@ -8,6 +8,7 @@ import com.shipyard.repair.embeddable.ShipyardAddress;
 import com.shipyard.repair.entity.Shipyard;
 import com.shipyard.repair.enums.ShipyardStatus;
 import com.shipyard.repair.exception.BadRequestException;
+import com.shipyard.repair.exception.DuplicateResourceException;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.mapper.shipyard.ShipyardMapper;
 import com.shipyard.repair.repository.ShipyardRepository;
@@ -146,5 +147,24 @@ public class ShipyardServiceImplTest {
 
         assertEquals(1, result.id());
         verify(shipyardRepository).save(any(Shipyard.class));
+    }
+
+    @Test
+    void createShipyard_alreadyExists() {
+        CreateShipyardRequest createShipyardRequest = new CreateShipyardRequest(
+          "Shipyard 1",
+                new CreateShipyardAddressRequest(
+                        "city",
+                        "street",
+                        "123"
+                ),
+                ShipyardStatus.ACTIVE
+        );
+
+        when(shipyardRepository.existsByName(anyString())).thenReturn(true);
+
+        assertThrows(DuplicateResourceException.class, () -> shipyardServiceImpl.createShipyard(createShipyardRequest));
+
+        verify(shipyardRepository, never()).save(any(Shipyard.class));
     }
 }

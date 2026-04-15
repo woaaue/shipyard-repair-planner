@@ -4,6 +4,7 @@ import com.shipyard.repair.dto.shipyard.CreateShipyardRequest;
 import com.shipyard.repair.dto.shipyard.ShipyardResponse;
 import com.shipyard.repair.entity.Shipyard;
 import com.shipyard.repair.exception.BadRequestException;
+import com.shipyard.repair.exception.DuplicateResourceException;
 import com.shipyard.repair.exception.ErrorCode;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.mapper.shipyard.ShipyardMapper;
@@ -44,6 +45,10 @@ public class ShipyardServiceImpl implements ShipyardService {
     @Override
     @Transactional
     public ShipyardResponse createShipyard(CreateShipyardRequest createShipyardRequest) {
+        if (shipyardRepository.existsByName(createShipyardRequest.name())) {
+            throw new DuplicateResourceException(ErrorCode.SHIPYARD_ALREADY_EXISTS);
+        }
+
         Shipyard shipyard = shipyardMapper.toEntity(createShipyardRequest);
         Shipyard savedShipyard = shipyardRepository.save(shipyard);
 

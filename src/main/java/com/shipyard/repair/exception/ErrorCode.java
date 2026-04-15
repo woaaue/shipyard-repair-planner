@@ -10,6 +10,7 @@ public enum ErrorCode {
     USER_ALREADY_EXISTS("user.already.exists"),
     DOCK_NOT_FOUND("dock.not.found"),
     SHIPYARD_NOT_FOUND("shipyard.not.found"),
+    SHIPYARD_ALREADY_EXISTS("shipyard.already.exists"),
     TYPE_MISMATCH("type.mismatch"),
     MISSING_PARAMETER("missing.parameter"),
     INVALID_JSON("invalid.json"),
