@@ -6,10 +6,10 @@ import com.shipyard.repair.entity.Shipyard;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = ShipyardAddressMapper.class)
 public interface ShipyardMapper {
 
     ShipyardResponse toDto(Shipyard shipyard);
 
-    Shipyard toDto(CreateShipyardRequest createShipyardRequest);
+    Shipyard toEntity(CreateShipyardRequest createShipyardRequest);
 }
