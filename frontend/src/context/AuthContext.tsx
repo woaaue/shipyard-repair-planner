@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockUsers } from '../mock-data/mockUsers';
+import { getCurrentUser, login as loginApi, logout as logoutApi, register as registerApi } from '../services/auth';
 
 export interface User {
+  id: number;
   email: string;
   fullName: string;
   role: 'admin' | 'dispatcher' | 'operator' | 'client' | 'master' | 'worker';
@@ -16,8 +17,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (fullName: string, email: string, password: string, role: User['role']) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,43 +38,79 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('user');
-      if (saved) {
-        setUser(JSON.parse(saved));
+    let active = true;
+
+    const restoreSession = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setIsLoading(false);
+        return;
       }
-    } catch {
-      localStorage.removeItem('user');
-    } finally {
-      setIsLoading(false);
-    }
+
+      try {
+        const currentUser = await getCurrentUser();
+        if (!active) return;
+        setUser(currentUser);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+      } catch {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        if (!active) return;
+        setUser(null);
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    restoreSession();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const login = useCallback((email: string, password: string): boolean => {
-    const foundUser = mockUsers.find(u =>
-      u.email === email && u.password === password
-    );
-
-    if (foundUser) {
-      const authUser: User = {
-        email: foundUser.email,
-        fullName: foundUser.fullName,
-        role: foundUser.role,
-        dock: 'dock' in foundUser ? foundUser.dock : undefined,
-        shipId: 'shipId' in foundUser ? foundUser.shipId : undefined,
-        avatar: foundUser.avatar,
-      };
-      setUser(authUser);
-      localStorage.setItem('user', JSON.stringify(authUser));
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await loginApi({ email, password });
+      setUser(response.user);
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('user');
-    navigate('/login');
+  const register = useCallback(async (
+    fullName: string,
+    email: string,
+    password: string,
+    role: User['role']
+  ): Promise<boolean> => {
+    try {
+      const response = await registerApi({ fullName, email, password, role });
+      setUser(response.user);
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // no-op for client-side logout
+    } finally {
+      setUser(null);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      navigate('/login');
+    }
   }, [navigate]);
 
   const value: AuthContextType = {
@@ -80,6 +118,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     login,
+    register,
     logout,
   };
 

@@ -42,7 +42,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const navigation = getNavigation();
 
   const handleLogout = () => {
-    logout();
+    void logout();
     if (onClose) onClose();
   };
 

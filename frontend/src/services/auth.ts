@@ -10,9 +10,7 @@ export interface RegisterData {
   fullName: string;
   email: string;
   password: string;
-  role: 'admin' | 'operator' | 'client';
-  dock?: string;
-  shipId?: number;
+  role?: 'admin' | 'dispatcher' | 'operator' | 'client' | 'master' | 'worker';
 }
 
 export interface AuthResponse {
