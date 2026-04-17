@@ -1,19 +1,49 @@
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Ship, Calendar, Wrench } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
-import { mockShips, mockExtendedRepairs } from '../mock-data/data';
+import { mockExtendedRepairs } from '../mock-data/data';
 import { useAuth } from '../context/AuthContext';
+import { getShip } from '../services/ships';
+import type { Ship as ShipType } from '../types/repair';
 
 export default function ShipDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const shipId = parseInt(id || '0');
-  const ship = mockShips.find(s => s.id === shipId);
-  
+  const [ship, setShip] = useState<ShipType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const shipId = parseInt(id || '0', 10);
+
+  useEffect(() => {
+    const loadShip = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getShip(shipId);
+        setShip(data);
+      } catch {
+        setShip(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (Number.isNaN(shipId) || shipId <= 0) {
+      setShip(null);
+      setIsLoading(false);
+      return;
+    }
+
+    void loadShip();
+  }, [shipId]);
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
+  }
+
   if (!ship) {
     return (
       <div className="text-center py-12">
@@ -24,9 +54,9 @@ export default function ShipDetail() {
       </div>
     );
   }
-  
+
   const repairs = mockExtendedRepairs.filter(r => r.shipId === shipId);
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -39,7 +69,7 @@ export default function ShipDetail() {
         <h1 className="text-2xl font-bold text-gray-900">{ship.name}</h1>
         <StatusBadge status={ship.status} size="md" />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -57,7 +87,7 @@ export default function ShipDetail() {
                 <div className="font-medium">{ship.type}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Год постройки</div>
+                <div className="text-sm text-gray-500">Год записи</div>
                 <div className="font-medium">{ship.buildYear}</div>
               </div>
               <div>
@@ -66,7 +96,7 @@ export default function ShipDetail() {
               </div>
             </div>
           </Card>
-          
+
           <Card>
             <h2 className="font-semibold mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5" />
@@ -104,17 +134,17 @@ export default function ShipDetail() {
             )}
           </Card>
         </div>
-        
+
         <div className="space-y-6">
           <Card>
-            <h2 className="font-semibold mb-4">Ближайшие события</h2>
+            <h2 className="font-semibold mb-4">Служебные даты</h2>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-100 rounded-lg">
                   <Wrench className="h-4 w-4 text-orange-600" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Следующий ремонт</div>
+                  <div className="text-sm text-gray-600">Последнее обновление</div>
                   <div className="font-medium">{ship.nextRepairDate}</div>
                 </div>
               </div>
@@ -123,22 +153,22 @@ export default function ShipDetail() {
                   <Calendar className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Последний ремонт</div>
+                  <div className="text-sm text-gray-600">Дата создания</div>
                   <div className="font-medium">{ship.lastRepairDate}</div>
                 </div>
               </div>
             </div>
           </Card>
-          
+
           {user?.role === 'admin' && (
             <Card>
               <h2 className="font-semibold mb-4">Действия</h2>
               <div className="space-y-2">
-                <Button variant="secondary" className="w-full">
-                  Редактировать
+                <Button variant="secondary" className="w-full" disabled>
+                  Редактировать (скоро)
                 </Button>
-                <Button variant="danger" className="w-full">
-                  Удалить
+                <Button variant="danger" className="w-full" disabled>
+                  Удалить (скоро)
                 </Button>
               </div>
             </Card>

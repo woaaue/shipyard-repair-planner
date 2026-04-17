@@ -1,36 +1,57 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Save, Ship } from 'lucide-react';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { useAuth } from '../../context/AuthContext';
+import type { ShipFormPayload } from '../../services/ships';
 
 interface ShipFormProps {
   onClose: () => void;
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: ShipFormPayload) => Promise<void> | void;
 }
 
-const SHIP_TYPES = ['Контейнеровоз', 'Танкер', 'Балкер', 'Ролкер'] as const;
+const SHIP_TYPES = ['Контейнеровоз', 'Танкер', 'Балкер', 'Ролкер', 'Другое'] as const;
 const SHIP_STATUSES = ['в плавании', 'ожидает', 'в ремонте'] as const;
 
 export default function ShipForm({ onClose, onSubmit }: ShipFormProps) {
   const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     imo: '',
     type: SHIP_TYPES[0] as string,
     status: SHIP_STATUSES[1] as string,
-    buildYear: '',
-    owner: '',
-    lastRepairDate: '',
-    nextRepairDate: ''
+    ownerId: user?.id ? String(user.id) : '',
+    length: '100',
+    width: '20',
+    draft: '8',
+    dockId: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit(formData);
+    if (!onSubmit) {
+      onClose();
+      return;
     }
-    onClose();
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        name: formData.name,
+        imo: formData.imo,
+        type: formData.type,
+        status: formData.status,
+        ownerId: Number(formData.ownerId),
+        length: Number(formData.length),
+        width: Number(formData.width),
+        draft: Number(formData.draft),
+        dockId: formData.dockId ? Number(formData.dockId) : undefined,
+      });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canEdit = user?.role === 'admin';
@@ -51,14 +72,14 @@ export default function ShipForm({ onClose, onSubmit }: ShipFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">IMO номер *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Рег. номер / IMO *</label>
             <input
               type="text"
               value={formData.imo}
               onChange={(e) => setFormData({ ...formData, imo: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              maxLength={7}
-              placeholder="9456789"
+              minLength={6}
+              maxLength={20}
               required
             />
           </div>
@@ -93,46 +114,64 @@ export default function ShipForm({ onClose, onSubmit }: ShipFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Год постройки *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ID владельца *</label>
             <input
               type="number"
-              value={formData.buildYear}
-              onChange={(e) => setFormData({ ...formData, buildYear: e.target.value })}
+              value={formData.ownerId}
+              onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min={1900}
-              max={new Date().getFullYear()}
+              min={1}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Владелец *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ID дока (опционально)</label>
             <input
-              type="text"
-              value={formData.owner}
-              onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
+              type="number"
+              value={formData.dockId}
+              onChange={(e) => setFormData({ ...formData, dockId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={1}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Длина (м) *</label>
+            <input
+              type="number"
+              value={formData.length}
+              onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={1}
+              max={500}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата последнего ремонта</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ширина (м) *</label>
             <input
-              type="date"
-              value={formData.lastRepairDate}
-              onChange={(e) => setFormData({ ...formData, lastRepairDate: e.target.value })}
+              type="number"
+              value={formData.width}
+              onChange={(e) => setFormData({ ...formData, width: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={1}
+              max={100}
+              required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата следующего ремонта</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Осадка (м) *</label>
             <input
-              type="date"
-              value={formData.nextRepairDate}
-              onChange={(e) => setFormData({ ...formData, nextRepairDate: e.target.value })}
+              type="number"
+              value={formData.draft}
+              onChange={(e) => setFormData({ ...formData, draft: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={1}
+              max={30}
+              required
             />
           </div>
         </div>
@@ -141,9 +180,9 @@ export default function ShipForm({ onClose, onSubmit }: ShipFormProps) {
           <Button type="button" variant="secondary" onClick={onClose}>
             Отмена
           </Button>
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmitting}>
             <Save className="h-4 w-4 mr-2" />
-            Добавить судно
+            {isSubmitting ? 'Сохранение...' : 'Добавить судно'}
           </Button>
         </div>
       </form>
