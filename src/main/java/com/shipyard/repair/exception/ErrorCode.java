@@ -9,6 +9,8 @@ public enum ErrorCode {
     USER_NOT_FOUND("user.not.found"),
     USER_ALREADY_EXISTS("user.already.exists"),
     DOCK_NOT_FOUND("dock.not.found"),
+    SHIP_NOT_FOUND("ship.not.found"),
+    SHIP_ALREADY_EXISTS("ship.already.exists"),
     SHIPYARD_NOT_FOUND("shipyard.not.found"),
     SHIPYARD_ALREADY_EXISTS("shipyard.already.exists"),
     TYPE_MISMATCH("type.mismatch"),
