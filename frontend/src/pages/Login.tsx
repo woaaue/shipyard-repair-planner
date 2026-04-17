@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,6 +6,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerData, setRegisterData] = useState({
     fullName: '',
@@ -16,10 +17,10 @@ export default function Login() {
     dock: '',
     shipId: ''
   });
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -28,15 +29,20 @@ export default function Login() {
       return;
     }
 
-    const success = login(email, password);
-    if (success) {
-      navigate('/');
-    } else {
-      setError('Неверный email или пароль');
+    setIsSubmitting(true);
+    try {
+      const success = await login(email, password);
+      if (success) {
+        navigate('/');
+      } else {
+        setError('Неверный email или пароль');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -50,12 +56,28 @@ export default function Login() {
       return;
     }
 
-    setError('Регистрация временно недоступна');
+    setIsSubmitting(true);
+    try {
+      const success = await register(
+        registerData.fullName,
+        registerData.email,
+        registerData.password,
+        registerData.role
+      );
+
+      if (success) {
+        navigate('/');
+      } else {
+        setError('Не удалось зарегистрироваться');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const quickLogin = (userEmail: string) => {
     setEmail(userEmail);
-    setPassword('123456');
+    setPassword('1234567890');
   };
 
   return (
@@ -103,9 +125,10 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                disabled={isSubmitting}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
               >
-                Войти
+                {isSubmitting ? 'Вход...' : 'Войти'}
               </button>
             </form>
           ) : (
@@ -136,7 +159,7 @@ export default function Login() {
                 <label className="block text-sm font-medium text-slate-300 mb-1">Роль</label>
                 <select
                   value={registerData.role}
-                  onChange={(e) => setRegisterData({ ...registerData, role: e.target.value as any })}
+                  onChange={(e) => setRegisterData({ ...registerData, role: e.target.value as 'client' | 'operator' | 'admin' })}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="client" className="bg-slate-800">Владелец судна</option>
@@ -144,32 +167,6 @@ export default function Login() {
                   <option value="admin" className="bg-slate-800">Администратор</option>
                 </select>
               </div>
-
-              {registerData.role === 'operator' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Док</label>
-                  <input
-                    type="text"
-                    value={registerData.dock}
-                    onChange={(e) => setRegisterData({ ...registerData, dock: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Северный (200м)"
-                  />
-                </div>
-              )}
-
-              {registerData.role === 'client' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">IMO судна</label>
-                  <input
-                    type="text"
-                    value={registerData.shipId}
-                    onChange={(e) => setRegisterData({ ...registerData, shipId: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="9456789"
-                  />
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Пароль</label>
@@ -195,9 +192,10 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                disabled={isSubmitting}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
               >
-                Зарегистрироваться
+                {isSubmitting ? 'Регистрация...' : 'Зарегистрироваться'}
               </button>
             </form>
           )}
@@ -212,7 +210,7 @@ export default function Login() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-white/20">
-            <p className="text-xs text-slate-400 mb-3 text-center">Быстрый вход для тестирования:</p>
+            <p className="text-xs text-slate-400 mb-3 text-center">Быстрый ввод email для теста:</p>
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => quickLogin('admin@dockplan.ru')}

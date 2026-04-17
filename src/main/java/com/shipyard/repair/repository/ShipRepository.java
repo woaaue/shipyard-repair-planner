@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface ShipRepository extends JpaRepository<Ship, Integer> {
     Optional<Ship> findByRegNumber(String regNumber);
     List<Ship> findByUserId(int userId);
+    Optional<Ship> findFirstByUserId(int userId);
     List<Ship> findByShipStatus(ShipStatus status);
     List<Ship> findByDockId(int dockId);
 }

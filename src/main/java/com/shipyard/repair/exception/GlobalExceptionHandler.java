@@ -5,6 +5,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -99,11 +101,31 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
         String message = messageSource.getMessage(ex.getErrorCode().getMessageCode(), null, Locale.getDefault());
         ErrorResponse error = new ErrorResponse(
-            errorCode.getMessageCode(),
+            message,
             errorCode.name(),
             System.currentTimeMillis()
         );
 
         return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+        ErrorResponse error = new ErrorResponse(
+                "Invalid email or password",
+                "UNAUTHORIZED",
+                System.currentTimeMillis()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        ErrorResponse error = new ErrorResponse(
+                "Access denied",
+                "FORBIDDEN",
+                System.currentTimeMillis()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 }

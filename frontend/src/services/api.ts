@@ -9,11 +9,16 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    const parsed = JSON.parse(user);
-    if (parsed.token) {
-      config.headers.Authorization = `Bearer ${parsed.token}`;
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const parsed = JSON.parse(user);
+      if (parsed.token) {
+        config.headers.Authorization = `Bearer ${parsed.token}`;
+      }
     }
   }
   return config;
@@ -24,6 +29,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
       window.location.href = '/login';
     }
     return Promise.reject(error);
