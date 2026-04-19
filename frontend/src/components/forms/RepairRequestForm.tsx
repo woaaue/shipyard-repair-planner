@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Send, ClipboardList } from 'lucide-react';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
-import { mockShips } from '../../mock-data/data';
 
 interface RepairRequestFormProps {
   onClose: () => void;
   onSubmit?: (data: any) => void;
+  ships?: Array<{ id: number; name: string; imo: string }>;
 }
 
 const REPAIR_TYPES = [
@@ -17,7 +17,7 @@ const REPAIR_TYPES = [
   'Аварийный ремонт'
 ] as const;
 
-export default function RepairRequestForm({ onClose, onSubmit }: RepairRequestFormProps) {
+export default function RepairRequestForm({ onClose, onSubmit, ships = [] }: RepairRequestFormProps) {
   const [formData, setFormData] = useState({
     shipId: '',
     repairType: REPAIR_TYPES[0] as string,
@@ -51,7 +51,7 @@ export default function RepairRequestForm({ onClose, onSubmit }: RepairRequestFo
               required
             >
               <option value="">Выберите судно</option>
-              {mockShips.map(ship => (
+              {ships.map(ship => (
                 <option key={ship.id} value={ship.id}>{ship.name} (IMO: {ship.imo})</option>
               ))}
             </select>

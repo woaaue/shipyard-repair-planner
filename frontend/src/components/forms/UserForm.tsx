@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Save, UserPlus } from 'lucide-react';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
-import { dockNames } from '../../mock-data/data';
 
 interface UserFormProps {
   onClose: () => void;
   onSubmit?: (data: any) => void;
+  docks?: string[];
 }
 
 const ROLES = [
@@ -17,7 +17,7 @@ const ROLES = [
   { value: 'client', label: 'Владелец судна' }
 ] as const;
 
-export default function UserForm({ onClose, onSubmit }: UserFormProps) {
+export default function UserForm({ onClose, onSubmit, docks = [] }: UserFormProps) {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -102,7 +102,7 @@ export default function UserForm({ onClose, onSubmit }: UserFormProps) {
                 required
               >
                 <option value="">Выберите док</option>
-                {dockNames.map(dock => (
+                {docks.map(dock => (
                   <option key={dock} value={dock}>{dock}</option>
                 ))}
               </select>
