@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Ship, DollarSign, CheckCircle, Clock, Calendar, Flag } from 'lucide-react';
 import Card from '../components/ui/Card';
@@ -7,28 +7,95 @@ import StatusBadge from '../components/ui/StatusBadge';
 import PriorityBadge from '../components/ui/PriorityBadge';
 import ProgressCircle from '../components/ui/ProgressCircle';
 import Modal from '../components/ui/Modal';
-import { mockExtendedRepairs, dockNames } from '../mock-data/data';
 import { useAuth } from '../context/AuthContext';
+import { getRepair, updateRepairStatus, type BackendRepairStatus } from '../services/repairs';
+import { getRepairRequest } from '../services/repairRequests';
+import { getWorkItems } from '../services/workItems';
+import type { ExtendedRepair } from '../types/repair';
 
 const PRIORITIES = ['низкий', 'средний', 'высокий', 'критический'] as const;
+
+function statusToBackend(status: ExtendedRepair['status']): BackendRepairStatus {
+  if (status === 'в работе') return 'IN_PROGRESS';
+  if (status === 'завершён') return 'COMPLETED';
+  if (status === 'отменён') return 'CANCELLED';
+  return 'SCHEDULED';
+}
+
+function toDate(input?: string | null): string {
+  if (!input) return new Date().toISOString().slice(0, 10);
+  return input.slice(0, 10);
+}
 
 export default function RepairDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const repairId = parseInt(id || '0');
-  const repair = mockExtendedRepairs.find(r => r.id === repairId);
-  
-  const [showDockModal, setShowDockModal] = useState(false);
-  const [showBudgetModal, setShowBudgetModal] = useState(false);
+
+  const [repair, setRepair] = useState<ExtendedRepair | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showPriorityModal, setShowPriorityModal] = useState(false);
-  const [selectedDock, setSelectedDock] = useState(repair?.dock || '');
-  const [newBudget, setNewBudget] = useState(repair?.budget || 0);
-  const [newStartDate, setNewStartDate] = useState(repair?.startDate || '');
-  const [newEndDate, setNewEndDate] = useState(repair?.endDate || '');
-  const [newPriority, setNewPriority] = useState<string>(repair?.priority || 'средний');
-  
+  const [newPriority, setNewPriority] = useState<string>('средний');
+
+  const repairId = Number(id || '0');
+
+  const loadRepair = async () => {
+    if (!repairId) {
+      setRepair(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const baseRepair = await getRepair(repairId);
+      const [request, workItems] = await Promise.all([
+        getRepairRequest(baseRepair.shipId).catch(() => null),
+        getWorkItems({ repairId }),
+      ]);
+
+      const tasks = workItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        completed: item.status === 'COMPLETED',
+        estimatedHours: item.estimatedHours,
+        actualHours: item.actualHours,
+        worker: 'Не назначен',
+      }));
+
+      const mapped: ExtendedRepair = {
+        ...baseRepair,
+        shipName: request?.shipName ?? baseRepair.shipName,
+        startDate: toDate(baseRepair.actualStartDate ?? baseRepair.startDate),
+        endDate: toDate(baseRepair.actualEndDate ?? baseRepair.endDate),
+        repairType: tasks.length > 0 ? 'Текущий ремонт' : 'Доковый ремонт',
+        priority: 'средний',
+        manager: 'Не назначен',
+        tasks,
+      };
+
+      setRepair(mapped);
+      setNewPriority(mapped.priority);
+    } catch {
+      setRepair(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadRepair();
+  }, [repairId]);
+
+  const completedTasks = useMemo(
+    () => repair?.tasks.filter((task) => task.completed).length ?? 0,
+    [repair]
+  );
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
+  }
+
   if (!repair) {
     return (
       <div className="text-center py-12">
@@ -39,10 +106,29 @@ export default function RepairDetail() {
       </div>
     );
   }
-  
-  const canEdit = user?.role === 'admin' || user?.role === 'dispatcher' || user?.role === 'operator' || (user?.role === 'master' && user.dock === repair.dock);
-  const completedTasks = repair.tasks.filter(t => t.completed).length;
-  
+
+  const canEdit =
+    user?.role === 'admin' ||
+    user?.role === 'dispatcher' ||
+    user?.role === 'operator' ||
+    (user?.role === 'master' && user.dock === repair.dock);
+
+  const handleStatusUpdate = async () => {
+    try {
+      const nextStatus: ExtendedRepair['status'] =
+        repair.status === 'запланирован'
+          ? 'в работе'
+          : repair.status === 'в работе'
+          ? 'завершён'
+          : 'запланирован';
+
+      await updateRepairStatus(repair.id, statusToBackend(nextStatus));
+      await loadRepair();
+    } catch {
+      // noop
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -55,7 +141,7 @@ export default function RepairDetail() {
         <h1 className="text-2xl font-bold text-gray-900">{repair.shipName}</h1>
         <StatusBadge status={repair.status} size="md" />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -88,20 +174,27 @@ export default function RepairDetail() {
                 <div className="font-medium">{repair.manager}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Судно (ID)</div>
+                <div className="text-sm text-gray-500">Repair Request ID</div>
                 <div className="font-medium">#{repair.shipId}</div>
               </div>
             </div>
           </Card>
-          
+
           <Card>
             <h2 className="font-semibold mb-4 flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
               Задачи ({completedTasks}/{repair.tasks.length})
             </h2>
             <div className="space-y-3">
-              {repair.tasks.map(task => (
-                <div key={task.id} className="flex items-center gap-4 p-3 border rounded-lg">
+              {repair.tasks.length === 0 && (
+                <div className="text-sm text-gray-500">По этому ремонту пока нет задач.</div>
+              )}
+              {repair.tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="flex items-center gap-4 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => navigate(`/repairs/${repair.id}/tasks/${task.id}`)}
+                >
                   <div className={`p-2 rounded-full ${task.completed ? 'bg-green-100' : 'bg-gray-100'}`}>
                     {task.completed ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -115,15 +208,13 @@ export default function RepairDetail() {
                     </div>
                     <div className="text-sm text-gray-500">{task.worker}</div>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {task.actualHours || task.estimatedHours}ч
-                  </div>
+                  <div className="text-sm text-gray-600">{task.actualHours || task.estimatedHours}ч</div>
                 </div>
               ))}
             </div>
           </Card>
         </div>
-        
+
         <div className="space-y-6">
           <Card>
             <h2 className="font-semibold mb-4">Прогресс</h2>
@@ -131,7 +222,7 @@ export default function RepairDetail() {
               <ProgressCircle progress={repair.progress} size={120} />
             </div>
           </Card>
-          
+
           <Card>
             <h2 className="font-semibold mb-4 flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
@@ -146,33 +237,18 @@ export default function RepairDetail() {
                 <span className="text-gray-600">Израсходовано</span>
                 <span className="font-medium">{repair.spent.toLocaleString()} ₽</span>
               </div>
-              <div className="pt-3 border-t">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Остаток</span>
-                  <span className="font-medium text-green-600">
-                    {(repair.budget - repair.spent).toLocaleString()} ₽
-                  </span>
-                </div>
-              </div>
             </div>
             <div className="mt-4">
               <div className="text-sm text-gray-500 mb-1">Использовано</div>
               <div className="bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: `${(repair.spent / repair.budget) * 100}%` }}
+                  style={{ width: `${repair.budget > 0 ? (repair.spent / repair.budget) * 100 : 0}%` }}
                 />
               </div>
             </div>
           </Card>
-          
-          {repair.delayReason && (
-            <Card>
-              <h2 className="font-semibold mb-2 text-orange-600">Причина задержки</h2>
-              <p className="text-gray-600">{repair.delayReason}</p>
-            </Card>
-          )}
-          
+
           {canEdit && (
             <Card>
               <h2 className="font-semibold mb-4">Действия</h2>
@@ -181,106 +257,16 @@ export default function RepairDetail() {
                   <Flag className="h-4 w-4 mr-2" />
                   Изменить приоритет
                 </Button>
-                <Button variant="secondary" className="w-full" onClick={() => setShowDockModal(true)}>
+                <Button variant="secondary" className="w-full" disabled>
                   <Calendar className="h-4 w-4 mr-2" />
-                  Назначить док
+                  Назначить док (скоро)
                 </Button>
-                <Button variant="secondary" className="w-full" onClick={() => setShowBudgetModal(true)}>
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Изменить бюджет
-                </Button>
-                {user?.role !== 'client' && (
-                  <Button className="w-full">
-                    Обновить статус
-                  </Button>
-                )}
+                {user?.role !== 'client' && <Button className="w-full" onClick={handleStatusUpdate}>Обновить статус</Button>}
               </div>
             </Card>
           )}
         </div>
       </div>
-
-      {showDockModal && (
-        <Modal isOpen={showDockModal} onClose={() => setShowDockModal(false)} title="Назначить док" icon={Ship}>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Док</label>
-              <select
-                value={selectedDock}
-                onChange={(e) => setSelectedDock(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Выберите док</option>
-                {dockNames.map(dock => (
-                  <option key={dock} value={dock}>{dock}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Дата начала</label>
-              <input
-                type="date"
-                value={newStartDate}
-                onChange={(e) => setNewStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Дата окончания</label>
-              <input
-                type="date"
-                value={newEndDate}
-                onChange={(e) => setNewEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex gap-3 pt-4">
-              <Button variant="secondary" className="flex-1" onClick={() => setShowDockModal(false)}>
-                Отмена
-              </Button>
-              <Button className="flex-1" onClick={() => setShowDockModal(false)}>
-                Сохранить
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {showBudgetModal && (
-        <Modal isOpen={showBudgetModal} onClose={() => setShowBudgetModal(false)} title="Изменить бюджет" icon={DollarSign}>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Плановый бюджет (₽)</label>
-              <input
-                type="number"
-                value={newBudget}
-                onChange={(e) => setNewBudget(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Израсходовано:</span>
-                <span className="font-medium">{repair?.spent.toLocaleString()} ₽</span>
-              </div>
-              <div className="flex justify-between text-sm mt-2">
-                <span className="text-gray-600">Остаток:</span>
-                <span className="font-medium text-green-600">
-                  {((repair?.budget || 0) - (repair?.spent || 0)).toLocaleString()} ₽
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-3 pt-4">
-              <Button variant="secondary" className="flex-1" onClick={() => setShowBudgetModal(false)}>
-                Отмена
-              </Button>
-              <Button className="flex-1" onClick={() => setShowBudgetModal(false)}>
-                Сохранить
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {showPriorityModal && (
         <Modal isOpen={showPriorityModal} onClose={() => setShowPriorityModal(false)} title="Изменить приоритет" icon={Flag}>
@@ -292,8 +278,10 @@ export default function RepairDetail() {
                 onChange={(e) => setNewPriority(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {PRIORITIES.map(p => (
-                  <option key={p} value={p}>{p}</option>
+                {PRIORITIES.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {priority}
+                  </option>
                 ))}
               </select>
             </div>
@@ -301,12 +289,7 @@ export default function RepairDetail() {
               <Button variant="secondary" className="flex-1" onClick={() => setShowPriorityModal(false)}>
                 Отмена
               </Button>
-              <Button className="flex-1" onClick={() => {
-                if (repair) {
-                  repair.priority = newPriority as any;
-                }
-                setShowPriorityModal(false);
-              }}>
+              <Button className="flex-1" onClick={() => setShowPriorityModal(false)}>
                 Сохранить
               </Button>
             </div>
