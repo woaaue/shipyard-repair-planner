@@ -1,7 +1,10 @@
 package com.shipyard.repair.service.user;
 
 import com.shipyard.repair.dto.user.CreateUserRequest;
+import com.shipyard.repair.dto.user.ResetPasswordResponse;
+import com.shipyard.repair.dto.user.UpdateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
+import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.User;
 import com.shipyard.repair.enums.UserRole;
 import com.shipyard.repair.exception.BadRequestException;
@@ -155,6 +158,79 @@ public class UserServiceImplTest {
 
         verify(userRepository).existsByEmail("test@mail.ru");
         verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void updateUser_Success() {
+        User existing = new User();
+        existing.setId(1);
+        existing.setEmail("old@mail.ru");
+        existing.setFirstName("Old");
+        existing.setLastName("Name");
+        existing.setRole(UserRole.CLIENT);
+
+        Dock dock = new Dock();
+        dock.setId(2);
+
+        UpdateUserRequest request = new UpdateUserRequest(
+                "new@mail.ru",
+                "Ivan",
+                "Ivanov",
+                "Ivanovich",
+                UserRole.OPERATOR,
+                2
+        );
+
+        UserResponse expected = new UserResponse(1, "new@mail.ru", "Ivan", "Ivanov", "Ivanovich", UserRole.OPERATOR, dock, LocalDate.now());
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("new@mail.ru")).thenReturn(Optional.empty());
+        when(dockRepository.findById(2)).thenReturn(Optional.of(dock));
+        when(userRepository.save(existing)).thenReturn(existing);
+        when(userMapper.toResponse(existing)).thenReturn(expected);
+
+        UserResponse result = userServiceImpl.updateUser(1, request);
+
+        assertEquals("new@mail.ru", result.email());
+        assertEquals(UserRole.OPERATOR, result.role());
+        verify(userRepository).save(existing);
+    }
+
+    @Test
+    void blockUser_Success() {
+        User existing = new User();
+        existing.setId(1);
+        existing.setEnabled(true);
+
+        UserResponse expected = new UserResponse(1, null, null, null, null, UserRole.CLIENT, null, LocalDate.now());
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(userRepository.save(existing)).thenReturn(existing);
+        when(userMapper.toResponse(existing)).thenReturn(expected);
+
+        userServiceImpl.blockUser(1);
+
+        assertFalse(existing.isEnabled());
+        verify(userRepository).save(existing);
+    }
+
+    @Test
+    void resetPassword_Success() {
+        User existing = new User();
+        existing.setId(1);
+        existing.setEnabled(false);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+        when(userRepository.save(existing)).thenReturn(existing);
+
+        ResetPasswordResponse response = userServiceImpl.resetPassword(1);
+
+        assertNotNull(response.tempPassword());
+        assertEquals(12, response.tempPassword().length());
+        assertTrue(existing.isEnabled());
+        verify(passwordEncoder).encode(response.tempPassword());
+        verify(userRepository).save(existing);
     }
 
     @Test

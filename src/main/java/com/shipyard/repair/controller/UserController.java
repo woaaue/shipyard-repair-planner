@@ -1,6 +1,8 @@
 package com.shipyard.repair.controller;
 
 import com.shipyard.repair.dto.user.CreateUserRequest;
+import com.shipyard.repair.dto.user.ResetPasswordResponse;
+import com.shipyard.repair.dto.user.UpdateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.service.user.UserService;
 import jakarta.validation.Valid;
@@ -34,6 +36,30 @@ public class UserController {
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.createUser(createUserRequest));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Integer id, @Valid @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(userService.updateUser(id, request));
+    }
+
+    @PostMapping("/{id}/block")
+    public ResponseEntity<UserResponse> blockUser(@PathVariable Integer id) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(userService.blockUser(id));
+    }
+
+    @PostMapping("/{id}/unblock")
+    public ResponseEntity<UserResponse> unblockUser(@PathVariable Integer id) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(userService.unblockUser(id));
+    }
+
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<ResetPasswordResponse> resetPassword(@PathVariable Integer id) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(userService.resetPassword(id));
     }
 
     @DeleteMapping("/{id}")

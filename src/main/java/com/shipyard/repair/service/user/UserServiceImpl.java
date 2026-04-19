@@ -1,6 +1,8 @@
 package com.shipyard.repair.service.user;
 
 import com.shipyard.repair.dto.user.CreateUserRequest;
+import com.shipyard.repair.dto.user.ResetPasswordResponse;
+import com.shipyard.repair.dto.user.UpdateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.User;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,9 @@ public class UserServiceImpl implements UserService {
     private final DockRepository dockRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private static final int TEMP_PASSWORD_LENGTH = 12;
+    private static final String TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    private static final Random RANDOM = new Random();
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -54,20 +60,79 @@ public class UserServiceImpl implements UserService {
             throw new DuplicateResourceException(ErrorCode.USER_ALREADY_EXISTS);
         }
 
-        Dock dock = null;
-        if (request.dockId() != null) {
-            dock = dockRepository.findById(request.dockId())
-                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.DOCK_NOT_FOUND));
-        }
+        Dock dock = resolveDock(request.dockId());
 
         User user = userMapper.toEntity(request);
-
         user.setEncodedPassword(passwordEncoder.encode(request.password()));
         user.setDock(dock);
+        user.setEnabled(true);
 
         User savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUser(Integer id, UpdateUserRequest request) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+
+        User user = getUserEntity(id);
+        userRepository.findByEmail(request.email())
+                .filter(existing -> existing.getId() != id)
+                .ifPresent(existing -> {
+                    throw new DuplicateResourceException(ErrorCode.USER_ALREADY_EXISTS);
+                });
+
+        user.setEmail(request.email());
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setPatronymic(request.patronymic());
+        user.setRole(request.role());
+        user.setDock(resolveDock(request.dockId()));
+
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse blockUser(Integer id) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+        User user = getUserEntity(id);
+        user.setEnabled(false);
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse unblockUser(Integer id) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+        User user = getUserEntity(id);
+        user.setEnabled(true);
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public ResetPasswordResponse resetPassword(Integer id) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+        User user = getUserEntity(id);
+        String tempPassword = generateTempPassword();
+        user.setEncodedPassword(passwordEncoder.encode(tempPassword));
+        user.setEnabled(true);
+        userRepository.save(user);
+        return new ResetPasswordResponse(tempPassword);
     }
 
     @Override
@@ -82,5 +147,26 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.deleteById(id);
+    }
+
+    private Dock resolveDock(Integer dockId) {
+        if (dockId == null) {
+            return null;
+        }
+        return dockRepository.findById(dockId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.DOCK_NOT_FOUND));
+    }
+
+    private User getUserEntity(Integer id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private String generateTempPassword() {
+        StringBuilder builder = new StringBuilder(TEMP_PASSWORD_LENGTH);
+        for (int i = 0; i < TEMP_PASSWORD_LENGTH; i++) {
+            builder.append(TEMP_PASSWORD_ALPHABET.charAt(RANDOM.nextInt(TEMP_PASSWORD_ALPHABET.length())));
+        }
+        return builder.toString();
     }
 }
