@@ -1,15 +1,22 @@
 package com.shipyard.repair.service.dock;
 
 import com.shipyard.repair.dto.dock.CreateDockRequest;
+import com.shipyard.repair.dto.dock.DockScheduleItemResponse;
 import com.shipyard.repair.dto.dock.DockDimensionsRequest;
 import com.shipyard.repair.dto.dock.DockResponse;
+import com.shipyard.repair.dto.dock.UpdateDockRequest;
 import com.shipyard.repair.entity.Dock;
+import com.shipyard.repair.entity.Repair;
+import com.shipyard.repair.entity.RepairRequest;
+import com.shipyard.repair.entity.Ship;
 import com.shipyard.repair.entity.Shipyard;
 import com.shipyard.repair.enums.DockStatus;
+import com.shipyard.repair.enums.RepairStatus;
 import com.shipyard.repair.exception.BadRequestException;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.mapper.dock.DockMapper;
 import com.shipyard.repair.repository.DockRepository;
+import com.shipyard.repair.repository.RepairRepository;
 import com.shipyard.repair.repository.ShipyardRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +43,8 @@ class DockServiceImplTest {
 
     @Mock
     private ShipyardRepository shipyardRepository;
+    @Mock
+    private RepairRepository repairRepository;
 
     @InjectMocks
     private DockServiceImpl dockService;
@@ -196,5 +206,92 @@ class DockServiceImplTest {
         
         verify(shipyardRepository).findById(999);
         verify(dockRepository, never()).save(any());
+    }
+
+    @Test
+    void updateDock_Success() {
+        Dock existing = new Dock();
+        existing.setId(1);
+        existing.setName("Old Dock");
+
+        DockDimensionsRequest dimensions = new DockDimensionsRequest(120, 25, 9);
+        UpdateDockRequest request = new UpdateDockRequest("New Dock", dimensions, DockStatus.MAINTENANCE, 2);
+
+        Shipyard shipyard = new Shipyard();
+        shipyard.setId(2);
+
+        DockResponse response = new DockResponse(1, "New Dock", null, DockStatus.MAINTENANCE);
+
+        when(dockRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(shipyardRepository.findById(2)).thenReturn(Optional.of(shipyard));
+        when(dockRepository.save(existing)).thenReturn(existing);
+        when(dockMapper.toDto(existing)).thenReturn(response);
+
+        DockResponse result = dockService.updateDock(1, request);
+
+        assertEquals("New Dock", result.name());
+        assertEquals(DockStatus.MAINTENANCE, result.status());
+        verify(dockRepository).save(existing);
+    }
+
+    @Test
+    void getDockSchedule_Success() {
+        Dock dock = new Dock();
+        dock.setId(1);
+
+        Ship ship = new Ship();
+        ship.setId(10);
+        ship.setName("Vessel A");
+
+        RepairRequest repairRequest = new RepairRequest();
+        repairRequest.setId(20);
+        repairRequest.setShip(ship);
+        repairRequest.setScheduledStartDate(LocalDate.of(2026, 1, 10));
+        repairRequest.setScheduledEndDate(LocalDate.of(2026, 1, 20));
+
+        Repair repair = new Repair();
+        repair.setId(30);
+        repair.setDock(dock);
+        repair.setRepairRequest(repairRequest);
+        repair.setStatus(RepairStatus.SCHEDULED);
+        repair.setProgressPercentage(15);
+
+        when(dockRepository.existsById(1)).thenReturn(true);
+        when(repairRepository.findByDockId(1)).thenReturn(List.of(repair));
+
+        List<DockScheduleItemResponse> result = dockService.getDockSchedule(
+                1,
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 31)
+        );
+
+        assertEquals(1, result.size());
+        assertEquals(30, result.get(0).repairId());
+        assertEquals("Vessel A", result.get(0).shipName());
+    }
+
+    @Test
+    void getDockLoad_Success() {
+        Dock dock = new Dock();
+        dock.setId(1);
+
+        Repair active1 = new Repair();
+        active1.setDock(dock);
+        active1.setStatus(RepairStatus.IN_PROGRESS);
+
+        Repair active2 = new Repair();
+        active2.setDock(dock);
+        active2.setStatus(RepairStatus.STARTED);
+
+        Repair completed = new Repair();
+        completed.setDock(dock);
+        completed.setStatus(RepairStatus.COMPLETED);
+
+        when(dockRepository.existsById(1)).thenReturn(true);
+        when(repairRepository.findByDockId(1)).thenReturn(List.of(active1, active2, completed));
+
+        Integer load = dockService.getDockLoad(1);
+
+        assertEquals(67, load);
     }
 }
