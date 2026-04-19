@@ -1,14 +1,16 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mockKPIs, getActiveRepairs } from '../mock-data/data';
 import KPICard from '../components/ui/KPICard';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import LoadPercentageChart from '../components/charts/LoadPercentageChart';
 import { FileDown, CalendarPlus, Ship, Wrench, MapPin, User, ClipboardList, Anchor, Download } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
-import { mockExtendedRepairs } from '../mock-data/data';
+import { CheckCircle } from 'lucide-react';
+import { getRepairs } from '../services/repairs';
+import { getRepairRequests } from '../services/repairRequests';
+import { getWorkItems } from '../services/workItems';
+import { getDocks } from '../services/docks';
 
 interface QuickAction {
   label: string;
@@ -38,22 +40,93 @@ const ACTIONS_BY_ROLE: Record<string, string[]> = {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const activeRepairs = getActiveRepairs();
-  
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [repairs, setRepairs] = useState<Awaited<ReturnType<typeof getRepairs>>>([]);
+  const [repairRequestsCount, setRepairRequestsCount] = useState(0);
+  const [workItemsCount, setWorkItemsCount] = useState(0);
+  const [docksCount, setDocksCount] = useState(0);
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [repairsData, repairRequestsData, workItemsData, docksData] = await Promise.all([
+          getRepairs(),
+          getRepairRequests(),
+          getWorkItems(),
+          getDocks(),
+        ]);
+        setRepairs(repairsData);
+        setRepairRequestsCount(repairRequestsData.length);
+        setWorkItemsCount(workItemsData.length);
+        setDocksCount(docksData.length);
+      } catch {
+        setError('Не удалось загрузить данные дашборда');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadDashboard();
+  }, []);
+
+  const activeRepairs = useMemo(
+    () => repairs.filter((repair) => repair.status === 'в работе' || repair.status === 'запланирован'),
+    [repairs]
+  );
+
+  const kpis = useMemo(
+    () => [
+      {
+        title: 'Активные ремонты',
+        value: activeRepairs.length,
+        change: 0,
+        icon: 'wrench',
+        color: 'blue' as const,
+        description: 'Запланированные и выполняемые',
+      },
+      {
+        title: 'Заявки на ремонт',
+        value: repairRequestsCount,
+        change: 0,
+        icon: 'clipboard',
+        color: 'orange' as const,
+        description: 'Всего заявок',
+      },
+      {
+        title: 'Работы',
+        value: workItemsCount,
+        change: 0,
+        icon: 'check-circle',
+        color: 'green' as const,
+        description: 'Work items в системе',
+      },
+      {
+        title: 'Доки',
+        value: docksCount,
+        change: 0,
+        icon: 'anchor',
+        color: 'blue' as const,
+        description: 'Доступные производственные ресурсы',
+      },
+    ],
+    [activeRepairs.length, repairRequestsCount, workItemsCount, docksCount]
+  );
+
   const userRole = user?.role || 'client';
   const allowedActions = ACTIONS_BY_ROLE[userRole] || [];
-  const quickActions = QUICK_ACTIONS.filter(action => 
-    allowedActions.includes(action.label)
-  );
-  
+  const quickActions = QUICK_ACTIONS.filter((action) => allowedActions.includes(action.label));
+
   const handleAction = (navigateTo: string) => {
     const path = navigateTo.split('?')[0];
     navigate(path);
   };
-  
+
   return (
     <div className="space-y-6">
-      {/* Заголовок и дата */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 text-start">Дашборд</h1>
@@ -64,18 +137,17 @@ export default function Dashboard() {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
           })}
         </div>
       </div>
 
-      {/* KPI карточки */}
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
+      {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {mockKPIs.map((kpi, index) => (
-          <div 
-            key={index} 
-            className="h-full transform transition-transform duration-300 hover:scale-[1.02]"
-          >
+        {kpis.map((kpi, index) => (
+          <div key={index} className="h-full transform transition-transform duration-300 hover:scale-[1.02]">
             <KPICard
               title={kpi.title}
               value={kpi.value}
@@ -88,9 +160,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Две колонки: активные ремонты и статистика */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Левая колонка: Активные ремонты */}
         <Card>
           <div className="card hover:shadow-md transition-shadow duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
@@ -105,13 +175,14 @@ export default function Dashboard() {
                 {activeRepairs.length} активных
               </span>
             </div>
-            
+
             {activeRepairs.length > 0 ? (
               <div className="space-y-4">
-                {activeRepairs.map((repair) => (
-                  <div 
-                    key={repair.id} 
-                    className="border border-gray-200 rounded-xl p-4 sm:p-5 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-300 group"
+                {activeRepairs.slice(0, 6).map((repair) => (
+                  <div
+                    key={repair.id}
+                    className="border border-gray-200 rounded-xl p-4 sm:p-5 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-300 group cursor-pointer"
+                    onClick={() => navigate(`/repairs/${repair.id}`)}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
                       <div className="flex-1">
@@ -131,29 +202,16 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Прогресс-бар */}
                     <div className="mb-3">
                       <div className="flex flex-col sm:flex-row sm:justify-between text-sm text-gray-600 mb-1.5 gap-1">
                         <span>Прогресс</span>
                         <span className="font-medium">{repair.progress}% завершено</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-500"
                           style={{ width: `${repair.progress}%` }}
                         />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="text-gray-600">Начало</div>
-                        <div className="font-medium text-gray-900">{repair.startDate}</div>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="text-gray-600">Завершение</div>
-                        <div className="font-medium text-gray-900">{repair.endDate}</div>
                       </div>
                     </div>
                   </div>
@@ -171,78 +229,41 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Правая колонка: Графики */}
-        <div className="space-y-6">
-          {/* График загрузки в процентах */}
-          <Card title="Загрузка доков (%)">
-            <div className="mb-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">Процентная загрузка ремонтных мощностей</p>
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="flex items-center">
-                    <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
-                    <span>Норма</span>
+        <Card title="Финансовая сводка">
+          <div className="space-y-3">
+            {repairs.slice(0, 5).map((repair) => {
+              const efficiency = repair.budget > 0 ? Math.round((repair.spent / repair.budget) * 100) : 0;
+              return (
+                <div key={repair.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{repair.shipName}</p>
+                    <p className="text-sm text-gray-600">{repair.repairType}</p>
                   </div>
-                  <div className="flex items-center">
-                    <AlertTriangle className="h-3 w-3 text-orange-500 mr-1" />
-                    <span>Выше нормы</span>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${efficiency <= 100 ? 'text-green-600' : 'text-red-600'}`}>
+                      {efficiency}%
+                    </div>
+                    <div className="text-xs text-gray-500">использования бюджета</div>
                   </div>
                 </div>
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                Оранжевая пунктирная линия показывает оптимальный уровень загрузки (70%)
-              </div>
-            </div>
-            <LoadPercentageChart />
-          </Card>
-
-          {/* Таблица эффективности остаётся без изменений */}
-          <Card title="Эффективность ремонтов">
-            <div className="space-y-3">
-              {mockExtendedRepairs
-                .filter(repair => repair.status === 'в работе' || repair.status === 'завершён')
-                .slice(0, 3)
-                .map((repair) => {
-                  const efficiency = repair.budget > 0 
-                    ? Math.round((repair.spent / repair.budget) * 100) 
-                    : 0;
-                  
-                  return (
-                    <div key={repair.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{repair.shipName}</p>
-                        <p className="text-sm text-gray-600">{repair.repairType}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-lg font-bold ${efficiency <= 100 ? 'text-green-600' : 'text-red-600'}`}>
-                          {efficiency}%
-                        </div>
-                        <div className="text-xs text-gray-500">использования бюджета</div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-            <div className="mt-4 text-center">
-              <Button variant="outline" size="sm" className="w-full">
-                Подробная статистика
-              </Button>
-            </div>
-          </Card>
-        </div>
+              );
+            })}
+          </div>
+          <div className="mt-4 text-center">
+            <Button variant="outline" size="sm" className="w-full">
+              Подробная статистика
+            </Button>
+          </div>
+        </Card>
       </div>
 
-      {/* Быстрые действия */}
       {quickActions.length > 0 && (
-        <Card 
-          title="Быстрые действия"
-          className="mt-6"
-        >
+        <Card title="Быстрые действия" className="mt-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {quickActions.map((action, index) => (
-              <Button 
+              <Button
                 key={index}
-                variant={index === 0 ? "primary" : "secondary"}
+                variant={index === 0 ? 'primary' : 'secondary'}
                 icon={action.icon}
                 onClick={() => handleAction(action.navigateTo)}
               >

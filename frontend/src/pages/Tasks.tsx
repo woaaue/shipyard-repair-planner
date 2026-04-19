@@ -1,91 +1,77 @@
-import { useState } from 'react';
-import { CheckCircle, Clock, User, AlertTriangle, Send, X, Check, UserPlus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Clock } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import Modal from '../components/ui/Modal';
-import { mockExtendedRepairs } from '../mock-data/data';
+import { getWorkItems, updateWorkItemStatus, type WorkItemResponse } from '../services/workItems';
+import { getRepairs } from '../services/repairs';
+import { getRepairRequests } from '../services/repairRequests';
 import { useAuth } from '../context/AuthContext';
 
-const WORKERS = [
-  'Слесарь Петров',
-  'Сварщик Сидоров',
-  'Электроник Иванов',
-  'Маляр Кузнецов',
-  'Моторист Смирнов'
-];
+type TaskRow = WorkItemResponse & {
+  repairEntityId: number | null;
+  shipName: string;
+  dock: string;
+};
 
 export default function Tasks() {
   const { user } = useAuth();
-  const [completedTaskIds, setCompletedTaskIds] = useState<number[]>([]);
-  const [assignedTaskIds, setAssignedTaskIds] = useState<Record<number, string>>({});
-  const [showProblemModal, setShowProblemModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [problemType, setProblemType] = useState('');
-  const [problemDescription, setProblemDescription] = useState('');
-  const [selectedWorker, setSelectedWorker] = useState('');
-  
-  const allTasks = mockExtendedRepairs.flatMap(repair => 
-    repair.tasks.map(task => ({
-      ...task,
-      repairId: repair.id,
-      shipName: repair.shipName,
-      dock: repair.dock,
-      repairStatus: repair.status,
-      repairProgress: repair.progress
-    }))
+  const navigate = useNavigate();
+
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTasks = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [items, repairs, requests] = await Promise.all([getWorkItems(), getRepairs(), getRepairRequests()]);
+      const repairsMap = new Map(repairs.map((repair) => [repair.id, repair]));
+      const requestsMap = new Map(requests.map((request) => [request.id, request]));
+
+      const mapped: TaskRow[] = items.map((item) => {
+        const repair = item.repairId ? repairsMap.get(item.repairId) : null;
+        const request = requestsMap.get(item.repairRequestId);
+        return {
+          ...item,
+          repairEntityId: repair?.id ?? null,
+          shipName: request?.shipName ?? `Repair Request #${item.repairRequestId}`,
+          dock: repair?.dock ?? '-',
+        };
+      });
+
+      setTasks(mapped);
+    } catch {
+      setError('Не удалось загрузить задачи');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadTasks();
+  }, []);
+
+  const pendingTasks = useMemo(
+    () => tasks.filter((task) => task.status === 'PENDING' || task.status === 'IN_PROGRESS'),
+    [tasks]
   );
-  
-  const myTasks = allTasks.filter(task => {
+  const completedTasks = useMemo(() => tasks.filter((task) => task.status === 'COMPLETED'), [tasks]);
+
+  const visiblePendingTasks = useMemo(() => {
     if (user?.role === 'worker') {
-      return !completedTaskIds.includes(task.id);
+      return pendingTasks;
     }
     if (user?.role === 'master' && user.dock) {
-      return task.dock === user.dock;
+      return pendingTasks.filter((task) => task.dock === user.dock);
     }
-    return true;
-  });
-  
-  const pendingTasks = myTasks.filter(t => !t.completed && !completedTaskIds.includes(t.id));
-  const completedTasks = allTasks.filter(t => t.completed || completedTaskIds.includes(t.id));
-  const unassignedTasksCount = pendingTasks.filter(t => !assignedTaskIds[t.id]).length;
-  
-  const handleCompleteTask = (taskId: number) => {
-    setCompletedTaskIds(prev => [...prev, taskId]);
-  };
-  
-  const handleReportProblem = (taskId: number) => {
-    setSelectedTaskId(taskId);
-    setShowProblemModal(true);
-  };
-  
-  const handleSubmitProblem = () => {
-    alert(`Проблема "${problemType}" сообщена мастеру участка!`);
-    setShowProblemModal(false);
-    setProblemType('');
-    setProblemDescription('');
-  };
-  
-  const handleAssignTask = (taskId: number) => {
-    setSelectedTaskId(taskId);
-    setSelectedWorker(assignedTaskIds[taskId] || '');
-    setShowAssignModal(true);
-  };
-  
-  const handleSaveAssignment = () => {
-    if (selectedTaskId && selectedWorker) {
-      setAssignedTaskIds(prev => ({ ...prev, [selectedTaskId]: selectedWorker }));
-    }
-    setShowAssignModal(false);
-    alert(`Задача назначена рабочему ${selectedWorker}`);
-  };
-  
-  const handleAcceptTask = (_taskId: number) => {
-    alert(`Задача принята!`);
-  };
-  
-  const handleRejectTask = (_taskId: number) => {
-    alert(`Задача отклонена и возвращена на доработку.`);
+    return pendingTasks;
+  }, [pendingTasks, user]);
+
+  const handleCompleteTask = async (taskId: number) => {
+    await updateWorkItemStatus(taskId, 'COMPLETED');
+    await loadTasks();
   };
 
   return (
@@ -95,7 +81,7 @@ export default function Tasks() {
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-500" />
-            <span>{pendingTasks.length} в работе</span>
+            <span>{visiblePendingTasks.length} в работе</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-green-500" />
@@ -104,91 +90,50 @@ export default function Tasks() {
         </div>
       </div>
 
-      {user?.role === 'master' && (
-        <Card>
-          <h2 className="font-semibold mb-4">Сводка по участку</h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{myTasks.length}</div>
-              <div className="text-sm text-gray-600">Всего задач</div>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">{pendingTasks.length}</div>
-              <div className="text-sm text-gray-600">В работе</div>
-            </div>
-            <div className="text-center p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{unassignedTasksCount}</div>
-              <div className="text-sm text-gray-600">Не назначено</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{completedTasks.length}</div>
-              <div className="text-sm text-gray-600">Выполнено</div>
-            </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">
-                {Math.round((completedTasks.length / (myTasks.length || 1)) * 100)}%
-              </div>
-              <div className="text-sm text-gray-600">Готовность</div>
-            </div>
-          </div>
-        </Card>
-      )}
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
+      {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-500" />
-            Задачи в работе ({pendingTasks.length})
+            Задачи в работе ({visiblePendingTasks.length})
           </h2>
           <div className="space-y-3">
-            {pendingTasks.length === 0 ? (
+            {visiblePendingTasks.length === 0 ? (
               <div className="text-gray-500 text-center py-4">Нет активных задач</div>
             ) : (
-              pendingTasks.map(task => (
-                <div key={task.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-2">
+              visiblePendingTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-2 gap-2">
                     <div>
                       <div className="font-medium">{task.name}</div>
-                      <div className="text-sm text-gray-500">{task.shipName} • {task.dock}</div>
+                      <div className="text-sm text-gray-500">
+                        {task.shipName} • {task.dock}
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">{task.status}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-sm text-gray-600">
+                      {task.actualHours || task.estimatedHours}ч / план {task.estimatedHours}ч
                     </div>
                     {user?.role === 'worker' && (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => handleReportProblem(task.id)}>
-                          <AlertTriangle className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" onClick={() => handleCompleteTask(task.id)}>
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Выполнить
-                        </Button>
-                      </div>
+                      <Button size="sm" onClick={() => void handleCompleteTask(task.id)}>
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Выполнить
+                      </Button>
                     )}
-                    {user?.role === 'master' && (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => handleAssignTask(task.id)}>
-                          <Send className="h-4 w-4 mr-1" />
-                          Назначить
-                        </Button>
-                        {assignedTaskIds[task.id] && (
-                          <>
-                            <Button size="sm" onClick={() => handleAcceptTask(task.id)}>
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="danger" onClick={() => handleRejectTask(task.id)}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 mt-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <User className="h-4 w-4" />
-                      {task.worker}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {task.estimatedHours}ч (план)
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => navigate(`/repairs/${task.repairEntityId ?? 0}/tasks/${task.id}`)}
+                    >
+                      Открыть
+                    </Button>
                   </div>
                 </div>
               ))
@@ -205,94 +150,21 @@ export default function Tasks() {
             {completedTasks.length === 0 ? (
               <div className="text-gray-500 text-center py-4">Нет выполненных задач</div>
             ) : (
-              completedTasks.map(task => (
-                <div key={task.id} className="p-4 border rounded-lg bg-green-50">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-medium line-through text-gray-500">{task.name}</div>
-                      <div className="text-sm text-gray-500">{task.shipName}</div>
-                    </div>
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                    <span>{task.actualHours || task.estimatedHours}ч</span>
-                    {(task.actualHours || 0) > task.estimatedHours && (
-                      <span className="text-orange-600">+{(task.actualHours || 0) - task.estimatedHours}ч</span>
-                    )}
-                  </div>
+              completedTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="p-4 border rounded-lg bg-green-50 cursor-pointer"
+                  onClick={() => navigate(`/repairs/${task.repairEntityId ?? 0}/tasks/${task.id}`)}
+                >
+                  <div className="font-medium line-through text-gray-500">{task.name}</div>
+                  <div className="text-sm text-gray-500 mt-1">{task.shipName}</div>
+                  <div className="text-sm text-gray-600 mt-2">{task.actualHours || task.estimatedHours}ч</div>
                 </div>
               ))
             )}
           </div>
         </Card>
       </div>
-
-      {showProblemModal && (
-        <Modal isOpen={showProblemModal} onClose={() => setShowProblemModal(false)} title="Сообщить о проблеме" icon={AlertTriangle}>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Тип проблемы</label>
-              <select
-                value={problemType}
-                onChange={(e) => setProblemType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Выберите тип</option>
-                <option value="materials">Нехватка материалов</option>
-                <option value="defect">Обнаружен дефект</option>
-                <option value="delay">Задержка работ</option>
-                <option value="other">Другое</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-              <textarea
-                value={problemDescription}
-                onChange={(e) => setProblemDescription(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Опишите проблему..."
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" onClick={() => setShowProblemModal(false)}>
-                Отмена
-              </Button>
-              <Button className="flex-1" onClick={handleSubmitProblem}>
-                Отправить
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {showAssignModal && (
-        <Modal isOpen={showAssignModal} onClose={() => setShowAssignModal(false)} title="Назначить задачу" icon={UserPlus}>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Исполнитель</label>
-              <select
-                value={selectedWorker}
-                onChange={(e) => setSelectedWorker(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Выберите рабочего</option>
-                {WORKERS.map(worker => (
-                  <option key={worker} value={worker}>{worker}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" onClick={() => setShowAssignModal(false)}>
-                Отмена
-              </Button>
-              <Button className="flex-1" onClick={handleSaveAssignment}>
-                Назначить
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }
