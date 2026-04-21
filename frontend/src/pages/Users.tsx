@@ -77,17 +77,22 @@ export default function Users() {
       ? docks.find((dock) => dock.name === formData.dock)?.id
       : undefined;
 
-    await createUser({
-      email: formData.email,
-      password: formData.password,
-      fullName: formData.fullName,
-      role: formData.role,
-      dock: formData.dock,
-      dockId,
-    });
+    setError(null);
+    try {
+      await createUser({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        role: formData.role,
+        dock: formData.dock,
+        dockId,
+      });
 
-    setShowUserForm(false);
-    await loadData();
+      setShowUserForm(false);
+      await loadData();
+    } catch {
+      setError('Не удалось создать пользователя');
+    }
   };
 
   const handleEditUser = (id: number) => {

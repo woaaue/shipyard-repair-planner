@@ -34,6 +34,19 @@ interface BackendCreateUserRequest {
   dockId?: number | null;
 }
 
+interface BackendUpdateUserRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  patronymic?: string | null;
+  role: BackendUserRole;
+  dockId?: number | null;
+}
+
+interface BackendResetPasswordResponse {
+  tempPassword: string;
+}
+
 const backendToUiRole: Record<BackendUserRole, User['role']> = {
   ADMIN: 'admin',
   DISPATCHER: 'dispatcher',
@@ -85,7 +98,7 @@ export const getUsers = async (filters?: UserFilters): Promise<User[]> => {
   return users;
 };
 
-export const getUser = async (id: string): Promise<User> => {
+export const getUser = async (id: string | number): Promise<User> => {
   const response = await api.get<BackendUserResponse>(`/users/${id}`);
   return toUiUser(response.data);
 };
@@ -108,18 +121,35 @@ export const createUser = async (
   return toUiUser(response.data);
 };
 
-export const updateUser = async (): Promise<User> => {
-  throw new Error('User update endpoint is not implemented on backend yet');
+export const updateUser = async (
+  id: number,
+  data: Omit<User, 'id'> & { dockId?: number }
+): Promise<User> => {
+  const names = splitFullName(data.fullName);
+  const payload: BackendUpdateUserRequest = {
+    email: data.email,
+    firstName: names.firstName,
+    lastName: names.lastName,
+    patronymic: names.patronymic,
+    role: uiToBackendRole[data.role],
+    dockId: data.dockId ?? null,
+  };
+
+  const response = await api.put<BackendUserResponse>(`/users/${id}`, payload);
+  return toUiUser(response.data);
 };
 
-export const blockUser = async (): Promise<User> => {
-  throw new Error('User block endpoint is not implemented on backend yet');
+export const blockUser = async (id: number): Promise<User> => {
+  const response = await api.post<BackendUserResponse>(`/users/${id}/block`);
+  return toUiUser(response.data);
 };
 
-export const unblockUser = async (): Promise<User> => {
-  throw new Error('User unblock endpoint is not implemented on backend yet');
+export const unblockUser = async (id: number): Promise<User> => {
+  const response = await api.post<BackendUserResponse>(`/users/${id}/unblock`);
+  return toUiUser(response.data);
 };
 
-export const resetPassword = async (): Promise<string> => {
-  throw new Error('User reset-password endpoint is not implemented on backend yet');
+export const resetPassword = async (id: number): Promise<string> => {
+  const response = await api.post<BackendResetPasswordResponse>(`/users/${id}/reset-password`);
+  return response.data.tempPassword;
 };
