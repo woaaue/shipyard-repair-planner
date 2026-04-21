@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Shield, MapPin, Calendar, UserX, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Mail, Shield, MapPin, Calendar, UserX, RefreshCw, ShieldCheck } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { useAuth } from '../context/AuthContext';
-import { getUser } from '../services/users';
+import { blockUser, getUser, resetPassword, unblockUser } from '../services/users';
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Администратор',
@@ -37,28 +37,36 @@ export default function UserDetail() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showUnblockModal, setShowUnblockModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  const [tempPassword] = useState('');
+  const [tempPassword, setTempPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  const userId = useMemo(() => Number(id || '0'), [id]);
+
+  const loadUser = async () => {
+    if (!userId) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getUser(userId);
+      setUser(data);
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadUser = async () => {
-      if (!id) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const data = await getUser(id);
-        setUser(data);
-      } catch {
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     void loadUser();
-  }, [id]);
+  }, [userId]);
 
   if (isLoading) {
     return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
@@ -77,6 +85,50 @@ export default function UserDetail() {
 
   const canEdit = currentUser?.role === 'admin';
 
+  const handleBlock = async () => {
+    if (!userId) return;
+    setError(null);
+    setIsActionLoading(true);
+    try {
+      const updated = await blockUser(userId);
+      setUser(updated);
+      setShowBlockModal(false);
+    } catch {
+      setError('Не удалось заблокировать пользователя');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!userId) return;
+    setError(null);
+    setIsActionLoading(true);
+    try {
+      const updated = await unblockUser(userId);
+      setUser(updated);
+      setShowUnblockModal(false);
+    } catch {
+      setError('Не удалось разблокировать пользователя');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!userId) return;
+    setError(null);
+    setIsActionLoading(true);
+    try {
+      const password = await resetPassword(userId);
+      setTempPassword(password);
+    } catch {
+      setError('Не удалось сбросить пароль');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -89,6 +141,8 @@ export default function UserDetail() {
         <h1 className="text-2xl font-bold text-gray-900">{user.fullName}</h1>
         <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">{ROLE_LABELS[user.role] || user.role}</span>
       </div>
+
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -154,12 +208,17 @@ export default function UserDetail() {
                 <Button variant="secondary" className="w-full" disabled>
                   Редактирование (скоро)
                 </Button>
-                <Button variant="danger" className="w-full" onClick={() => setShowBlockModal(true)} disabled>
-                  Заблокировать (скоро)
+                <Button variant="danger" className="w-full" onClick={() => setShowBlockModal(true)} disabled={isActionLoading}>
+                  <UserX className="h-4 w-4 mr-2" />
+                  Заблокировать
                 </Button>
-                <Button variant="secondary" className="w-full" onClick={() => setShowResetModal(true)} disabled>
+                <Button variant="secondary" className="w-full" onClick={() => setShowUnblockModal(true)} disabled={isActionLoading}>
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  Разблокировать
+                </Button>
+                <Button variant="secondary" className="w-full" onClick={() => setShowResetModal(true)} disabled={isActionLoading}>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Сбросить пароль (скоро)
+                  Сбросить пароль
                 </Button>
               </div>
             </Card>
@@ -170,24 +229,50 @@ export default function UserDetail() {
       {showBlockModal && (
         <Modal isOpen={showBlockModal} onClose={() => setShowBlockModal(false)} title="Блокировка пользователя" icon={UserX}>
           <div className="text-center">
-            <p className="text-gray-600 mb-4">Этот сценарий будет доступен после реализации endpoint на backend.</p>
-            <Button className="w-full" onClick={() => setShowBlockModal(false)}>
-              Понятно
-            </Button>
+            <p className="text-gray-600 mb-4">Подтвердите блокировку пользователя.</p>
+            <div className="flex gap-3">
+              <Button variant="secondary" className="flex-1" onClick={() => setShowBlockModal(false)} disabled={isActionLoading}>
+                Отмена
+              </Button>
+              <Button className="flex-1" onClick={() => void handleBlock()} disabled={isActionLoading}>
+                {isActionLoading ? 'Выполнение...' : 'Подтвердить'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {showUnblockModal && (
+        <Modal isOpen={showUnblockModal} onClose={() => setShowUnblockModal(false)} title="Разблокировка пользователя" icon={ShieldCheck}>
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Подтвердите разблокировку пользователя.</p>
+            <div className="flex gap-3">
+              <Button variant="secondary" className="flex-1" onClick={() => setShowUnblockModal(false)} disabled={isActionLoading}>
+                Отмена
+              </Button>
+              <Button className="flex-1" onClick={() => void handleUnblock()} disabled={isActionLoading}>
+                {isActionLoading ? 'Выполнение...' : 'Подтвердить'}
+              </Button>
+            </div>
           </div>
         </Modal>
       )}
 
       {showResetModal && (
-        <Modal isOpen={showResetModal} onClose={() => setShowResetModal(false)} title="Сброс пароля" icon={RefreshCw}>
+        <Modal isOpen={showResetModal} onClose={() => { setShowResetModal(false); setTempPassword(''); }} title="Сброс пароля" icon={RefreshCw}>
           <div className="text-center">
-            <p className="text-gray-600 mb-4">Этот сценарий будет доступен после реализации endpoint на backend.</p>
+            <p className="text-gray-600 mb-4">Будет сгенерирован временный пароль.</p>
             {tempPassword && (
               <div className="bg-gray-100 p-3 rounded-lg mb-4 font-mono text-lg">{tempPassword}</div>
             )}
-            <Button className="w-full" onClick={() => setShowResetModal(false)}>
-              Понятно
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="secondary" className="flex-1" onClick={() => { setShowResetModal(false); setTempPassword(''); }} disabled={isActionLoading}>
+                Закрыть
+              </Button>
+              <Button className="flex-1" onClick={() => void handleResetPassword()} disabled={isActionLoading}>
+                {isActionLoading ? 'Выполнение...' : 'Сбросить'}
+              </Button>
+            </div>
           </div>
         </Modal>
       )}

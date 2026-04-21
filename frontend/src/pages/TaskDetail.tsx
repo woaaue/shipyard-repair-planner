@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Clock, FileText } from 'lucide-react';
 import Card from '../components/ui/Card';
@@ -13,6 +13,8 @@ export default function TaskDetail() {
 
   const [task, setTask] = useState<WorkItemResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const numericTaskId = Number(taskId || '0');
   const numericRepairId = Number(repairId || '0');
@@ -23,6 +25,7 @@ export default function TaskDetail() {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     try {
       const data = await getWorkItem(numericTaskId);
@@ -57,8 +60,16 @@ export default function TaskDetail() {
   const canEdit = user?.role === 'master' || user?.role === 'dispatcher' || user?.role === 'admin';
 
   const handleComplete = async () => {
-    await updateWorkItemStatus(task.id, 'COMPLETED');
-    await loadTask();
+    setActionError(null);
+    setIsCompleting(true);
+    try {
+      await updateWorkItemStatus(task.id, 'COMPLETED');
+      await loadTask();
+    } catch {
+      setActionError('Не удалось завершить задачу');
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   return (
@@ -72,6 +83,8 @@ export default function TaskDetail() {
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Задача: {task.name}</h1>
       </div>
+
+      {actionError && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{actionError}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -135,8 +148,8 @@ export default function TaskDetail() {
               <h2 className="font-semibold mb-4">Действия</h2>
               <div className="space-y-2">
                 {!completed && (
-                  <Button className="w-full" onClick={() => void handleComplete()}>
-                    Отметить выполненной
+                  <Button className="w-full" onClick={() => void handleComplete()} disabled={isCompleting}>
+                    {isCompleting ? 'Обновление...' : 'Отметить выполненной'}
                   </Button>
                 )}
                 <Button variant="secondary" className="w-full" disabled>

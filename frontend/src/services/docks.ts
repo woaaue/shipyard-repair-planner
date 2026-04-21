@@ -32,6 +32,37 @@ interface BackendCreateDockRequest {
   shipyardId: number;
 }
 
+interface BackendDockScheduleItem {
+  repairId: number;
+  repairRequestId: number;
+  shipName: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  progressPercentage: number;
+}
+
+interface BackendDockUpdateRequest {
+  name: string;
+  dimensions: {
+    maxLength: number;
+    maxWidth: number;
+    maxDraft: number;
+  };
+  status: BackendDockStatus;
+  shipyardId: number;
+}
+
+export interface DockScheduleItem {
+  repairId: number;
+  repairRequestId: number;
+  shipName: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  progress: number;
+}
+
 const statusToUi: Record<BackendDockStatus, Dock['status']> = {
   AVAILABLE: 'active',
   OCCUPIED: 'active',
@@ -83,18 +114,50 @@ export const createDock = async (data: Omit<Dock, 'id'>): Promise<Dock> => {
   return mapBackendToUiDock(response.data);
 };
 
-export const updateDock = async (_id: number, _data: Partial<Dock>): Promise<Dock> => {
-  throw new Error('Dock update endpoint is not implemented on backend yet');
+export const updateDock = async (id: number, data: Partial<Dock>): Promise<Dock> => {
+  const currentDock = await getDock(id);
+  const merged: Omit<Dock, 'id'> = {
+    name: data.name ?? currentDock.name,
+    length: data.length ?? currentDock.length,
+    capacity: data.capacity ?? currentDock.capacity,
+    status: data.status ?? currentDock.status,
+  };
+
+  const payload: BackendDockUpdateRequest = {
+    ...mapUiToBackendDock(merged),
+    shipyardId: 1,
+  };
+
+  const response = await api.put<BackendDockResponse>(`/docks/${id}`, payload);
+  return mapBackendToUiDock(response.data);
 };
 
 export const deleteDock = async (id: number): Promise<void> => {
   await api.delete(`/docks/${id}`);
 };
 
-export const getDockSchedule = async (): Promise<never[]> => {
-  return [];
+export const getDockSchedule = async (
+  id: number,
+  startDate?: string,
+  endDate?: string
+): Promise<DockScheduleItem[]> => {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+
+  const response = await api.get<BackendDockScheduleItem[]>(`/docks/${id}/schedule`, { params });
+  return response.data.map((item) => ({
+    repairId: item.repairId,
+    repairRequestId: item.repairRequestId,
+    shipName: item.shipName,
+    status: item.status,
+    startDate: item.startDate,
+    endDate: item.endDate,
+    progress: item.progressPercentage,
+  }));
 };
 
-export const getDockLoad = async (): Promise<number> => {
-  return 0;
+export const getDockLoad = async (id: number): Promise<number> => {
+  const response = await api.get<number>(`/docks/${id}/load`);
+  return response.data;
 };
