@@ -111,17 +111,22 @@ export default function Repairs() {
     const shipId = Number(repairData.shipId);
     if (!shipId) return;
 
-    await createRepairRequest({
-      shipId,
-      clientId: user?.id ?? 1,
-      requestedStartDate: repairData.desiredDate || null,
-      description: repairData.description,
-      status: 'SUBMITTED',
-    });
+    setError(null);
+    try {
+      await createRepairRequest({
+        shipId,
+        clientId: user?.id ?? 1,
+        requestedStartDate: repairData.desiredDate || null,
+        description: repairData.description,
+        status: 'SUBMITTED',
+      });
 
-    setShowRepairForm(false);
-    setSearchParams({});
-    await loadRepairs();
+      setShowRepairForm(false);
+      setSearchParams({});
+      await loadRepairs();
+    } catch {
+      setError('Не удалось создать заявку на ремонт');
+    }
   };
 
   const filteredRepairs = useMemo(() => {

@@ -70,8 +70,13 @@ export default function Tasks() {
   }, [pendingTasks, user]);
 
   const handleCompleteTask = async (taskId: number) => {
-    await updateWorkItemStatus(taskId, 'COMPLETED');
-    await loadTasks();
+    setError(null);
+    try {
+      await updateWorkItemStatus(taskId, 'COMPLETED');
+      await loadTasks();
+    } catch {
+      setError('Не удалось обновить статус задачи');
+    }
   };
 
   return (
