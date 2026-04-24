@@ -61,6 +61,34 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
                     .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                    .requestMatchers(HttpMethod.POST, "/api/repair-requests").hasAnyRole("CLIENT", "ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/*/status").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR")
+                    .requestMatchers(HttpMethod.PUT, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
+
+                    .requestMatchers(HttpMethod.POST, "/api/repairs").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.PUT, "/api/repairs/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/repairs/*/status").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/repairs/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+
+                    .requestMatchers(HttpMethod.POST, "/api/work-items").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.PUT, "/api/work-items/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/work-items/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/work-items/*/status").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER", "WORKER")
+
+                    .requestMatchers(HttpMethod.POST, "/api/docks").hasAnyRole("ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.PUT, "/api/docks/**").hasAnyRole("ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/docks/**").hasAnyRole("ADMIN", "DISPATCHER")
+
+                    .requestMatchers(HttpMethod.POST, "/api/ships").hasAnyRole("ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.PUT, "/api/ships/**").hasAnyRole("ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/ships/**").hasAnyRole("ADMIN", "DISPATCHER")
+
+                    .requestMatchers(HttpMethod.POST, "/api/shipyards").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/shipyards/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/shipyards/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
