@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -298,5 +299,244 @@ class RepairFlowScenarioTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").exists());
+    }
+
+    @Test
+    void repairRequest_rejectedThenCancelled_returnsExpectedStatuses() throws Exception {
+        RepairRequestResponse rejectedRequest = new RepairRequestResponse(
+                901,
+                22,
+                "Baltic Star",
+                12,
+                "Client B",
+                RepairRequestStatus.REJECTED,
+                LocalDate.of(2026, 6, 1),
+                null,
+                null,
+                null,
+                10,
+                1,
+                0,
+                null,
+                "Scope mismatch",
+                "Need more details",
+                LocalDateTime.of(2026, 4, 24, 10, 0),
+                LocalDateTime.of(2026, 4, 24, 11, 0)
+        );
+
+        RepairRequestResponse cancelledRequest = new RepairRequestResponse(
+                901,
+                22,
+                "Baltic Star",
+                12,
+                "Client B",
+                RepairRequestStatus.CANCELLED,
+                LocalDate.of(2026, 6, 1),
+                null,
+                null,
+                null,
+                10,
+                1,
+                0,
+                null,
+                "Scope mismatch",
+                "Cancelled by client",
+                LocalDateTime.of(2026, 4, 24, 10, 0),
+                LocalDateTime.of(2026, 4, 24, 11, 30)
+        );
+
+        when(repairRequestService.updateStatus(eq(901), eq(RepairRequestStatus.REJECTED)))
+                .thenReturn(rejectedRequest);
+        when(repairRequestService.updateStatus(eq(901), eq(RepairRequestStatus.CANCELLED)))
+                .thenReturn(cancelledRequest);
+
+        repairRequestMvc.perform(patch("/api/repair-requests/{id}/status", 901)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "REJECTED"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(901))
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        repairRequestMvc.perform(patch("/api/repair-requests/{id}/status", 901)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "CANCELLED"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(901))
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void repairFlow_withMultipleWorkItems_movesRepairToQa() throws Exception {
+        WorkItemResponse itemOne = new WorkItemResponse(
+                401,
+                777,
+                303,
+                WorkCategory.MECHANICAL,
+                "Engine inspection",
+                null,
+                WorkItemStatus.PENDING,
+                6,
+                0,
+                true,
+                false,
+                null,
+                LocalDateTime.of(2026, 4, 24, 12, 0),
+                LocalDateTime.of(2026, 4, 24, 12, 0)
+        );
+
+        WorkItemResponse itemTwo = new WorkItemResponse(
+                402,
+                777,
+                303,
+                WorkCategory.ELECTRICAL,
+                "Cable routing",
+                null,
+                WorkItemStatus.PENDING,
+                5,
+                0,
+                true,
+                false,
+                null,
+                LocalDateTime.of(2026, 4, 24, 12, 5),
+                LocalDateTime.of(2026, 4, 24, 12, 5)
+        );
+
+        WorkItemResponse itemOneCompleted = new WorkItemResponse(
+                401,
+                777,
+                303,
+                WorkCategory.MECHANICAL,
+                "Engine inspection",
+                null,
+                WorkItemStatus.COMPLETED,
+                6,
+                6,
+                true,
+                false,
+                null,
+                LocalDateTime.of(2026, 4, 24, 12, 0),
+                LocalDateTime.of(2026, 4, 24, 15, 0)
+        );
+
+        WorkItemResponse itemTwoCompleted = new WorkItemResponse(
+                402,
+                777,
+                303,
+                WorkCategory.ELECTRICAL,
+                "Cable routing",
+                null,
+                WorkItemStatus.COMPLETED,
+                5,
+                5,
+                true,
+                false,
+                null,
+                LocalDateTime.of(2026, 4, 24, 12, 5),
+                LocalDateTime.of(2026, 4, 24, 16, 0)
+        );
+
+        RepairResponse qaRepair = new RepairResponse(
+                303,
+                777,
+                2,
+                "Dock 2",
+                RepairStatus.QA,
+                LocalDate.of(2026, 4, 20),
+                LocalDate.of(2026, 5, 5),
+                90,
+                new BigDecimal("1200000"),
+                "Ready for quality check",
+                LocalDateTime.of(2026, 4, 20, 9, 0),
+                LocalDateTime.of(2026, 4, 24, 16, 10)
+        );
+
+        when(workItemService.createWorkItem(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(itemOne, itemTwo);
+        when(workItemService.updateStatus(eq(401), eq(WorkItemStatus.COMPLETED)))
+                .thenReturn(itemOneCompleted);
+        when(workItemService.updateStatus(eq(402), eq(WorkItemStatus.COMPLETED)))
+                .thenReturn(itemTwoCompleted);
+        when(workItemService.getWorkItems(eq(777), eq(303), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull()))
+                .thenReturn(java.util.List.of(itemOneCompleted, itemTwoCompleted));
+        when(repairService.updateStatus(eq(303), eq(RepairStatus.QA)))
+                .thenReturn(qaRepair);
+
+        workItemMvc.perform(post("/api/work-items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "repairRequestId": 777,
+                                  "repairId": 303,
+                                  "category": "MECHANICAL",
+                                  "name": "Engine inspection",
+                                  "status": "PENDING",
+                                  "estimatedHours": 6
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(401));
+
+        workItemMvc.perform(post("/api/work-items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "repairRequestId": 777,
+                                  "repairId": 303,
+                                  "category": "ELECTRICAL",
+                                  "name": "Cable routing",
+                                  "status": "PENDING",
+                                  "estimatedHours": 5
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(402));
+
+        workItemMvc.perform(patch("/api/work-items/{id}/status", 401)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "COMPLETED"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        workItemMvc.perform(patch("/api/work-items/{id}/status", 402)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "COMPLETED"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        workItemMvc.perform(get("/api/work-items")
+                        .param("repairRequestId", "777")
+                        .param("repairId", "303"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"))
+                .andExpect(jsonPath("$[1].status").value("COMPLETED"));
+
+        repairMvc.perform(patch("/api/repairs/{id}/status", 303)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "QA"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(303))
+                .andExpect(jsonPath("$.status").value("QA"))
+                .andExpect(jsonPath("$.progressPercentage").value(90));
     }
 }
