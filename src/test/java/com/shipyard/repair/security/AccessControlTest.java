@@ -1,10 +1,12 @@
 package com.shipyard.repair.security;
 
 import com.shipyard.repair.config.SecurityConfig;
+import com.shipyard.repair.controller.AuditLogController;
 import com.shipyard.repair.controller.DockController;
 import com.shipyard.repair.controller.RepairRequestController;
 import com.shipyard.repair.controller.UserController;
 import com.shipyard.repair.controller.WorkItemController;
+import com.shipyard.repair.dto.audit.AuditLogResponse;
 import com.shipyard.repair.dto.dock.DockDimensionsResponse;
 import com.shipyard.repair.dto.dock.DockResponse;
 import com.shipyard.repair.dto.repairrequest.RepairRequestResponse;
@@ -18,6 +20,7 @@ import com.shipyard.repair.enums.WorkCategory;
 import com.shipyard.repair.enums.WorkItemStatus;
 import com.shipyard.repair.service.dock.DockService;
 import com.shipyard.repair.service.repairrequest.RepairRequestService;
+import com.shipyard.repair.service.audit.AuditLogService;
 import com.shipyard.repair.service.user.UserService;
 import com.shipyard.repair.service.workitem.WorkItemService;
 import jakarta.servlet.FilterChain;
@@ -38,10 +41,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -50,7 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         UserController.class,
         RepairRequestController.class,
         WorkItemController.class,
-        DockController.class
+        DockController.class,
+        AuditLogController.class
 })
 @AutoConfigureMockMvc
 @Import({SecurityConfig.class, AccessControlTest.TestSecurityBeans.class})
@@ -67,6 +73,9 @@ class AccessControlTest {
 
     @MockitoBean
     private DockService dockService;
+
+    @MockitoBean
+    private AuditLogService auditLogService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -256,5 +265,24 @@ class AccessControlTest {
                                 }
                                 """))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void auditLogsGet_forWorker_forbidden() throws Exception {
+        mockMvc.perform(get("/api/audit-logs")
+                        .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void auditLogsGet_forOperator_ok() throws Exception {
+        when(auditLogService.getAuditLogs(any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new AuditLogResponse(
+                        1, "CREATE", "REPAIR", 12, "operator@mail.com", 7, "createRepair", LocalDateTime.now()
+                )));
+
+        mockMvc.perform(get("/api/audit-logs")
+                        .with(SecurityMockMvcRequestPostProcessors.user("operator@mail.com").roles("OPERATOR")))
+                .andExpect(status().isOk());
     }
 }
