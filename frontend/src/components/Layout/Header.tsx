@@ -13,7 +13,7 @@ interface HeaderProps {
 export default function Header({ children }: HeaderProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { query, results, search, clearSearch } = useGlobalSearch();
+  const { query, results, isSearching, search, clearSearch } = useGlobalSearch();
   const [showResults, setShowResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -86,6 +86,8 @@ export default function Header({ children }: HeaderProps) {
             {showResults && query.length >= 2 && (
               <SearchResults 
                 query={query} 
+                results={results}
+                isSearching={isSearching}
                 onClose={() => setShowResults(false)}
                 onSelect={handleSelect}
               />

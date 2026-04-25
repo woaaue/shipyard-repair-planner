@@ -1,6 +1,8 @@
-import { useState, useCallback } from 'react';
-import { mockShips, mockExtendedRepairs } from '../mock-data/data';
-import { mockUsers } from '../mock-data/mockUsers';
+import { useState, useCallback, useRef } from 'react';
+import { getShips } from '../services/ships';
+import { getUsers } from '../services/users';
+import { getRepairs } from '../services/repairs';
+import { getRepairRequests } from '../services/repairRequests';
 
 export interface SearchResult {
   type: 'ship' | 'repair' | 'user';
@@ -14,74 +16,102 @@ export function useGlobalSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  
-  const search = useCallback((searchQuery: string) => {
+  const requestRef = useRef(0);
+
+  const search = useCallback(async (searchQuery: string) => {
     setQuery(searchQuery);
-    
+
     if (!searchQuery || searchQuery.length < 2) {
       setResults([]);
+      setIsSearching(false);
       return;
     }
-    
+
+    const currentRequest = ++requestRef.current;
     setIsSearching(true);
-    
-    const q = searchQuery.toLowerCase();
-    const searchResults: SearchResult[] = [];
-    
-    // Search ships
-    mockShips.forEach((ship) => {
-      if (ship.name.toLowerCase().includes(q) || ship.imo.includes(q)) {
-        searchResults.push({
-          type: 'ship',
-          id: ship.id,
-          title: ship.name,
-          subtitle: `IMO: ${ship.imo} • ${ship.type}`,
-          url: `/ships/${ship.id}`
-        });
+
+    try {
+      const q = searchQuery.toLowerCase();
+      const [ships, repairs, repairRequests, users] = await Promise.all([
+        getShips({ search: searchQuery }),
+        getRepairs(),
+        getRepairRequests(),
+        getUsers({ search: searchQuery }),
+      ]);
+
+      if (currentRequest !== requestRef.current) {
+        return;
       }
-    });
-    
-    // Search repairs
-    mockExtendedRepairs.forEach((repair) => {
-      if (repair.shipName.toLowerCase().includes(q) || repair.repairType.toLowerCase().includes(q)) {
-        searchResults.push({
-          type: 'repair',
-          id: repair.id,
-          title: repair.shipName,
-          subtitle: `${repair.repairType} • ${repair.status}`,
-          url: `/repairs/${repair.id}`
-        });
-      }
-    });
-    
-    // Search users
-    mockUsers.forEach((user) => {
-      if (user.fullName.toLowerCase().includes(q) || user.email.toLowerCase().includes(q)) {
+
+      const requestById = new Map(repairRequests.map((request) => [request.id, request]));
+      const searchResults: SearchResult[] = [];
+
+      ships.forEach((ship) => {
+        if (ship.name.toLowerCase().includes(q) || ship.imo.toLowerCase().includes(q)) {
+          searchResults.push({
+            type: 'ship',
+            id: ship.id,
+            title: ship.name,
+            subtitle: `IMO: ${ship.imo} - ${ship.type}`,
+            url: `/ships/${ship.id}`,
+          });
+        }
+      });
+
+      repairs.forEach((repair) => {
+        const linkedRequest = requestById.get(repair.shipId);
+        const shipName = linkedRequest?.shipName ?? repair.shipName;
+        const matches =
+          shipName.toLowerCase().includes(q) ||
+          repair.repairType.toLowerCase().includes(q) ||
+          repair.dock.toLowerCase().includes(q) ||
+          String(repair.id).includes(q);
+
+        if (matches) {
+          searchResults.push({
+            type: 'repair',
+            id: repair.id,
+            title: shipName,
+            subtitle: `${repair.repairType} - ${repair.status}`,
+            url: `/repairs/${repair.id}`,
+          });
+        }
+      });
+
+      users.forEach((user) => {
         searchResults.push({
           type: 'user',
-          id: searchResults.length + 1,
+          id: user.id,
           title: user.fullName,
           subtitle: user.role,
-          url: `/users/${encodeURIComponent(user.email)}`
+          url: `/users/${user.id}`,
         });
+      });
+
+      setResults(searchResults);
+    } catch {
+      if (currentRequest === requestRef.current) {
+        setResults([]);
       }
-    });
-    
-    setResults(searchResults);
-    setIsSearching(false);
+    } finally {
+      if (currentRequest === requestRef.current) {
+        setIsSearching(false);
+      }
+    }
   }, []);
-  
+
   const clearSearch = useCallback(() => {
     setQuery('');
     setResults([]);
+    setIsSearching(false);
   }, []);
-  
+
   return {
     query,
     results,
     isSearching,
     search,
     clearSearch,
-    hasResults: results.length > 0
+    hasResults: results.length > 0,
   };
 }
