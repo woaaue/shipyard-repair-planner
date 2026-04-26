@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useCallback, useMemo } from 'react
 import type { ReactNode } from 'react';
 import type { Dock, DockFilters } from '../types/dock';
 import { useAuth } from './AuthContext';
-import { dockNames, mockExtendedRepairs } from '../mock-data/data';
+import { getDock, getDocks } from '../services/docks';
+import { getRepairs } from '../services/repairs';
 
 interface DockContextType {
   docks: Dock[];
@@ -62,18 +63,16 @@ export function DockProvider({ children }: { children: ReactNode }) {
     let result = docks;
 
     if (user?.role === 'operator' && user.dock) {
-      result = result.filter(d => d.name === user.dock);
+      result = result.filter((dock) => dock.name === user.dock);
     }
 
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      result = result.filter(d => 
-        d.name.toLowerCase().includes(search)
-      );
+      result = result.filter((dock) => dock.name.toLowerCase().includes(search));
     }
 
     if (filters.status) {
-      result = result.filter(d => d.status === filters.status);
+      result = result.filter((dock) => dock.status === filters.status);
     }
 
     return result;
@@ -83,26 +82,31 @@ export function DockProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const dockData: Dock[] = dockNames.map((name, index) => {
-        const capacityMatch = name.match(/\((\d+)м\)/);
-        const length = capacityMatch ? parseInt(capacityMatch[1]) : 100;
-        const currentRepairs = mockExtendedRepairs.filter(
-          r => r.dock === name && r.status === 'в работе'
-        ).length;
-        
+      const [dockData, repairs] = await Promise.all([getDocks(), getRepairs()]);
+      const activeByDock = new Map<string, number>();
+
+      repairs.forEach((repair) => {
+        const isActive = repair.progress > 0 && repair.progress < 100;
+        if (!isActive) {
+          return;
+        }
+
+        activeByDock.set(repair.dock, (activeByDock.get(repair.dock) ?? 0) + 1);
+      });
+
+      const withLoad: Dock[] = dockData.map((dock) => {
+        const activeRepairs = activeByDock.get(dock.name) ?? 0;
+        const assumedCapacity = 3;
+
         return {
-          id: index + 1,
-          name,
-          length,
-          capacity: length,
-          status: currentRepairs > 0 ? 'active' : 'active',
-          load: Math.round((currentRepairs / 3) * 100),
+          ...dock,
+          load: Math.min(100, Math.round((activeRepairs / assumedCapacity) * 100)),
         };
       });
-      
-      setDocks(dockData);
+
+      setDocks(withLoad);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки доков');
+      setError(err instanceof Error ? err.message : 'Failed to load docks');
     } finally {
       setIsLoading(false);
     }
@@ -112,19 +116,22 @@ export function DockProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const dock = docks.find(d => d.id === id);
-      if (!dock) {
-        await fetchDocks();
-        return docks.find(d => d.id === id) || null;
+      const existing = docks.find((dock) => dock.id === id);
+      if (existing) {
+        return existing;
       }
-      return dock;
+
+      const response = await getDock(id);
+      const mapped: Dock = { ...response, load: 0 };
+      setDocks((prev) => (prev.some((dock) => dock.id === mapped.id) ? prev : [...prev, mapped]));
+      return mapped;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки дока');
+      setError(err instanceof Error ? err.message : 'Failed to load dock');
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [docks, fetchDocks]);
+  }, [docks]);
 
   const value: DockContextType = {
     docks,
@@ -141,9 +148,5 @@ export function DockProvider({ children }: { children: ReactNode }) {
     fetchDock,
   };
 
-  return (
-    <DockContext.Provider value={value}>
-      {children}
-    </DockContext.Provider>
-  );
+  return <DockContext.Provider value={value}>{children}</DockContext.Provider>;
 }

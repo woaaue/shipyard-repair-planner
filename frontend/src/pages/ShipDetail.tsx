@@ -4,16 +4,18 @@ import { ArrowLeft, Ship, Calendar, Wrench } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
-import { mockExtendedRepairs } from '../mock-data/data';
 import { useAuth } from '../context/AuthContext';
 import { getShip } from '../services/ships';
+import { getRepairsByShip } from '../services/repairs';
 import type { Ship as ShipType } from '../types/repair';
+import type { ExtendedRepair } from '../types/repair';
 
 export default function ShipDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [ship, setShip] = useState<ShipType | null>(null);
+  const [repairs, setRepairs] = useState<ExtendedRepair[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const shipId = parseInt(id || '0', 10);
@@ -22,10 +24,15 @@ export default function ShipDetail() {
     const loadShip = async () => {
       setIsLoading(true);
       try {
-        const data = await getShip(shipId);
-        setShip(data);
+        const [shipData, repairsData] = await Promise.all([
+          getShip(shipId),
+          getRepairsByShip(shipId),
+        ]);
+        setShip(shipData);
+        setRepairs(repairsData);
       } catch {
         setShip(null);
+        setRepairs([]);
       } finally {
         setIsLoading(false);
       }
@@ -54,8 +61,6 @@ export default function ShipDetail() {
       </div>
     );
   }
-
-  const repairs = mockExtendedRepairs.filter(r => r.shipId === shipId);
 
   return (
     <div className="space-y-6">
