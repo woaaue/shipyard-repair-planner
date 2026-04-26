@@ -42,4 +42,11 @@ export {
 } from './workItems';
 export type { WorkCategory, WorkItemStatus, WorkItemResponse, WorkItemPayload } from './workItems';
 
+export {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from './notifications';
+export type { NotificationResponse, NotificationType } from './notifications';
+
 export { default as api } from './api';
