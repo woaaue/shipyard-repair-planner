@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { ExtendedRepair } from '../types/repair';
 import type { RepairFilters } from '../types/dock';
 import { useAuth } from './AuthContext';
-import { mockExtendedRepairs } from '../mock-data/data';
+import { getRepair, getRepairs } from '../services/repairs';
 
 interface RepairContextType {
   repairs: ExtendedRepair[];
@@ -66,49 +66,51 @@ export function RepairProvider({ children }: { children: ReactNode }) {
     let result = repairs;
 
     if (user?.role === 'operator' && user.dock) {
-      result = result.filter(r => r.dock === user.dock);
+      result = result.filter((repair) => repair.dock === user.dock);
     }
 
     if (user?.role === 'client' && user.shipId) {
-      result = result.filter(r => r.shipId === user.shipId);
+      result = result.filter((repair) => repair.shipId === user.shipId);
     }
 
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      result = result.filter(r =>
-        r.shipName?.toLowerCase().includes(search) ||
-        r.dock.toLowerCase().includes(search) ||
-        r.manager.toLowerCase().includes(search) ||
-        r.repairType?.toLowerCase().includes(search)
+      result = result.filter(
+        (repair) =>
+          repair.shipName?.toLowerCase().includes(search) ||
+          repair.dock.toLowerCase().includes(search) ||
+          repair.manager.toLowerCase().includes(search) ||
+          repair.repairType?.toLowerCase().includes(search)
       );
     }
 
-    if (filters.status && filters.status !== '') {
-      result = result.filter(r => r.status === filters.status);
+    if (filters.status) {
+      result = result.filter((repair) => repair.status === filters.status);
     }
 
-    if (filters.dock && filters.dock !== '') {
-      result = result.filter(r => r.dock === filters.dock);
+    if (filters.dock) {
+      result = result.filter((repair) => repair.dock === filters.dock);
     }
 
-    if (filters.repairType && filters.repairType !== '') {
-      result = result.filter(r => r.repairType === filters.repairType);
+    if (filters.repairType) {
+      result = result.filter((repair) => repair.repairType === filters.repairType);
     }
 
-    if (filters.priority && filters.priority !== '') {
-      result = result.filter(r => r.priority === filters.priority);
+    if (filters.priority) {
+      result = result.filter((repair) => repair.priority === filters.priority);
     }
 
     return result;
-  }, [repairs, filters, user]);
+  }, [filters, repairs, user]);
 
   const fetchRepairs = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      setRepairs(mockExtendedRepairs);
+      const response = await getRepairs();
+      setRepairs(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки ремонтов');
+      setError(err instanceof Error ? err.message : 'Failed to load repairs');
     } finally {
       setIsLoading(false);
     }
@@ -118,19 +120,21 @@ export function RepairProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const repair = repairs.find(r => r.id === id);
-      if (!repair) {
-        await fetchRepairs();
-        return repairs.find(r => r.id === id) || null;
+      const cached = repairs.find((repair) => repair.id === id);
+      if (cached) {
+        return cached;
       }
-      return repair;
+
+      const response = await getRepair(id);
+      setRepairs((prev) => (prev.some((repair) => repair.id === response.id) ? prev : [...prev, response]));
+      return response;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки ремонта');
+      setError(err instanceof Error ? err.message : 'Failed to load repair');
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [repairs, fetchRepairs]);
+  }, [repairs]);
 
   const value: RepairContextType = {
     repairs,
@@ -147,9 +151,5 @@ export function RepairProvider({ children }: { children: ReactNode }) {
     fetchRepair,
   };
 
-  return (
-    <RepairContext.Provider value={value}>
-      {children}
-    </RepairContext.Provider>
-  );
+  return <RepairContext.Provider value={value}>{children}</RepairContext.Provider>;
 }
