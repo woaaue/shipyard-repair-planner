@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Search, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useGlobalSearch } from '../../hooks/useGlobalSearch';
+import { getNotifications } from '../../services/notifications';
 import SearchResults from '../ui/SearchResults';
 import NotificationPanel from '../ui/NotificationPanel';
 
@@ -16,6 +17,13 @@ export default function Header({ children }: HeaderProps) {
   const { query, results, isSearching, search, clearSearch } = useGlobalSearch();
   const [showResults, setShowResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    void getNotifications(true)
+      .then((items) => setUnreadCount(items.length))
+      .catch(() => setUnreadCount(0));
+  }, []);
 
   const getRoleLabel = (role: string) => {
     switch(role) {
@@ -102,12 +110,19 @@ export default function Header({ children }: HeaderProps) {
               className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
             >
               <Bell className="h-6 w-6" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             
             {showNotifications && (
               <div className="absolute right-0 mt-2">
-                <NotificationPanel onClose={() => setShowNotifications(false)} />
+                <NotificationPanel
+                  onClose={() => setShowNotifications(false)}
+                  onUnreadChange={setUnreadCount}
+                />
               </div>
             )}
           </div>

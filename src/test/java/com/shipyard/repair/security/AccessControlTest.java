@@ -3,6 +3,7 @@ package com.shipyard.repair.security;
 import com.shipyard.repair.config.SecurityConfig;
 import com.shipyard.repair.controller.AuditLogController;
 import com.shipyard.repair.controller.DockController;
+import com.shipyard.repair.controller.NotificationController;
 import com.shipyard.repair.controller.RepairRequestController;
 import com.shipyard.repair.controller.UserController;
 import com.shipyard.repair.controller.WorkItemController;
@@ -21,6 +22,7 @@ import com.shipyard.repair.enums.WorkItemStatus;
 import com.shipyard.repair.service.dock.DockService;
 import com.shipyard.repair.service.repairrequest.RepairRequestService;
 import com.shipyard.repair.service.audit.AuditLogService;
+import com.shipyard.repair.service.notification.NotificationService;
 import com.shipyard.repair.service.user.UserService;
 import com.shipyard.repair.service.workitem.WorkItemService;
 import jakarta.servlet.FilterChain;
@@ -56,7 +58,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         RepairRequestController.class,
         WorkItemController.class,
         DockController.class,
-        AuditLogController.class
+        AuditLogController.class,
+        NotificationController.class
 })
 @AutoConfigureMockMvc
 @Import({SecurityConfig.class, AccessControlTest.TestSecurityBeans.class})
@@ -76,6 +79,9 @@ class AccessControlTest {
 
     @MockitoBean
     private AuditLogService auditLogService;
+
+    @MockitoBean
+    private NotificationService notificationService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -283,6 +289,15 @@ class AccessControlTest {
 
         mockMvc.perform(get("/api/audit-logs")
                         .with(SecurityMockMvcRequestPostProcessors.user("operator@mail.com").roles("OPERATOR")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void notificationsGet_forWorker_ok() throws Exception {
+        when(notificationService.getNotifications(eq(false))).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/notifications")
+                        .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER")))
                 .andExpect(status().isOk());
     }
 }

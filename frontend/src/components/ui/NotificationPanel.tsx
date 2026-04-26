@@ -1,45 +1,77 @@
+﻿import { useEffect, useMemo, useState } from 'react';
 import { X, Bell, CheckCircle, AlertCircle, Info } from 'lucide-react';
-import { useState } from 'react';
-
-interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
+import {
+  getNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  type NotificationResponse,
+} from '../../services/notifications';
 
 interface NotificationPanelProps {
-  notifications?: Notification[];
   onClose?: () => void;
+  onUnreadChange?: (count: number) => void;
 }
 
-const mockNotifications: Notification[] = [
-  { id: '1', type: 'info', title: 'Ремонт начат', message: 'Ремонт судна "Анна Мария" начат', time: '10:30', read: false },
-  { id: '2', type: 'warning', title: 'Задержка', message: 'Ремонт "Урал" отстаёт от графика', time: '09:15', read: false },
-  { id: '3', type: 'success', title: 'Ремонт завершён', message: 'Ремонт "Балтика" завершён', time: 'Вчера', read: true },
-];
-
 const icons = {
-  success: <CheckCircle className="h-5 w-5 text-green-500" />,
-  error: <AlertCircle className="h-5 w-5 text-red-500" />,
-  warning: <AlertCircle className="h-5 w-5 text-yellow-500" />,
-  info: <Info className="h-5 w-5 text-blue-500" />
+  SUCCESS: <CheckCircle className="h-5 w-5 text-green-500" />,
+  ERROR: <AlertCircle className="h-5 w-5 text-red-500" />,
+  WARNING: <AlertCircle className="h-5 w-5 text-yellow-500" />,
+  INFO: <Info className="h-5 w-5 text-blue-500" />,
 };
 
-export default function NotificationPanel({ onClose }: NotificationPanelProps) {
-  const [list, setList] = useState(mockNotifications);
-  const unreadCount = list.filter(n => !n.read).length;
-  
-  const markAsRead = (id: string) => {
-    setList(list.map(n => n.id === id ? { ...n, read: true } : n));
+function formatTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  return date.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+export default function NotificationPanel({ onClose, onUnreadChange }: NotificationPanelProps) {
+  const [list, setList] = useState<NotificationResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const unreadCount = useMemo(() => list.filter((item) => !item.read).length, [list]);
+
+  useEffect(() => {
+    onUnreadChange?.(unreadCount);
+  }, [onUnreadChange, unreadCount]);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getNotifications(false);
+        setList(data);
+      } catch {
+        setList([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadNotifications();
+  }, []);
+
+  const markAsRead = async (id: number) => {
+    try {
+      const updated = await markNotificationAsRead(id);
+      setList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    } catch {
+      // ignore
+    }
   };
-  
-  const markAllAsRead = () => {
-    setList(list.map(n => ({ ...n, read: true })));
+
+  const markAllAsRead = async () => {
+    try {
+      const updated = await markAllNotificationsAsRead();
+      const updatedMap = new Map(updated.map((item) => [item.id, item]));
+      setList((prev) => prev.map((item) => updatedMap.get(item.id) ?? item));
+    } catch {
+      // ignore
+    }
   };
-  
+
   return (
     <div className="w-80 bg-white border-l shadow-lg flex flex-col h-full">
       <div className="flex items-center justify-between p-4 border-b">
@@ -47,49 +79,44 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
           <Bell className="h-5 w-5 text-gray-600" />
           <h2 className="font-semibold">Уведомления</h2>
           {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-              {unreadCount}
-            </span>
+            <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>
           )}
         </div>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
           <X className="h-4 w-4" />
         </button>
       </div>
-      
+
       <div className="p-2 border-b">
-        <button 
-          onClick={markAllAsRead}
-          className="text-sm text-blue-600 hover:underline"
-        >
+        <button onClick={() => void markAllAsRead()} className="text-sm text-blue-600 hover:underline" disabled={isLoading}>
           Отметить все как прочитанные
         </button>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto">
-        {list.map(n => (
-          <div 
-            key={n.id}
-            className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${!n.read ? 'bg-blue-50' : ''}`}
-            onClick={() => markAsRead(n.id)}
-          >
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 mt-1">{icons[n.type]}</div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{n.title}</span>
-                  <span className="text-xs text-gray-500">{n.time}</span>
+        {isLoading ? (
+          <div className="p-6 text-center text-gray-500">Загрузка...</div>
+        ) : list.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">Нет уведомлений</div>
+        ) : (
+          list.map((item) => (
+            <div
+              key={item.id}
+              className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${!item.read ? 'bg-blue-50' : ''}`}
+              onClick={() => void markAsRead(item.id)}
+            >
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 mt-1">{icons[item.type]}</div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{item.title}</span>
+                    <span className="text-xs text-gray-500">{formatTime(item.createdAt)}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{item.message}</p>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">{n.message}</p>
               </div>
             </div>
-          </div>
-        ))}
-        
-        {list.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
-            Нет уведомлений
-          </div>
+          ))
         )}
       </div>
     </div>
