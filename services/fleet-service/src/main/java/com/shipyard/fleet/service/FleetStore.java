@@ -8,6 +8,7 @@ import com.shipyard.fleet.dto.ship.UpdateShipRequest;
 import com.shipyard.fleet.dto.shipyard.CreateShipyardRequest;
 import com.shipyard.fleet.dto.shipyard.ShipyardAddressResponse;
 import com.shipyard.fleet.dto.shipyard.ShipyardResponse;
+import com.shipyard.fleet.integration.OutboxService;
 import com.shipyard.fleet.model.DockStatus;
 import com.shipyard.fleet.model.ShipStatus;
 import com.shipyard.fleet.model.ShipyardStatus;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,6 +34,11 @@ public class FleetStore {
     private final AtomicInteger shipSeq = new AtomicInteger(20);
     private final AtomicInteger dockSeq = new AtomicInteger(2);
     private final AtomicInteger shipyardSeq = new AtomicInteger(1);
+    private final OutboxService outboxService;
+
+    public FleetStore(OutboxService outboxService) {
+        this.outboxService = outboxService;
+    }
 
     @PostConstruct
     void init() {
@@ -118,6 +125,16 @@ public class FleetStore {
                 LocalDateTime.now()
         );
         replaceShip(updated);
+        outboxService.enqueue(
+                "ship.status.changed",
+                "ship.status.changed",
+                Map.of(
+                        "shipId", updated.id(),
+                        "shipName", updated.name(),
+                        "status", updated.shipStatus().name(),
+                        "dockId", updated.dockId() == null ? 0 : updated.dockId()
+                )
+        );
         return updated;
     }
 
@@ -159,6 +176,28 @@ public class FleetStore {
                 request.status()
         );
         replaceDock(updated);
+        outboxService.enqueue(
+                "dock.capacity.changed",
+                "dock.capacity.changed",
+                Map.of(
+                        "dockId", updated.id(),
+                        "dockName", updated.name(),
+                        "status", updated.status().name(),
+                        "maxLength", updated.dimensions().maxLength(),
+                        "maxWidth", updated.dimensions().maxWidth(),
+                        "maxDraft", updated.dimensions().maxDraft()
+                )
+        );
+        outboxService.enqueue(
+                "repair.schedule.validated",
+                "repair.schedule.validated",
+                Map.of(
+                        "repairId", 0,
+                        "dockId", updated.id(),
+                        "isValid", updated.status() == DockStatus.AVAILABLE || updated.status() == DockStatus.OCCUPIED,
+                        "reason", updated.status().name()
+                )
+        );
         return updated;
     }
 

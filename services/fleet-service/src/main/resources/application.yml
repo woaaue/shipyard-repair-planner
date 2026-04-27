@@ -1,2 +1,9 @@
 server:
   port: 8095
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: fleet-service
+      auto-offset-reset: earliest
