@@ -34,6 +34,7 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 - Domain events via Kafka.
 - Examples: `repair.request.approved`, `repair.started`, `downtime.registered`, `work-item.completed`.
 - Contract draft: see `docs/event-contracts-planning-execution.md`.
+- Contract draft (planning/fleet): see `docs/event-contracts-planning-fleet.md`.
 
 ## Data ownership boundaries
 
@@ -53,10 +54,11 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 
 3. Extraction wave 2
 - Extract Execution service (work items/issues/downtimes).
-- Status: in progress (service skeleton and gateway routes added).
+- Status: delivered (service skeleton and gateway routes added).
 
 4. Extraction wave 3
 - Extract Repair Planning service and integrate with Fleet service.
+- Status: in progress (planning and fleet service skeletons with gateway routes added).
 
 5. Finalization
 - Split Identity and Fleet if still hosted in monolith.
