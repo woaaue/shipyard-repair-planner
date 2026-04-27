@@ -93,6 +93,12 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/audit-logs/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
                     .requestMatchers(HttpMethod.GET, "/api/notifications/**").authenticated()
                     .requestMatchers(HttpMethod.PATCH, "/api/notifications/**").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/issues/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.POST, "/api/issues/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/issues/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.GET, "/api/downtimes/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.POST, "/api/downtimes/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/downtimes/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
                     .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
