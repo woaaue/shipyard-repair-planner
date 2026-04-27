@@ -4,6 +4,7 @@ import com.shipyard.planning.dto.repair.CreateRepairRequest;
 import com.shipyard.planning.dto.repair.RepairResponse;
 import com.shipyard.planning.dto.repair.UpdateRepairRequest;
 import com.shipyard.planning.dto.repairrequest.RepairRequestResponse;
+import com.shipyard.planning.integration.OutboxService;
 import com.shipyard.planning.model.RepairRequestStatus;
 import com.shipyard.planning.model.RepairStatus;
 import jakarta.annotation.PostConstruct;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,6 +27,11 @@ public class PlanningStore {
 
     private final AtomicLong repairRequestSeq = new AtomicLong(90);
     private final AtomicLong repairSeq = new AtomicLong(30);
+    private final OutboxService outboxService;
+
+    public PlanningStore(OutboxService outboxService) {
+        this.outboxService = outboxService;
+    }
 
     @PostConstruct
     void init() {
@@ -158,6 +165,20 @@ public class PlanningStore {
                 LocalDateTime.now()
         );
         replaceRepairRequest(updated);
+        if (status == RepairRequestStatus.APPROVED) {
+            outboxService.enqueue(
+                    "repair.request.approved",
+                    "repair.request.approved",
+                    Map.of(
+                            "repairRequestId", updated.id(),
+                            "repairId", 0,
+                            "shipId", updated.shipId(),
+                            "dockId", 0,
+                            "scheduledStartDate", updated.scheduledStartDate() == null ? "" : updated.scheduledStartDate().toString(),
+                            "scheduledEndDate", updated.scheduledEndDate() == null ? "" : updated.scheduledEndDate().toString()
+                    )
+            );
+        }
         return updated;
     }
 
@@ -200,6 +221,18 @@ public class PlanningStore {
                 now
         );
         repairs.add(created);
+        outboxService.enqueue(
+                "repair.schedule.requested",
+                "repair.schedule.requested",
+                Map.of(
+                        "repairRequestId", created.repairRequestId(),
+                        "repairId", created.id(),
+                        "shipId", 0,
+                        "dockId", created.dockId(),
+                        "scheduledStartDate", created.actualStartDate() == null ? "" : created.actualStartDate().toString(),
+                        "scheduledEndDate", created.actualEndDate() == null ? "" : created.actualEndDate().toString()
+                )
+        );
         return created;
     }
 

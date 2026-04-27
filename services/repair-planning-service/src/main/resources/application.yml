@@ -1,2 +1,9 @@
 server:
   port: 8094
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: repair-planning-service
+      auto-offset-reset: earliest
