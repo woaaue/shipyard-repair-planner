@@ -67,6 +67,27 @@ services:
     depends_on:
       - postgres
 
+  notification-service:
+    build:
+      context: ../../services/notification-service
+      dockerfile: Dockerfile
+    container_name: micro_notification_service
+    ports:
+      - "8091:8091"
+    depends_on:
+      - postgres
+      - redis
+
+  audit-service:
+    build:
+      context: ../../services/audit-service
+      dockerfile: Dockerfile
+    container_name: micro_audit_service
+    ports:
+      - "8092:8092"
+    depends_on:
+      - postgres
+
   api-gateway:
     image: nginx:1.29-alpine
     container_name: micro_api_gateway

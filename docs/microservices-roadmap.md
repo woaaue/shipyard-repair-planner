@@ -48,6 +48,7 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 
 2. Extraction wave 1
 - Extract Notification and Audit services first (low coupling, high value).
+- Status: in progress (service skeletons and gateway routes added).
 
 3. Extraction wave 2
 - Extract Execution service (work items/issues/downtimes).
