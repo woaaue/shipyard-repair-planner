@@ -99,6 +99,28 @@ services:
       - postgres
       - kafka
 
+  repair-planning-service:
+    build:
+      context: ../../services/repair-planning-service
+      dockerfile: Dockerfile
+    container_name: micro_repair_planning_service
+    ports:
+      - "8094:8094"
+    depends_on:
+      - postgres
+      - kafka
+
+  fleet-service:
+    build:
+      context: ../../services/fleet-service
+      dockerfile: Dockerfile
+    container_name: micro_fleet_service
+    ports:
+      - "8095:8095"
+    depends_on:
+      - postgres
+      - kafka
+
   api-gateway:
     image: nginx:1.29-alpine
     container_name: micro_api_gateway

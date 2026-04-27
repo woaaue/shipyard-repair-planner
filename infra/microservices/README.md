@@ -11,7 +11,9 @@ This directory contains local infrastructure required to start the microservice 
 5. Notification service (`/api/notifications`).
 6. Audit service (`/api/audit-logs`).
 7. Execution service (`/api/work-items`, `/api/issues`, `/api/downtimes`).
-8. API gateway with initial routing for extracted services.
+8. Repair planning service (`/api/repair-requests`, `/api/repairs`).
+9. Fleet service (`/api/ships`, `/api/docks`, `/api/shipyards`).
+10. API gateway with initial routing for extracted services.
 
 ## Quick start
 
@@ -60,6 +62,31 @@ curl http://localhost:8088/api/issues
 6. Downtimes via gateway:
 ```bash
 curl http://localhost:8088/api/downtimes
+```
+
+7. Repair requests via gateway:
+```bash
+curl http://localhost:8088/api/repair-requests
+```
+
+8. Repairs via gateway:
+```bash
+curl http://localhost:8088/api/repairs
+```
+
+9. Ships via gateway:
+```bash
+curl http://localhost:8088/api/ships
+```
+
+10. Docks via gateway:
+```bash
+curl http://localhost:8088/api/docks
+```
+
+11. Shipyards via gateway:
+```bash
+curl http://localhost:8088/api/shipyards
 ```
 
 ## Notes
