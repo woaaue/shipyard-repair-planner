@@ -33,6 +33,7 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 2. Asynchronous events
 - Domain events via Kafka.
 - Examples: `repair.request.approved`, `repair.started`, `downtime.registered`, `work-item.completed`.
+- Contract draft: see `docs/event-contracts-planning-execution.md`.
 
 ## Data ownership boundaries
 
@@ -48,10 +49,11 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 
 2. Extraction wave 1
 - Extract Notification and Audit services first (low coupling, high value).
-- Status: in progress (service skeletons and gateway routes added).
+- Status: delivered (service skeletons and gateway routes added).
 
 3. Extraction wave 2
 - Extract Execution service (work items/issues/downtimes).
+- Status: in progress (service skeleton and gateway routes added).
 
 4. Extraction wave 3
 - Extract Repair Planning service and integrate with Fleet service.

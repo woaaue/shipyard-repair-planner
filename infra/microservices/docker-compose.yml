@@ -88,6 +88,17 @@ services:
     depends_on:
       - postgres
 
+  execution-service:
+    build:
+      context: ../../services/execution-service
+      dockerfile: Dockerfile
+    container_name: micro_execution_service
+    ports:
+      - "8093:8093"
+    depends_on:
+      - postgres
+      - kafka
+
   api-gateway:
     image: nginx:1.29-alpine
     container_name: micro_api_gateway
