@@ -10,7 +10,8 @@ This directory contains local infrastructure required to start the microservice 
 4. Keycloak for centralized identity (planned integration).
 5. Notification service (`/api/notifications`).
 6. Audit service (`/api/audit-logs`).
-7. API gateway with initial routing for extracted services.
+7. Execution service (`/api/work-items`, `/api/issues`, `/api/downtimes`).
+8. API gateway with initial routing for extracted services.
 
 ## Quick start
 
@@ -44,6 +45,21 @@ curl http://localhost:8088/api/notifications
 3. Audit logs via gateway:
 ```bash
 curl http://localhost:8088/api/audit-logs
+```
+
+4. Work items via gateway:
+```bash
+curl http://localhost:8088/api/work-items
+```
+
+5. Issues via gateway:
+```bash
+curl http://localhost:8088/api/issues
+```
+
+6. Downtimes via gateway:
+```bash
+curl http://localhost:8088/api/downtimes
 ```
 
 ## Notes
