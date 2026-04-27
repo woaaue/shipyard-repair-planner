@@ -8,7 +8,9 @@ This directory contains local infrastructure required to start the microservice 
 2. Redis for caching/session workloads.
 3. Kafka + Zookeeper for domain events.
 4. Keycloak for centralized identity (planned integration).
-5. API gateway placeholder container for route-level validation.
+5. Notification service (`/api/notifications`).
+6. Audit service (`/api/audit-logs`).
+7. API gateway with initial routing for extracted services.
 
 ## Quick start
 
@@ -25,6 +27,23 @@ docker compose -f docker-compose.yml --env-file .env up -d
 3. Stop infrastructure:
 ```bash
 docker compose -f docker-compose.yml --env-file .env down
+```
+
+## Smoke checks
+
+1. Gateway health:
+```bash
+curl http://localhost:8088/health
+```
+
+2. Notifications via gateway:
+```bash
+curl http://localhost:8088/api/notifications
+```
+
+3. Audit logs via gateway:
+```bash
+curl http://localhost:8088/api/audit-logs
 ```
 
 ## Notes
