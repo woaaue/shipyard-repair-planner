@@ -7,6 +7,7 @@ import com.shipyard.execution.dto.issue.IssueResponse;
 import com.shipyard.execution.dto.workitem.CreateWorkItemRequest;
 import com.shipyard.execution.dto.workitem.UpdateWorkItemRequest;
 import com.shipyard.execution.dto.workitem.WorkItemResponse;
+import com.shipyard.execution.integration.OutboxService;
 import com.shipyard.execution.model.WorkCategory;
 import com.shipyard.execution.model.WorkItemStatus;
 import jakarta.annotation.PostConstruct;
@@ -14,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,6 +31,11 @@ public class ExecutionStore {
     private final AtomicLong workItemSeq = new AtomicLong(100);
     private final AtomicLong issueSeq = new AtomicLong(1000);
     private final AtomicLong downtimeSeq = new AtomicLong(500);
+    private final OutboxService outboxService;
+
+    public ExecutionStore(OutboxService outboxService) {
+        this.outboxService = outboxService;
+    }
 
     @PostConstruct
     void init() {
@@ -153,6 +161,17 @@ public class ExecutionStore {
                 LocalDateTime.now()
         );
         replaceWorkItem(updated);
+        outboxService.enqueue(
+                "work.item.status.changed",
+                "work.item.status.changed",
+                Map.of(
+                        "workItemId", updated.id(),
+                        "repairId", updated.repairId(),
+                        "repairRequestId", updated.repairRequestId(),
+                        "status", updated.status().name(),
+                        "actualHours", updated.actualHours()
+                )
+        );
         return updated;
     }
 
@@ -183,6 +202,17 @@ public class ExecutionStore {
                 null
         );
         issues.add(created);
+        outboxService.enqueue(
+                "issue.reported",
+                "issue.reported",
+                Map.of(
+                        "issueId", created.id(),
+                        "repairId", created.repairId(),
+                        "issueType", created.issueType(),
+                        "impact", created.impact(),
+                        "status", created.status()
+                )
+        );
         return created;
     }
 
@@ -226,6 +256,17 @@ public class ExecutionStore {
                 LocalDateTime.now()
         );
         downtimes.add(created);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("downtimeId", created.id());
+        payload.put("dockName", created.dockName());
+        payload.put("reason", created.reason());
+        payload.put("startDate", created.startDate().toString());
+        payload.put("expectedEndDate", created.expectedEndDate() == null ? null : created.expectedEndDate().toString());
+        outboxService.enqueue(
+                "downtime.registered",
+                "downtime.registered",
+                payload
+        );
         return created;
     }
 
