@@ -3,6 +3,8 @@ package com.shipyard.repair.security;
 import com.shipyard.repair.config.SecurityConfig;
 import com.shipyard.repair.controller.AuditLogController;
 import com.shipyard.repair.controller.DockController;
+import com.shipyard.repair.controller.DowntimeController;
+import com.shipyard.repair.controller.IssueController;
 import com.shipyard.repair.controller.NotificationController;
 import com.shipyard.repair.controller.RepairRequestController;
 import com.shipyard.repair.controller.UserController;
@@ -10,6 +12,8 @@ import com.shipyard.repair.controller.WorkItemController;
 import com.shipyard.repair.dto.audit.AuditLogResponse;
 import com.shipyard.repair.dto.dock.DockDimensionsResponse;
 import com.shipyard.repair.dto.dock.DockResponse;
+import com.shipyard.repair.dto.downtime.DowntimeResponse;
+import com.shipyard.repair.dto.issue.IssueResponse;
 import com.shipyard.repair.dto.repairrequest.RepairRequestResponse;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.dto.workitem.WorkItemResponse;
@@ -22,6 +26,8 @@ import com.shipyard.repair.enums.WorkItemStatus;
 import com.shipyard.repair.service.dock.DockService;
 import com.shipyard.repair.service.repairrequest.RepairRequestService;
 import com.shipyard.repair.service.audit.AuditLogService;
+import com.shipyard.repair.service.downtime.DowntimeService;
+import com.shipyard.repair.service.issue.IssueService;
 import com.shipyard.repair.service.notification.NotificationService;
 import com.shipyard.repair.service.user.UserService;
 import com.shipyard.repair.service.workitem.WorkItemService;
@@ -59,7 +65,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         WorkItemController.class,
         DockController.class,
         AuditLogController.class,
-        NotificationController.class
+        NotificationController.class,
+        IssueController.class,
+        DowntimeController.class
 })
 @AutoConfigureMockMvc
 @Import({SecurityConfig.class, AccessControlTest.TestSecurityBeans.class})
@@ -82,6 +90,12 @@ class AccessControlTest {
 
     @MockitoBean
     private NotificationService notificationService;
+
+    @MockitoBean
+    private IssueService issueService;
+
+    @MockitoBean
+    private DowntimeService downtimeService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -299,5 +313,96 @@ class AccessControlTest {
         mockMvc.perform(get("/api/notifications")
                         .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void issueCreate_forWorker_forbidden() throws Exception {
+        mockMvc.perform(post("/api/issues")
+                        .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "repairId": 32,
+                                  "issueType": "DEFECT",
+                                  "description": "Hull crack found",
+                                  "impact": "HIGH",
+                                  "reportedBy": "Operator"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void issueCreate_forOperator_created() throws Exception {
+        IssueResponse response = new IssueResponse(
+                801,
+                32,
+                "DEFECT",
+                "Hull crack found",
+                "HIGH",
+                "OPEN",
+                "Operator",
+                LocalDateTime.of(2026, 4, 24, 10, 0),
+                null
+        );
+        when(issueService.createIssue(any())).thenReturn(response);
+
+        mockMvc.perform(post("/api/issues")
+                        .with(SecurityMockMvcRequestPostProcessors.user("operator@mail.com").roles("OPERATOR"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "repairId": 32,
+                                  "issueType": "DEFECT",
+                                  "description": "Hull crack found",
+                                  "impact": "HIGH",
+                                  "reportedBy": "Operator"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void downtimeCreate_forWorker_forbidden() throws Exception {
+        mockMvc.perform(post("/api/downtimes")
+                        .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "dockName": "Dock 1",
+                                  "reason": "Weather",
+                                  "startDate": "2026-04-24T12:00:00"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void downtimeCreate_forOperator_created() throws Exception {
+        DowntimeResponse response = new DowntimeResponse(
+                601,
+                "Dock 1",
+                "Weather",
+                LocalDateTime.of(2026, 4, 24, 12, 0),
+                null,
+                LocalDateTime.of(2026, 4, 24, 18, 0),
+                "High wind",
+                LocalDateTime.of(2026, 4, 24, 12, 0)
+        );
+        when(downtimeService.createDowntime(any())).thenReturn(response);
+
+        mockMvc.perform(post("/api/downtimes")
+                        .with(SecurityMockMvcRequestPostProcessors.user("operator@mail.com").roles("OPERATOR"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "dockName": "Dock 1",
+                                  "reason": "Weather",
+                                  "startDate": "2026-04-24T12:00:00",
+                                  "expectedEndDate": "2026-04-24T18:00:00",
+                                  "notes": "High wind"
+                                }
+                                """))
+                .andExpect(status().isCreated());
     }
 }

@@ -49,4 +49,10 @@ export {
 } from './notifications';
 export type { NotificationResponse, NotificationType } from './notifications';
 
+export { getIssues, createIssue, updateIssueStatus } from './issues';
+export type { IssueResponse, CreateIssuePayload } from './issues';
+
+export { getDowntimes, createDowntime, finishDowntime } from './downtimes';
+export type { DowntimeResponse, CreateDowntimePayload } from './downtimes';
+
 export { default as api } from './api';
