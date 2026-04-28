@@ -133,6 +133,11 @@ powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-shadow-
 Output report:
 - `infra/microservices/shadow-parity-report.json`
 
+20. Gateway smoke-check after traffic switch:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-gateway-smoke-check.ps1
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.
