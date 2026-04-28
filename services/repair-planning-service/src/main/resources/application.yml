@@ -30,3 +30,8 @@ management:
 logging:
   pattern:
     correlation: "[%X{traceId:-},%X{spanId:-}] "
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change_me_to_a_long_random_secret_key_for_hs256_change_me}
+
