@@ -102,3 +102,7 @@ Used by planning to confirm or reject assignment.
 1. Consumers ignore unknown fields.
 2. Breaking change requires version bump.
 3. Event names are immutable after production adoption.
+4. Consumer processing policy:
+- Validate envelope fields (`eventId`, `eventType`, `occurredAt`, `source`, `version`, `payload`).
+- Retry up to 3 attempts.
+- After final failure, publish original event to DLQ topic `<source-topic>.dlq`.
