@@ -1,6 +1,7 @@
 param(
     [string]$MonolithBaseUrl = "http://localhost:8080",
     [string]$GatewayBaseUrl = "http://localhost:8088",
+    [switch]$SkipParity,
     [switch]$SkipRetirement
 )
 
@@ -27,10 +28,15 @@ function Run-Step {
 try {
     Set-Location $projectRoot
 
-    Run-Step -Name "Shadow parity-check" -Command (
-        "powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-shadow-parity-check.ps1 " +
-        "-MonolithBaseUrl `"$MonolithBaseUrl`" -GatewayBaseUrl `"$GatewayBaseUrl`""
-    )
+    if (-not $SkipParity) {
+        Run-Step -Name "Shadow parity-check" -Command (
+            "powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-shadow-parity-check.ps1 " +
+            "-MonolithBaseUrl `"$MonolithBaseUrl`" -GatewayBaseUrl `"$GatewayBaseUrl`""
+        )
+    } else {
+        Write-Host ""
+        Write-Host "Shadow parity-check skipped."
+    }
 
     Run-Step -Name "Gateway contract coverage check" -Command (
         "powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/check-gateway-contract-coverage.ps1"

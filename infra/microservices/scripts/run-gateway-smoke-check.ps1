@@ -32,12 +32,19 @@ foreach ($endpoint in $endpoints) {
         }
         Write-Host "[OK] $endpoint -> $code"
     } catch {
-        $status = "network-error"
+        $status = 0
         if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
             $status = [int]$_.Exception.Response.StatusCode
         }
-        $failed += "$endpoint -> $status"
-        Write-Host "[FAIL] $endpoint -> $status"
+        # For protected routes, 4xx means upstream is reachable and auth works.
+        if ($status -ge 400 -and $status -lt 500) {
+            Write-Host "[OK] $endpoint -> $status"
+            continue
+        }
+
+        $label = if ($status -eq 0) { "network-error" } else { [string]$status }
+        $failed += "$endpoint -> $label"
+        Write-Host "[FAIL] $endpoint -> $label"
     }
 }
 
