@@ -9,7 +9,7 @@ Single execution checklist for validating cutover readiness in a live environmen
 1. Infrastructure is up:
    - `docker compose -f infra/microservices/docker-compose.yml --env-file infra/microservices/.env up -d`
 2. Gateway is reachable.
-3. Monolith is reachable for parity/retirement checks.
+3. Monolith is reachable for parity checks, or run with `-SkipParity` if monolith is intentionally offline.
 
 ## Full E2E run
 
@@ -21,6 +21,12 @@ powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover-e2e-check.ps1 -SkipRetirement
+```
+
+## Optional run (without parity stage)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover-e2e-check.ps1 -SkipParity
 ```
 
 ## Pass criteria

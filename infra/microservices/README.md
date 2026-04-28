@@ -147,6 +147,10 @@ powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-retirem
 ```powershell
 powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover-e2e-check.ps1
 ```
+If monolith is intentionally offline, run:
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover-e2e-check.ps1 -SkipParity
+```
 
 23. Gateway contract coverage check (stage1 API vs gateway routes):
 ```powershell

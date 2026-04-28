@@ -74,6 +74,9 @@ services:
     container_name: micro_notification_service
     ports:
       - "8091:8091"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       - postgres
       - redis
@@ -85,6 +88,9 @@ services:
     container_name: micro_audit_service
     ports:
       - "8092:8092"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       - postgres
 
@@ -97,6 +103,8 @@ services:
       - "8093:8093"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       - postgres
       - kafka
@@ -110,6 +118,8 @@ services:
       - "8094:8094"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       - postgres
       - kafka
@@ -123,6 +133,8 @@ services:
       - "8095:8095"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       - postgres
       - kafka
@@ -134,6 +146,9 @@ services:
     container_name: micro_identity_service
     ports:
       - "8096:8096"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       - postgres
 
