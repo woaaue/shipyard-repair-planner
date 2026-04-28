@@ -32,6 +32,7 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 2. Traffic migration
 - Route 100% gateway traffic to microservices.
 - Keep monolith only for rollback window.
+- Status: delivered baseline (step-by-step runbook at `docs/traffic-migration-runbook.md` and automated gateway smoke-check at `infra/microservices/scripts/run-gateway-smoke-check.ps1`).
 
 3. Deprecation notice
 - Publish deprecation date for legacy monolith endpoints.
