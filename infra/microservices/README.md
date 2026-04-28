@@ -121,6 +121,11 @@ curl http://localhost:8093/actuator/prometheus
 docker logs execution-service
 ```
 
+18. Authenticated API call (example):
+```bash
+curl http://localhost:8088/api/work-items -H "Authorization: Bearer <jwt>"
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.
