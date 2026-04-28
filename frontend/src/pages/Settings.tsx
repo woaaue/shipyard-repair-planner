@@ -12,6 +12,7 @@ export default function Settings() {
   const [showAddDock, setShowAddDock] = useState(false);
   const [newDockName, setNewDockName] = useState('');
   const [newDockLength, setNewDockLength] = useState('150');
+  const [newDockShipyardId, setNewDockShipyardId] = useState('1');
   const [docks, setDocks] = useState<Dock[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,8 @@ export default function Settings() {
 
     const length = Number.parseInt(newDockLength, 10);
     if (!Number.isFinite(length) || length <= 0) return;
+    const shipyardId = Number.parseInt(newDockShipyardId, 10);
+    if (!Number.isFinite(shipyardId) || shipyardId <= 0) return;
 
     try {
       await createDock({
@@ -45,9 +48,11 @@ export default function Settings() {
         length,
         capacity: length * 30,
         status: 'active',
+        shipyardId,
       });
       setNewDockName('');
       setNewDockLength('150');
+      setNewDockShipyardId('1');
       setShowAddDock(false);
       await loadDocks();
     } catch {
@@ -148,6 +153,14 @@ export default function Settings() {
                 onChange={(e) => setNewDockLength(e.target.value)}
                 placeholder="Length (m)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              />
+              <input
+                type="number"
+                value={newDockShipyardId}
+                onChange={(e) => setNewDockShipyardId(e.target.value)}
+                placeholder="Shipyard ID"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                min={1}
               />
               <div className="flex gap-2">
                 <Button onClick={handleAddDock}>Create</Button>

@@ -8,6 +8,14 @@ export interface Dock {
   status: 'active' | 'maintenance' | 'inactive';
 }
 
+export interface DockUpsertInput {
+  name: string;
+  length: number;
+  capacity: number;
+  status: Dock['status'];
+  shipyardId: number;
+}
+
 type BackendDockStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'REPAIR';
 
 interface BackendDockResponse {
@@ -86,7 +94,7 @@ function mapBackendToUiDock(dock: BackendDockResponse): Dock {
   };
 }
 
-function mapUiToBackendDock(data: Omit<Dock, 'id'>): BackendCreateDockRequest {
+function mapUiToBackendDock(data: DockUpsertInput): BackendCreateDockRequest {
   return {
     name: data.name,
     dimensions: {
@@ -95,7 +103,7 @@ function mapUiToBackendDock(data: Omit<Dock, 'id'>): BackendCreateDockRequest {
       maxDraft: 10,
     },
     status: uiToStatus[data.status] ?? 'AVAILABLE',
-    shipyardId: 1,
+    shipyardId: data.shipyardId,
   };
 }
 
@@ -109,24 +117,26 @@ export const getDock = async (id: number): Promise<Dock> => {
   return mapBackendToUiDock(response.data);
 };
 
-export const createDock = async (data: Omit<Dock, 'id'>): Promise<Dock> => {
+export const createDock = async (data: DockUpsertInput): Promise<Dock> => {
   const response = await api.post<BackendDockResponse>('/docks', mapUiToBackendDock(data));
   return mapBackendToUiDock(response.data);
 };
 
-export const updateDock = async (id: number, data: Partial<Dock>): Promise<Dock> => {
+export const updateDock = async (id: number, data: Partial<DockUpsertInput>): Promise<Dock> => {
+  if (data.shipyardId == null) {
+    throw new Error('shipyardId is required for dock update');
+  }
+
   const currentDock = await getDock(id);
-  const merged: Omit<Dock, 'id'> = {
+  const merged: DockUpsertInput = {
     name: data.name ?? currentDock.name,
     length: data.length ?? currentDock.length,
     capacity: data.capacity ?? currentDock.capacity,
     status: data.status ?? currentDock.status,
+    shipyardId: data.shipyardId,
   };
 
-  const payload: BackendDockUpdateRequest = {
-    ...mapUiToBackendDock(merged),
-    shipyardId: 1,
-  };
+  const payload: BackendDockUpdateRequest = mapUiToBackendDock(merged);
 
   const response = await api.put<BackendDockResponse>(`/docks/${id}`, payload);
   return mapBackendToUiDock(response.data);
