@@ -34,3 +34,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Shadow mode parity-check output
+infra/microservices/shadow-parity-report.json

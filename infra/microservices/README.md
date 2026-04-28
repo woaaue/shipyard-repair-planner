@@ -126,6 +126,13 @@ docker logs execution-service
 curl http://localhost:8088/api/work-items -H "Authorization: Bearer <jwt>"
 ```
 
+19. Shadow mode parity-check (monolith vs gateway):
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-shadow-parity-check.ps1
+```
+Output report:
+- `infra/microservices/shadow-parity-report.json`
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.
