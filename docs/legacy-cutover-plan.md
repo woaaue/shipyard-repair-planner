@@ -35,6 +35,7 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 3. Deprecation notice
 - Publish deprecation date for legacy monolith endpoints.
 - Return deprecation headers for any direct monolith API calls.
+ - Status: delivered baseline (`Deprecation`, `Sunset`, `Link` headers on `/api/*` responses).
  - Gateway returns `410 Gone` for unmapped `/api/*` routes (explicit cutover barrier).
 
 4. Retirement

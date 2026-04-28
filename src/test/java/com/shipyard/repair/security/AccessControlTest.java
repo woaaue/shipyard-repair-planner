@@ -1,6 +1,7 @@
 package com.shipyard.repair.security;
 
 import com.shipyard.repair.config.SecurityConfig;
+import com.shipyard.repair.config.LegacyApiDeprecationHeaderFilter;
 import com.shipyard.repair.controller.AuditLogController;
 import com.shipyard.repair.controller.DockController;
 import com.shipyard.repair.controller.DowntimeController;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = {
@@ -70,7 +72,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         DowntimeController.class
 })
 @AutoConfigureMockMvc
-@Import({SecurityConfig.class, AccessControlTest.TestSecurityBeans.class})
+@Import({SecurityConfig.class, LegacyApiDeprecationHeaderFilter.class, AccessControlTest.TestSecurityBeans.class})
 class AccessControlTest {
 
     @MockitoBean
@@ -313,6 +315,18 @@ class AccessControlTest {
         mockMvc.perform(get("/api/notifications")
                         .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void apiResponse_containsLegacyDeprecationHeaders() throws Exception {
+        when(notificationService.getNotifications(eq(false))).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/notifications")
+                        .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Deprecation", "true"))
+                .andExpect(header().string("Sunset", "Wed, 30 Sep 2026 23:59:59 GMT"))
+                .andExpect(header().exists("Link"));
     }
 
     @Test
