@@ -73,3 +73,4 @@ The current codebase is a modular monolith. The migration target is a domain-ori
  - Status: delivered baseline (event envelope validation, 3-attempt consumer retry, DLQ publish to `<topic>.dlq`).
 3. Security: JWT + role checks at gateway and service level.
 4. Observability: unified logs, service health probes, metrics.
+ - Status: delivered baseline (`/actuator/health`, `/actuator/health/readiness`, `/actuator/prometheus` enabled for extracted services).
