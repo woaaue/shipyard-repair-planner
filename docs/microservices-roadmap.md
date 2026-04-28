@@ -63,7 +63,7 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 5. Finalization
 - Split Identity and Fleet if still hosted in monolith.
 - Decommission monolith endpoints behind gateway.
-- Status: in progress (Kafka outbox/idempotency foundation added for planning/execution/fleet, identity-service extraction started).
+- Status: in progress (Kafka outbox/idempotency foundation added for planning/execution/fleet, identity-service extracted, legacy API cutover barrier enabled at gateway).
 - Legacy cutover notes: `docs/legacy-cutover-plan.md`.
 
 ## Non-functional requirements
