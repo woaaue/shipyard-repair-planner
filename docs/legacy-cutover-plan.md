@@ -43,9 +43,11 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 4. Retirement
 - Disable direct monolith API exposure.
 - Keep only internal admin/maintenance paths if needed.
+- Status: delivered baseline (retirement runbook at `docs/retirement-runbook.md` and verification script at `infra/microservices/scripts/run-retirement-check.ps1`).
 
 ## Exit criteria
 
 1. No critical regression for 2 consecutive release cycles.
 2. Kafka event lag and consumer errors under agreed SLO.
 3. Rollback playbook validated in staging.
+4. Direct monolith `/api/*` public route removed and retirement check passed.
