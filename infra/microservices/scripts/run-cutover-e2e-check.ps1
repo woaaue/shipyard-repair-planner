@@ -32,6 +32,10 @@ try {
         "-MonolithBaseUrl `"$MonolithBaseUrl`" -GatewayBaseUrl `"$GatewayBaseUrl`""
     )
 
+    Run-Step -Name "Gateway contract coverage check" -Command (
+        "powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/check-gateway-contract-coverage.ps1"
+    )
+
     Run-Step -Name "Gateway smoke-check" -Command (
         "powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-gateway-smoke-check.ps1 " +
         "-GatewayBaseUrl `"$GatewayBaseUrl`""

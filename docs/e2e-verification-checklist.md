@@ -26,9 +26,10 @@ powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover
 ## Pass criteria
 
 1. Shadow parity-check passes with zero mismatches.
-2. Gateway smoke-check passes.
-3. Retirement check passes (or intentionally skipped for pre-retirement rehearsal).
-4. No critical errors in service logs during the run window.
+2. Gateway contract coverage check passes (stage1 API contract is mapped by gateway routes).
+3. Gateway smoke-check passes.
+4. Retirement check passes (or intentionally skipped for pre-retirement rehearsal).
+5. No critical errors in service logs during the run window.
 
 ## Evidence to attach to release/cutover ticket
 

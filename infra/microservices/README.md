@@ -148,6 +148,11 @@ powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-retirem
 powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover-e2e-check.ps1
 ```
 
+23. Gateway contract coverage check (stage1 API vs gateway routes):
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/check-gateway-contract-coverage.ps1
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.
