@@ -100,6 +100,21 @@ curl -X POST http://localhost:8088/api/auth/login -H "Content-Type: application/
 curl http://localhost:8088/api/users
 ```
 
+14. Service health (example: execution):
+```bash
+curl http://localhost:8093/actuator/health
+```
+
+15. Service readiness (example: execution):
+```bash
+curl http://localhost:8093/actuator/health/readiness
+```
+
+16. Service metrics (example: execution):
+```bash
+curl http://localhost:8093/actuator/prometheus
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.

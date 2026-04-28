@@ -7,3 +7,19 @@ spring:
     consumer:
       group-id: execution-service
       auto-offset-reset: earliest
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
