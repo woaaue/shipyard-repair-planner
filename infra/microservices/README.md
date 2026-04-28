@@ -115,6 +115,12 @@ curl http://localhost:8093/actuator/health/readiness
 curl http://localhost:8093/actuator/prometheus
 ```
 
+17. Trace/span in logs (example):
+```bash
+# look for correlation pattern: [traceId,spanId]
+docker logs execution-service
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.
