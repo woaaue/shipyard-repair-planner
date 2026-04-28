@@ -103,3 +103,7 @@ Used to create replanning tasks for blockers and delays.
 1. Consumers must ignore unknown fields.
 2. Breaking changes require `version` increment.
 3. Producers must preserve field semantics for the same version.
+4. Consumer processing policy:
+- Validate envelope fields (`eventId`, `eventType`, `occurredAt`, `source`, `version`, `payload`).
+- Retry up to 3 attempts.
+- After final failure, publish original event to DLQ topic `<source-topic>.dlq`.

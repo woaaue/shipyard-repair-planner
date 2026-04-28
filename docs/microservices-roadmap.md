@@ -70,5 +70,6 @@ The current codebase is a modular monolith. The migration target is a domain-ori
 
 1. Traceability: distributed tracing for all cross-service calls.
 2. Reliability: idempotent event handlers and retry policy.
+ - Status: delivered baseline (event envelope validation, 3-attempt consumer retry, DLQ publish to `<topic>.dlq`).
 3. Security: JWT + role checks at gateway and service level.
 4. Observability: unified logs, service health probes, metrics.
