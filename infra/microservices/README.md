@@ -143,6 +143,11 @@ powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-gateway
 powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-retirement-check.ps1
 ```
 
+22. Full cutover E2E check (parity + smoke + retirement):
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-cutover-e2e-check.ps1
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.

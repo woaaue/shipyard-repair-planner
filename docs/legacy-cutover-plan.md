@@ -49,5 +49,5 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 
 1. No critical regression for 2 consecutive release cycles.
 2. Kafka event lag and consumer errors under agreed SLO.
-3. Rollback playbook validated in staging.
+3. Rollback playbook validated in staging (E2E checklist: `docs/e2e-verification-checklist.md`).
 4. Direct monolith `/api/*` public route removed and retirement check passed.
