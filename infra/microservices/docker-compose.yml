@@ -127,6 +127,16 @@ services:
       - postgres
       - kafka
 
+  identity-service:
+    build:
+      context: ../../services/identity-service
+      dockerfile: Dockerfile
+    container_name: micro_identity_service
+    ports:
+      - "8096:8096"
+    depends_on:
+      - postgres
+
   api-gateway:
     image: nginx:1.29-alpine
     container_name: micro_api_gateway
