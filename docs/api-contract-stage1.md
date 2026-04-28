@@ -14,27 +14,21 @@ This file captures the agreed backend API surface used by frontend services afte
 - `GET /api/users`
 - `GET /api/users/{id}`
 - `POST /api/users`
-- `DELETE /api/users/{id}`
-
-Not implemented on backend yet (kept as explicit TODO in frontend service):
-
 - `PUT /api/users/{id}`
 - `POST /api/users/{id}/block`
 - `POST /api/users/{id}/unblock`
 - `POST /api/users/{id}/reset-password`
+- `DELETE /api/users/{id}`
 
 ## Docks
 
 - `GET /api/docks`
 - `GET /api/docks/{id}`
 - `POST /api/docks`
-- `DELETE /api/docks/{id}`
-
-Not implemented on backend yet:
-
 - `PUT /api/docks/{id}`
 - `GET /api/docks/{id}/schedule`
 - `GET /api/docks/{id}/load`
+- `DELETE /api/docks/{id}`
 
 ## Ships
 
