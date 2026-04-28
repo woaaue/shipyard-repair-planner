@@ -17,6 +17,8 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 - `/api/ships`
 - `/api/docks`
 - `/api/shipyards`
+- `/api/auth`
+- `/api/users`
 
 2. Monolith endpoints remain in codebase as fallback implementation.
 
@@ -33,6 +35,7 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 3. Deprecation notice
 - Publish deprecation date for legacy monolith endpoints.
 - Return deprecation headers for any direct monolith API calls.
+ - Gateway returns `410 Gone` for unmapped `/api/*` routes (explicit cutover barrier).
 
 4. Retirement
 - Disable direct monolith API exposure.
