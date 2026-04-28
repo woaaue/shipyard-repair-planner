@@ -138,6 +138,11 @@ Output report:
 powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-gateway-smoke-check.ps1
 ```
 
+21. Retirement check (gateway + monolith public exposure):
+```powershell
+powershell -ExecutionPolicy Bypass -File infra/microservices/scripts/run-retirement-check.ps1
+```
+
 ## Notes
 
 1. Existing monolith `docker-compose.yml` remains unchanged.
