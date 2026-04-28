@@ -80,9 +80,17 @@ function mapBackendToUiRepair(repair: BackendRepairResponse): ExtendedRepair {
 }
 
 function mapUiToBackendRepair(data: Partial<ExtendedRepair>): BackendCreateRepairRequest {
+  const parsedDockId = Number(data.dock);
+  if (!Number.isFinite(parsedDockId) || parsedDockId <= 0) {
+    throw new Error('dockId is required and must be a valid number');
+  }
+  if (!data.shipId) {
+    throw new Error('repairRequestId is required');
+  }
+
   return {
-    repairRequestId: data.shipId ?? 0,
-    dockId: Number(data.dock) || 1,
+    repairRequestId: data.shipId,
+    dockId: parsedDockId,
     progressPercentage: data.progress ?? 0,
     totalCost: data.budget ?? 0,
     notes: null,

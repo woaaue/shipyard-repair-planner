@@ -110,12 +110,16 @@ export default function Repairs() {
   }) => {
     const shipId = Number(repairData.shipId);
     if (!shipId) return;
+    if (!user?.id) {
+      setError('User session is required to create a repair request');
+      return;
+    }
 
     setError(null);
     try {
       await createRepairRequest({
         shipId,
-        clientId: user?.id ?? 1,
+        clientId: user.id,
         requestedStartDate: repairData.desiredDate || null,
         description: repairData.description,
         status: 'SUBMITTED',
