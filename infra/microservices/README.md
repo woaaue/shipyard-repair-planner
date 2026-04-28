@@ -13,7 +13,8 @@ This directory contains local infrastructure required to start the microservice 
 7. Execution service (`/api/work-items`, `/api/issues`, `/api/downtimes`).
 8. Repair planning service (`/api/repair-requests`, `/api/repairs`).
 9. Fleet service (`/api/ships`, `/api/docks`, `/api/shipyards`).
-10. API gateway with initial routing for extracted services.
+10. Identity service (`/api/auth`, `/api/users`).
+11. API gateway with initial routing for extracted services.
 
 ## Quick start
 
@@ -87,6 +88,16 @@ curl http://localhost:8088/api/docks
 11. Shipyards via gateway:
 ```bash
 curl http://localhost:8088/api/shipyards
+```
+
+12. Auth login via gateway:
+```bash
+curl -X POST http://localhost:8088/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"admin@shipyard.local\",\"password\":\"admin12345\"}"
+```
+
+13. Users via gateway:
+```bash
+curl http://localhost:8088/api/users
 ```
 
 ## Notes
