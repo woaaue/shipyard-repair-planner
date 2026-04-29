@@ -44,6 +44,7 @@ Phase out monolith API traffic behind the gateway after microservices become sta
 - Disable direct monolith API exposure.
 - Keep only internal admin/maintenance paths if needed.
 - Status: delivered baseline (retirement runbook at `docs/retirement-runbook.md` and verification script at `infra/microservices/scripts/run-retirement-check.ps1`).
+- Status: delivered in code (`LegacyApiDecommissionFilter` returns `410 Gone` for monolith `/api/*`; can be toggled by `app.legacy-api.block-enabled`).
 
 ## Exit criteria
 
