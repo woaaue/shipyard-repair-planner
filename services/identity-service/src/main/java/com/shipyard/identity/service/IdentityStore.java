@@ -10,12 +10,12 @@ import com.shipyard.identity.dto.user.ResetPasswordResponse;
 import com.shipyard.identity.dto.user.UpdateUserRequest;
 import com.shipyard.identity.dto.user.UserResponse;
 import com.shipyard.identity.model.UserRole;
+import com.shipyard.identity.security.JwtTokenService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +26,11 @@ public class IdentityStore {
 
     private final Map<Integer, StoredUser> users = new ConcurrentHashMap<>();
     private final AtomicInteger idGenerator = new AtomicInteger(1);
+    private final JwtTokenService jwtTokenService;
+
+    public IdentityStore(JwtTokenService jwtTokenService) {
+        this.jwtTokenService = jwtTokenService;
+    }
 
     @PostConstruct
     void init() {
@@ -219,9 +224,8 @@ public class IdentityStore {
         );
     }
 
-    private static String buildToken(StoredUser user) {
-        String payload = user.email + ":" + user.role.name();
-        return Base64.getEncoder().encodeToString(payload.getBytes());
+    private String buildToken(StoredUser user) {
+        return jwtTokenService.generateToken(user.email, user.role.name());
     }
 
     private record NameParts(String firstName, String lastName, String patronymic) {

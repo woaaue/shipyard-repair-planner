@@ -4,6 +4,7 @@ import com.shipyard.identity.dto.auth.AuthResponse;
 import com.shipyard.identity.dto.auth.AuthUserResponse;
 import com.shipyard.identity.dto.auth.LoginRequest;
 import com.shipyard.identity.dto.auth.RegisterRequest;
+import com.shipyard.identity.security.JwtTokenService;
 import com.shipyard.identity.service.IdentityStore;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,17 +16,16 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final IdentityStore identityStore;
+    private final JwtTokenService jwtTokenService;
 
-    public AuthController(IdentityStore identityStore) {
+    public AuthController(IdentityStore identityStore, JwtTokenService jwtTokenService) {
         this.identityStore = identityStore;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @PostMapping("/login")
@@ -49,16 +49,15 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    private static String extractEmail(String authHeader) {
+    private String extractEmail(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Authorization header is required");
         }
         String token = authHeader.substring(7);
-        String payload = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-        String[] parts = payload.split(":", 2);
-        if (parts.length < 1 || parts[0].isBlank()) {
+        String email = jwtTokenService.extractUsername(token);
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Invalid token");
         }
-        return parts[0];
+        return email;
     }
 }
