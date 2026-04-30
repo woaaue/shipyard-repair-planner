@@ -7,7 +7,7 @@ import PriorityBadge from '../components/ui/PriorityBadge';
 import ProgressCircle from '../components/ui/ProgressCircle';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import RepairRequestForm from '../components/forms/RepairRequestForm';
+import RepairRequestForm, { type RepairRequestFormData } from '../components/forms/RepairRequestForm';
 import {
   Search,
   Filter,
@@ -23,7 +23,7 @@ import { createRepairRequest, getRepairRequests } from '../services/repairReques
 import { getRepairs } from '../services/repairs';
 import { getWorkItems } from '../services/workItems';
 import { useAuth } from '../context/AuthContext';
-import { getShips } from '../services/ships';
+import { createShip, getShips } from '../services/ships';
 
 function toDateString(input?: string | null): string {
   if (!input) return new Date().toISOString().slice(0, 10);
@@ -103,13 +103,7 @@ export default function Repairs() {
     setSearchParams({});
   };
 
-  const handleAddRepairRequest = async (repairData: {
-    shipId: string;
-    desiredDate?: string;
-    description: string;
-  }) => {
-    const shipId = Number(repairData.shipId);
-    if (!shipId) return;
+  const handleAddRepairRequest = async (repairData: RepairRequestFormData) => {
     if (!user?.id) {
       setError('User session is required to create a repair request');
       return;
@@ -117,6 +111,24 @@ export default function Repairs() {
 
     setError(null);
     try {
+      let shipId = repairData.mode === 'existing' ? Number(repairData.shipId) : 0;
+
+      if (repairData.mode === 'new') {
+        const createdShip = await createShip({
+          name: repairData.newShip.name,
+          imo: repairData.newShip.imo,
+          type: repairData.newShip.type,
+          status: 'ожидает',
+          ownerId: user.id,
+          length: Number(repairData.newShip.length),
+          width: Number(repairData.newShip.width),
+          draft: Number(repairData.newShip.draft),
+        });
+        shipId = createdShip.id;
+      }
+
+      if (!shipId) return;
+
       await createRepairRequest({
         shipId,
         clientId: user.id,
@@ -439,6 +451,7 @@ export default function Repairs() {
           onClose={handleCloseForm}
           onSubmit={handleAddRepairRequest}
           ships={ships}
+          allowNewShip={user?.role === 'client'}
         />
       )}
     </div>

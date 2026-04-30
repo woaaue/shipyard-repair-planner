@@ -18,6 +18,22 @@ export interface AuthResponse {
   token: string;
 }
 
+export function getAuthErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string; fields?: Record<string, string> } } }).response;
+    const fields = response?.data?.fields;
+    if (fields && Object.keys(fields).length > 0) {
+      return Object.entries(fields)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join(', ');
+    }
+    if (response?.data?.message) {
+      return response.data.message;
+    }
+  }
+  return 'Ошибка авторизации';
+}
+
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>('/auth/login', credentials);
   return response.data;
