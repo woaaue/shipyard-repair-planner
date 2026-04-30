@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, login as loginApi, logout as logoutApi, register as registerApi } from '../services/auth';
+import { getAuthErrorMessage, getCurrentUser, login as loginApi, logout as logoutApi, register as registerApi } from '../services/auth';
 
 export interface User {
   id: number;
@@ -18,7 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (fullName: string, email: string, password: string, role: User['role']) => Promise<boolean>;
+  register: (fullName: string, email: string, password: string, role: User['role']) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -88,15 +88,15 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     role: User['role']
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await registerApi({ fullName, email, password, role });
       setUser(response.user);
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-      return true;
-    } catch {
-      return false;
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: getAuthErrorMessage(error) };
     }
   }, []);
 

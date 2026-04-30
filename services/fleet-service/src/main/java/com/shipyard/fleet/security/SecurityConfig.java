@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**", "/health").permitAll()
                         
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER", "WORKER", "CLIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/ships").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER", "WORKER", "CLIENT")
                         .requestMatchers(HttpMethod.POST, "/api/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER", "WORKER")
                         .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER", "WORKER")
                         .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER", "WORKER")

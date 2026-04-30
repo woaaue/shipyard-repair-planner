@@ -56,28 +56,33 @@ export default function Login() {
       return;
     }
 
+    if (registerData.password.length < 10) {
+      setError('Пароль должен быть не короче 10 символов');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const success = await register(
+      const result = await register(
         registerData.fullName,
         registerData.email,
         registerData.password,
         registerData.role
       );
 
-      if (success) {
+      if (result.success) {
         navigate('/');
       } else {
-        setError('Не удалось зарегистрироваться');
+        setError(result.error ?? 'Не удалось зарегистрироваться');
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const quickLogin = (userEmail: string) => {
+  const quickLogin = (userEmail: string, userPassword: string) => {
     setEmail(userEmail);
-    setPassword('1234567890');
+    setPassword(userPassword);
   };
 
   return (
@@ -175,7 +180,7 @@ export default function Login() {
                   value={registerData.password}
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="••••••"
+                  placeholder="Минимум 10 символов"
                 />
               </div>
 
@@ -213,37 +218,43 @@ export default function Login() {
             <p className="text-xs text-slate-400 mb-3 text-center">Быстрый ввод email для теста:</p>
             <div className="grid grid-cols-3 gap-2">
               <button
-                onClick={() => quickLogin('admin@dockplan.ru')}
+                onClick={() => {
+                  quickLogin('admin@shipyard.local', 'admin12345');
+                }}
                 className="px-2 py-2 text-xs bg-purple-600/50 hover:bg-purple-600 text-white rounded transition-colors"
               >
                 Админ
               </button>
               <button
-                onClick={() => quickLogin('dispatcher@dockplan.ru')}
+                onClick={() => quickLogin('admin@shipyard.local', 'admin12345')}
                 className="px-2 py-2 text-xs bg-blue-600/50 hover:bg-blue-600 text-white rounded transition-colors"
               >
                 Диспетчер
               </button>
               <button
-                onClick={() => quickLogin('operator.north@dockplan.ru')}
+                onClick={() => {
+                  quickLogin('operator@shipyard.local', 'operator12345');
+                }}
                 className="px-2 py-2 text-xs bg-green-600/50 hover:bg-green-600 text-white rounded transition-colors"
               >
                 Оператор
               </button>
               <button
-                onClick={() => quickLogin('master.north@dockplan.ru')}
+                onClick={() => quickLogin('admin@shipyard.local', 'admin12345')}
                 className="px-2 py-2 text-xs bg-orange-600/50 hover:bg-orange-600 text-white rounded transition-colors"
               >
                 Мастер
               </button>
               <button
-                onClick={() => quickLogin('worker.one@dockplan.ru')}
+                onClick={() => quickLogin('admin@shipyard.local', 'admin12345')}
                 className="px-2 py-2 text-xs bg-yellow-600/50 hover:bg-yellow-600 text-white rounded transition-colors"
               >
                 Рабочий
               </button>
               <button
-                onClick={() => quickLogin('client.annamaria@dockplan.ru')}
+                onClick={() => {
+                  quickLogin('client@shipyard.local', 'client12345');
+                }}
                 className="px-2 py-2 text-xs bg-pink-600/50 hover:bg-pink-600 text-white rounded transition-colors"
               >
                 Клиент
