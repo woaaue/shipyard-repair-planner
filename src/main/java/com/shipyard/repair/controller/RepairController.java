@@ -2,6 +2,7 @@ package com.shipyard.repair.controller;
 
 import com.shipyard.repair.dto.repair.CreateRepairRequest;
 import com.shipyard.repair.dto.repair.RepairResponse;
+import com.shipyard.repair.dto.repair.UpdateRepairOperatorRequest;
 import com.shipyard.repair.dto.repair.UpdateRepairRequest;
 import com.shipyard.repair.dto.repair.UpdateRepairStatusRequest;
 import com.shipyard.repair.enums.RepairStatus;
@@ -25,10 +26,11 @@ public class RepairController {
     public ResponseEntity<List<RepairResponse>> getRepairs(
             @RequestParam(required = false) Integer dockId,
             @RequestParam(required = false) Integer repairRequestId,
-            @RequestParam(required = false) RepairStatus status
+            @RequestParam(required = false) RepairStatus status,
+            @RequestParam(required = false) Integer operatorId
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(repairService.getRepairs(dockId, repairRequestId, status));
+                .body(repairService.getRepairs(dockId, repairRequestId, status, operatorId));
     }
 
     @GetMapping("/{id}")
@@ -56,6 +58,15 @@ public class RepairController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(repairService.updateStatus(id, request.status()));
+    }
+
+    @PatchMapping("/{id}/operator")
+    public ResponseEntity<RepairResponse> updateOperator(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateRepairOperatorRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(repairService.updateOperator(id, request.operatorId()));
     }
 
     @DeleteMapping("/{id}")

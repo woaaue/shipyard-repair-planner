@@ -25,5 +25,18 @@ public record UpdateUserRequest(
         @NotNull(message = "{user.role.not.null}")
         UserRole role,
 
-        Integer dockId
-) {}
+        Integer dockId,
+
+        Integer reportsToUserId
+) {
+    public UpdateUserRequest(
+            String email,
+            String firstName,
+            String lastName,
+            String patronymic,
+            UserRole role,
+            Integer dockId
+    ) {
+        this(email, firstName, lastName, patronymic, role, dockId, null);
+    }
+}

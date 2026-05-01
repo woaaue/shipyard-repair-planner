@@ -44,6 +44,10 @@ public class User {
     @JoinColumn(name = "dock_id")
     private Dock dock;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reports_to_user_id")
+    private User reportsTo;
+
     @Column(nullable = false)
     private LocalDate createdAt;
 

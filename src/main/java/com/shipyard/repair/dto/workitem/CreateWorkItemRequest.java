@@ -1,6 +1,7 @@
 package com.shipyard.repair.dto.workitem;
 
 import com.shipyard.repair.enums.WorkCategory;
+import com.shipyard.repair.enums.WorkItemReviewStatus;
 import com.shipyard.repair.enums.WorkItemStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -35,6 +36,26 @@ public record CreateWorkItemRequest(
         Boolean isDiscovered,
 
         @Size(max = 500, message = "Notes max length is 500")
-        String notes
+        String notes,
+
+        Integer assigneeId,
+
+        WorkItemReviewStatus reviewStatus
 ) {
+    public CreateWorkItemRequest(
+            Integer repairRequestId,
+            Integer repairId,
+            WorkCategory category,
+            String name,
+            String description,
+            WorkItemStatus status,
+            Integer estimatedHours,
+            Integer actualHours,
+            Boolean isMandatory,
+            Boolean isDiscovered,
+            String notes
+    ) {
+        this(repairRequestId, repairId, category, name, description, status, estimatedHours, actualHours,
+                isMandatory, isDiscovered, notes, null, null);
+    }
 }

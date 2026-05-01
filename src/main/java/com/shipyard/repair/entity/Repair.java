@@ -28,6 +28,10 @@ public class Repair {
     @JoinColumn(name = "dock_id", nullable = false)
     private Dock dock;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "operator_id")
+    private User operator;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RepairStatus status;

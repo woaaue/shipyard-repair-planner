@@ -6,6 +6,7 @@ import com.shipyard.repair.dto.user.UpdateUserRequest;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.User;
+import com.shipyard.repair.enums.UserRole;
 import com.shipyard.repair.exception.BadRequestException;
 import com.shipyard.repair.exception.DuplicateResourceException;
 import com.shipyard.repair.exception.ErrorCode;
@@ -54,6 +55,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponse> getSubordinates(Integer id) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND);
+        }
+        return userRepository.findByReportsToId(id).stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -61,10 +75,12 @@ public class UserServiceImpl implements UserService {
         }
 
         Dock dock = resolveDock(request.dockId());
+        User reportsTo = resolveSupervisor(request.reportsToUserId(), request.role(), null);
 
         User user = userMapper.toEntity(request);
         user.setEncodedPassword(passwordEncoder.encode(request.password()));
         user.setDock(dock);
+        user.setReportsTo(reportsTo);
         user.setEnabled(true);
 
         User savedUser = userRepository.save(user);
@@ -92,6 +108,7 @@ public class UserServiceImpl implements UserService {
         user.setPatronymic(request.patronymic());
         user.setRole(request.role());
         user.setDock(resolveDock(request.dockId()));
+        user.setReportsTo(resolveSupervisor(request.reportsToUserId(), request.role(), id));
 
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
@@ -155,6 +172,46 @@ public class UserServiceImpl implements UserService {
         }
         return dockRepository.findById(dockId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.DOCK_NOT_FOUND));
+    }
+
+    private User resolveSupervisor(Integer reportsToUserId, UserRole role, Integer currentUserId) {
+        if (reportsToUserId == null) {
+            return null;
+        }
+        if (currentUserId != null && reportsToUserId.equals(currentUserId)) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST);
+        }
+
+        User supervisor = userRepository.findById(reportsToUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+        UserRole expectedSupervisorRole = expectedSupervisorRole(role);
+        if (expectedSupervisorRole == null || supervisor.getRole() != expectedSupervisorRole) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST);
+        }
+        ensureNoSupervisorCycle(supervisor, currentUserId);
+        return supervisor;
+    }
+
+    private UserRole expectedSupervisorRole(UserRole role) {
+        return switch (role) {
+            case WORKER -> UserRole.MASTER;
+            case MASTER -> UserRole.OPERATOR;
+            case OPERATOR -> UserRole.DISPATCHER;
+            case CLIENT, DISPATCHER, ADMIN -> null;
+        };
+    }
+
+    private void ensureNoSupervisorCycle(User supervisor, Integer currentUserId) {
+        if (currentUserId == null) {
+            return;
+        }
+        User cursor = supervisor;
+        while (cursor != null) {
+            if (cursor.getId() == currentUserId) {
+                throw new BadRequestException(ErrorCode.BAD_REQUEST);
+            }
+            cursor = cursor.getReportsTo();
+        }
     }
 
     private User getUserEntity(Integer id) {

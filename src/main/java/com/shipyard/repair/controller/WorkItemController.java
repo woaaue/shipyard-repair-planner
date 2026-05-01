@@ -1,10 +1,13 @@
 package com.shipyard.repair.controller;
 
 import com.shipyard.repair.dto.workitem.CreateWorkItemRequest;
+import com.shipyard.repair.dto.workitem.UpdateWorkItemAssigneeRequest;
+import com.shipyard.repair.dto.workitem.UpdateWorkItemReviewRequest;
 import com.shipyard.repair.dto.workitem.UpdateWorkItemRequest;
 import com.shipyard.repair.dto.workitem.UpdateWorkItemStatusRequest;
 import com.shipyard.repair.dto.workitem.WorkItemResponse;
 import com.shipyard.repair.enums.WorkCategory;
+import com.shipyard.repair.enums.WorkItemReviewStatus;
 import com.shipyard.repair.enums.WorkItemStatus;
 import com.shipyard.repair.service.workitem.WorkItemService;
 import jakarta.validation.Valid;
@@ -27,10 +30,12 @@ public class WorkItemController {
             @RequestParam(required = false) Integer repairRequestId,
             @RequestParam(required = false) Integer repairId,
             @RequestParam(required = false) WorkCategory category,
-            @RequestParam(required = false) WorkItemStatus status
+            @RequestParam(required = false) WorkItemStatus status,
+            @RequestParam(required = false) Integer assigneeId,
+            @RequestParam(required = false) WorkItemReviewStatus reviewStatus
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(workItemService.getWorkItems(repairRequestId, repairId, category, status));
+                .body(workItemService.getWorkItems(repairRequestId, repairId, category, status, assigneeId, reviewStatus));
     }
 
     @GetMapping("/{id}")
@@ -58,6 +63,24 @@ public class WorkItemController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(workItemService.updateStatus(id, request.status()));
+    }
+
+    @PatchMapping("/{id}/assignee")
+    public ResponseEntity<WorkItemResponse> updateAssignee(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateWorkItemAssigneeRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(workItemService.updateAssignee(id, request.assigneeId()));
+    }
+
+    @PatchMapping("/{id}/review")
+    public ResponseEntity<WorkItemResponse> updateReviewStatus(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateWorkItemReviewRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(workItemService.updateReviewStatus(id, request.reviewStatus()));
     }
 
     @DeleteMapping("/{id}")

@@ -32,6 +32,12 @@ public class UserController {
                 .body(userService.getUserById(id));
     }
 
+    @GetMapping("/{id}/subordinates")
+    public ResponseEntity<List<UserResponse>> getSubordinates(@PathVariable Integer id) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(userService.getSubordinates(id));
+    }
+
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)

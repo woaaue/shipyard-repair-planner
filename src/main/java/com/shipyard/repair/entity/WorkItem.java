@@ -1,6 +1,7 @@
 package com.shipyard.repair.entity;
 
 import com.shipyard.repair.enums.WorkCategory;
+import com.shipyard.repair.enums.WorkItemReviewStatus;
 import com.shipyard.repair.enums.WorkItemStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,6 +28,10 @@ public class WorkItem {
     @JoinColumn(name = "repair_id")
     private Repair repair;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private WorkCategory category;
@@ -40,6 +45,10 @@ public class WorkItem {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private WorkItemStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "review_status", nullable = false, length = 30)
+    private WorkItemReviewStatus reviewStatus;
 
     @Column(name = "estimated_hours")
     private int estimatedHours;

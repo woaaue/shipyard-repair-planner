@@ -5,12 +5,16 @@ import com.shipyard.repair.dto.workitem.UpdateWorkItemRequest;
 import com.shipyard.repair.dto.workitem.WorkItemResponse;
 import com.shipyard.repair.entity.Repair;
 import com.shipyard.repair.entity.RepairRequest;
+import com.shipyard.repair.entity.User;
 import com.shipyard.repair.entity.WorkItem;
+import com.shipyard.repair.enums.UserRole;
 import com.shipyard.repair.enums.WorkCategory;
+import com.shipyard.repair.enums.WorkItemReviewStatus;
 import com.shipyard.repair.enums.WorkItemStatus;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.repository.RepairRepository;
 import com.shipyard.repair.repository.RepairRequestRepository;
+import com.shipyard.repair.repository.UserRepository;
 import com.shipyard.repair.repository.WorkItemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +40,8 @@ class WorkItemServiceImplTest {
     private RepairRequestRepository repairRequestRepository;
     @Mock
     private RepairRepository repairRepository;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private WorkItemServiceImpl workItemService;
@@ -93,6 +99,53 @@ class WorkItemServiceImplTest {
     }
 
     @Test
+    void createWorkItem_WithAssignee_ReturnsAssignmentAndReviewStatus() {
+        CreateWorkItemRequest request = new CreateWorkItemRequest(
+                2,
+                3,
+                WorkCategory.MECHANICAL,
+                "Main engine overhaul",
+                "planned",
+                WorkItemStatus.PENDING,
+                40,
+                0,
+                true,
+                false,
+                "notes",
+                9,
+                WorkItemReviewStatus.NOT_SUBMITTED
+        );
+
+        RepairRequest repairRequest = new RepairRequest();
+        repairRequest.setId(2);
+
+        Repair repair = new Repair();
+        repair.setId(3);
+        repair.setRepairRequest(repairRequest);
+
+        User worker = new User();
+        worker.setId(9);
+        worker.setFirstName("Ivan");
+        worker.setLastName("Worker");
+        worker.setRole(UserRole.WORKER);
+
+        when(repairRequestRepository.findById(2)).thenReturn(Optional.of(repairRequest));
+        when(repairRepository.findById(3)).thenReturn(Optional.of(repair));
+        when(userRepository.findById(9)).thenReturn(Optional.of(worker));
+        when(workItemRepository.save(any(WorkItem.class))).thenAnswer(invocation -> {
+            WorkItem saved = invocation.getArgument(0);
+            saved.setId(10);
+            return saved;
+        });
+
+        WorkItemResponse response = workItemService.createWorkItem(request);
+
+        assertEquals(9, response.assigneeId());
+        assertEquals("Worker Ivan", response.assigneeFullName());
+        assertEquals(WorkItemReviewStatus.NOT_SUBMITTED, response.reviewStatus());
+    }
+
+    @Test
     void createWorkItem_RepairRequestNotFound_Throws() {
         CreateWorkItemRequest request = new CreateWorkItemRequest(
                 99, null, WorkCategory.OTHER, "Task", null, null, null, null, null, null, null
@@ -140,6 +193,20 @@ class WorkItemServiceImplTest {
         workItemService.deleteWorkItem(1);
 
         verify(workItemRepository).deleteById(1);
+    }
+
+    @Test
+    void updateStatus_ToCompleted_MarksPendingReview() {
+        WorkItem existing = buildWorkItem(5);
+        existing.setReviewStatus(WorkItemReviewStatus.NOT_SUBMITTED);
+
+        when(workItemRepository.findById(5)).thenReturn(Optional.of(existing));
+        when(workItemRepository.save(existing)).thenReturn(existing);
+
+        WorkItemResponse response = workItemService.updateStatus(5, WorkItemStatus.COMPLETED);
+
+        assertEquals(WorkItemStatus.COMPLETED, response.status());
+        assertEquals(WorkItemReviewStatus.PENDING_REVIEW, response.reviewStatus());
     }
 
     private WorkItem buildWorkItem(int id) {

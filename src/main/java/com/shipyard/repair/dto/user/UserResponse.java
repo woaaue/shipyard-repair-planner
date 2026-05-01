@@ -13,5 +13,20 @@ public record UserResponse(
         String patronymic,
         UserRole role,
         Dock dock,
+        Integer reportsToUserId,
+        String reportsToFullName,
         LocalDate createdAt
-) {}
+) {
+    public UserResponse(
+            int id,
+            String email,
+            String firstName,
+            String lastName,
+            String patronymic,
+            UserRole role,
+            Dock dock,
+            LocalDate createdAt
+    ) {
+        this(id, email, firstName, lastName, patronymic, role, dock, null, null, createdAt);
+    }
+}

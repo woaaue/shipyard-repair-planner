@@ -96,8 +96,20 @@ public class AuthServiceImpl implements AuthService {
                 fullName,
                 toFrontendRole(user.getRole()),
                 dockName,
-                shipId
+                shipId,
+                user.getReportsTo() == null ? null : user.getReportsTo().getId(),
+                toFullName(user.getReportsTo())
         );
+    }
+
+    private static String toFullName(User user) {
+        if (user == null) {
+            return null;
+        }
+        String patronymic = user.getPatronymic() == null || user.getPatronymic().isBlank()
+                ? ""
+                : " " + user.getPatronymic();
+        return String.format("%s %s%s", user.getLastName(), user.getFirstName(), patronymic).trim();
     }
 
     private static UserRole resolveRole(String role) {

@@ -464,7 +464,14 @@ class RepairFlowScenarioTest {
                 .thenReturn(itemOneCompleted);
         when(workItemService.updateStatus(eq(402), eq(WorkItemStatus.COMPLETED)))
                 .thenReturn(itemTwoCompleted);
-        when(workItemService.getWorkItems(eq(777), eq(303), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull()))
+        when(workItemService.getWorkItems(
+                eq(777),
+                eq(303),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull()
+        ))
                 .thenReturn(java.util.List.of(itemOneCompleted, itemTwoCompleted));
         when(repairService.updateStatus(eq(303), eq(RepairStatus.QA)))
                 .thenReturn(qaRepair);
