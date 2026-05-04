@@ -4,13 +4,30 @@ import com.shipyard.repair.dto.workitem.CreateWorkItemRequest;
 import com.shipyard.repair.dto.workitem.UpdateWorkItemRequest;
 import com.shipyard.repair.dto.workitem.WorkItemResponse;
 import com.shipyard.repair.enums.WorkCategory;
+import com.shipyard.repair.enums.WorkItemReviewStatus;
 import com.shipyard.repair.enums.WorkItemStatus;
 
 import java.util.List;
 
 public interface WorkItemService {
 
-    List<WorkItemResponse> getWorkItems(Integer repairRequestId, Integer repairId, WorkCategory category, WorkItemStatus status);
+    List<WorkItemResponse> getWorkItems(
+            Integer repairRequestId,
+            Integer repairId,
+            WorkCategory category,
+            WorkItemStatus status,
+            Integer assigneeId,
+            WorkItemReviewStatus reviewStatus
+    );
+
+    default List<WorkItemResponse> getWorkItems(
+            Integer repairRequestId,
+            Integer repairId,
+            WorkCategory category,
+            WorkItemStatus status
+    ) {
+        return getWorkItems(repairRequestId, repairId, category, status, null, null);
+    }
 
     WorkItemResponse getWorkItemById(Integer id);
 
@@ -19,6 +36,10 @@ public interface WorkItemService {
     WorkItemResponse updateWorkItem(Integer id, UpdateWorkItemRequest request);
 
     WorkItemResponse updateStatus(Integer id, WorkItemStatus status);
+
+    WorkItemResponse updateAssignee(Integer id, Integer assigneeId);
+
+    WorkItemResponse updateReviewStatus(Integer id, WorkItemReviewStatus reviewStatus);
 
     void deleteWorkItem(Integer id);
 }

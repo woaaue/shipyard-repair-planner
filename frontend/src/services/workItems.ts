@@ -14,6 +14,7 @@ export type WorkCategory =
   | 'OTHER';
 
 export type WorkItemStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type WorkItemReviewStatus = 'NOT_REVIEWED' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 
 export interface WorkItemResponse {
   id: number;
@@ -28,6 +29,9 @@ export interface WorkItemResponse {
   isMandatory: boolean;
   isDiscovered: boolean;
   notes: string | null;
+  assigneeId: number | null;
+  assigneeFullName: string | null;
+  reviewStatus: WorkItemReviewStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,14 +53,18 @@ export interface WorkItemPayload {
 export const getWorkItems = async (filters?: {
   repairRequestId?: number;
   repairId?: number;
+  assigneeId?: number;
   category?: WorkCategory;
   status?: WorkItemStatus;
+  reviewStatus?: WorkItemReviewStatus;
 }): Promise<WorkItemResponse[]> => {
   const params = new URLSearchParams();
   if (typeof filters?.repairRequestId === 'number') params.append('repairRequestId', String(filters.repairRequestId));
   if (typeof filters?.repairId === 'number') params.append('repairId', String(filters.repairId));
+  if (typeof filters?.assigneeId === 'number') params.append('assigneeId', String(filters.assigneeId));
   if (filters?.category) params.append('category', filters.category);
   if (filters?.status) params.append('status', filters.status);
+  if (filters?.reviewStatus) params.append('reviewStatus', filters.reviewStatus);
 
   const response = await api.get<WorkItemResponse[]>('/work-items', { params });
   return response.data;
@@ -82,6 +90,22 @@ export const updateWorkItemStatus = async (
   status: WorkItemStatus
 ): Promise<WorkItemResponse> => {
   const response = await api.patch<WorkItemResponse>(`/work-items/${id}/status`, { status });
+  return response.data;
+};
+
+export const updateWorkItemAssignee = async (
+  id: number,
+  assigneeId: number | null
+): Promise<WorkItemResponse> => {
+  const response = await api.patch<WorkItemResponse>(`/work-items/${id}/assignee`, { assigneeId });
+  return response.data;
+};
+
+export const updateWorkItemReview = async (
+  id: number,
+  reviewStatus: WorkItemReviewStatus
+): Promise<WorkItemResponse> => {
+  const response = await api.patch<WorkItemResponse>(`/work-items/${id}/review`, { reviewStatus });
   return response.data;
 };
 

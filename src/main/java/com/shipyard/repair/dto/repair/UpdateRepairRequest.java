@@ -27,6 +27,20 @@ public record UpdateRepairRequest(
         BigDecimal totalCost,
 
         @Size(max = 1000, message = "Notes max length is 1000")
-        String notes
+        String notes,
+
+        Integer operatorId
 ) {
+    public UpdateRepairRequest(
+            Integer repairRequestId,
+            Integer dockId,
+            RepairStatus status,
+            LocalDate actualStartDate,
+            LocalDate actualEndDate,
+            Integer progressPercentage,
+            BigDecimal totalCost,
+            String notes
+    ) {
+        this(repairRequestId, dockId, status, actualStartDate, actualEndDate, progressPercentage, totalCost, notes, null);
+    }
 }

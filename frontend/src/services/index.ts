@@ -10,13 +10,14 @@ export {
   createRepair,
   updateRepair,
   updateRepairStatus,
+  updateRepairOperator,
   deleteRepair,
   getRepairsByDock,
   getRepairsByShip,
 } from './repairs';
 export type { RepairFilters, BackendRepairStatus } from './repairs';
 
-export { getUsers, getUser, createUser, updateUser, blockUser, unblockUser, resetPassword } from './users';
+export { getUsers, getUser, createUser, updateUser, blockUser, unblockUser, resetPassword, getSubordinates } from './users';
 export type { UserFilters } from './users';
 
 export { getDocks, getDock, createDock, updateDock, deleteDock, getDockSchedule, getDockLoad } from './docks';
@@ -38,9 +39,11 @@ export {
   createWorkItem,
   updateWorkItem,
   updateWorkItemStatus,
+  updateWorkItemAssignee,
+  updateWorkItemReview,
   deleteWorkItem,
 } from './workItems';
-export type { WorkCategory, WorkItemStatus, WorkItemResponse, WorkItemPayload } from './workItems';
+export type { WorkCategory, WorkItemStatus, WorkItemReviewStatus, WorkItemResponse, WorkItemPayload } from './workItems';
 
 export {
   getNotifications,

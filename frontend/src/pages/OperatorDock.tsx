@@ -51,7 +51,10 @@ export default function OperatorDock() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getRepairs();
+      const data =
+        user?.role === 'operator' && typeof user.id === 'number'
+          ? await getRepairs({ operatorId: user.id })
+          : await getRepairs();
       setRepairs(data);
     } catch {
       setError('Failed to load dock repairs.');
@@ -62,7 +65,7 @@ export default function OperatorDock() {
 
   useEffect(() => {
     void loadRepairs();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const dockRepairs = useMemo(() => repairs.filter((repair) => repair.dock === userDock), [repairs, userDock]);
   const activeRepairs = useMemo(

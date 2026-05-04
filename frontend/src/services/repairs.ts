@@ -3,6 +3,7 @@ import type { ExtendedRepair } from '../types/repair';
 
 export interface RepairFilters {
   dockId?: number;
+  operatorId?: number;
   repairRequestId?: number;
   status?: BackendRepairStatus;
 }
@@ -20,6 +21,8 @@ interface BackendRepairResponse {
   repairRequestId: number;
   dockId: number;
   dockName: string;
+  operatorId: number | null;
+  operatorFullName: string | null;
   status: BackendRepairStatus;
   actualStartDate: string | null;
   actualEndDate: string | null;
@@ -70,7 +73,9 @@ function mapBackendToUiRepair(repair: BackendRepairResponse): ExtendedRepair {
     progress: repair.progressPercentage ?? 0,
     budget: repair.totalCost ?? 0,
     spent: repair.totalCost ?? 0,
-    manager: 'Не назначен',
+    manager: repair.operatorFullName ?? 'Не назначен',
+    operatorId: repair.operatorId ?? undefined,
+    operatorFullName: repair.operatorFullName ?? undefined,
     repairType: 'Текущий ремонт',
     priority: 'средний',
     actualStartDate: repair.actualStartDate ?? undefined,
@@ -100,6 +105,7 @@ function mapUiToBackendRepair(data: Partial<ExtendedRepair>): BackendCreateRepai
 export const getRepairs = async (filters?: RepairFilters): Promise<ExtendedRepair[]> => {
   const params = new URLSearchParams();
   if (typeof filters?.dockId === 'number') params.append('dockId', String(filters.dockId));
+  if (typeof filters?.operatorId === 'number') params.append('operatorId', String(filters.operatorId));
   if (typeof filters?.repairRequestId === 'number') params.append('repairRequestId', String(filters.repairRequestId));
   if (filters?.status) params.append('status', filters.status);
 
@@ -129,6 +135,14 @@ export const updateRepairStatus = async (id: number, status: BackendRepairStatus
 
 export const deleteRepair = async (id: number): Promise<void> => {
   await api.delete(`/repairs/${id}`);
+};
+
+export const updateRepairOperator = async (
+  id: number,
+  operatorId: number | null
+): Promise<ExtendedRepair> => {
+  const response = await api.patch<BackendRepairResponse>(`/repairs/${id}/operator`, { operatorId });
+  return mapBackendToUiRepair(response.data);
 };
 
 export const getRepairsByDock = async (dockId: number): Promise<ExtendedRepair[]> => {

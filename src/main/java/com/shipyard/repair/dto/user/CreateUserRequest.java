@@ -29,5 +29,19 @@ public record CreateUserRequest(
         @NotNull(message = "{user.role.not.null}")
         UserRole role,
 
-        Integer dockId
-) {}
+        Integer dockId,
+
+        Integer reportsToUserId
+) {
+    public CreateUserRequest(
+            String email,
+            String password,
+            String firstName,
+            String lastName,
+            String patronymic,
+            UserRole role,
+            Integer dockId
+    ) {
+        this(email, password, firstName, lastName, patronymic, role, dockId, null);
+    }
+}

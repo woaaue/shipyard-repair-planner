@@ -161,6 +161,114 @@ public class UserServiceImplTest {
     }
 
     @Test
+    void createUser_withSupervisor_success() {
+        CreateUserRequest request = new CreateUserRequest(
+            "worker@mail.ru",
+            "password123",
+            "Ivan",
+            "Worker",
+            null,
+            UserRole.WORKER,
+            null,
+            7
+        );
+
+        User master = new User();
+        master.setId(7);
+        master.setRole(UserRole.MASTER);
+
+        User user = new User();
+        user.setId(1);
+        user.setEmail("worker@mail.ru");
+        user.setFirstName("Ivan");
+        user.setLastName("Worker");
+        user.setRole(UserRole.WORKER);
+
+        UserResponse expectedResponse = new UserResponse(
+                1, "worker@mail.ru", "Ivan", "Worker", null, UserRole.WORKER, null, 7, null, LocalDate.now()
+        );
+
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.findById(7)).thenReturn(Optional.of(master));
+        when(userMapper.toEntity(request)).thenReturn(user);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userMapper.toResponse(user)).thenReturn(expectedResponse);
+
+        UserResponse result = userServiceImpl.createUser(request);
+
+        assertEquals(7, user.getReportsTo().getId());
+        assertEquals(7, result.reportsToUserId());
+    }
+
+    @Test
+    void createUser_withWrongSupervisorRole_throws() {
+        CreateUserRequest request = new CreateUserRequest(
+                "worker@mail.ru",
+                "password123",
+                "Ivan",
+                "Worker",
+                null,
+                UserRole.WORKER,
+                null,
+                8
+        );
+
+        User operator = new User();
+        operator.setId(8);
+        operator.setRole(UserRole.OPERATOR);
+
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.findById(8)).thenReturn(Optional.of(operator));
+
+        assertThrows(BadRequestException.class, () -> userServiceImpl.createUser(request));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void getSubordinates_success() {
+        User master = new User();
+        master.setId(7);
+
+        User worker = new User();
+        worker.setId(9);
+        worker.setReportsTo(master);
+
+        UserResponse response = new UserResponse(9, "worker@mail.ru", "Ivan", "Worker", null, UserRole.WORKER, null, 7, null, LocalDate.now());
+
+        when(userRepository.existsById(7)).thenReturn(true);
+        when(userRepository.findByReportsToId(7)).thenReturn(List.of(worker));
+        when(userMapper.toResponse(worker)).thenReturn(response);
+
+        List<UserResponse> result = userServiceImpl.getSubordinates(7);
+
+        assertEquals(1, result.size());
+        assertEquals(7, result.get(0).reportsToUserId());
+    }
+
+    @Test
+    void updateUser_reportsToSelf_throws() {
+        User existing = new User();
+        existing.setId(1);
+        existing.setEmail("old@mail.ru");
+        existing.setRole(UserRole.WORKER);
+
+        UpdateUserRequest request = new UpdateUserRequest(
+                "old@mail.ru",
+                "Ivan",
+                "Worker",
+                null,
+                UserRole.WORKER,
+                null,
+                1
+        );
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("old@mail.ru")).thenReturn(Optional.empty());
+
+        assertThrows(BadRequestException.class, () -> userServiceImpl.updateUser(1, request));
+    }
+
+    @Test
     void updateUser_Success() {
         User existing = new User();
         existing.setId(1);

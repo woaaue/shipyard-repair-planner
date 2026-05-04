@@ -9,7 +9,11 @@ import java.util.List;
 
 public interface RepairService {
 
-    List<RepairResponse> getRepairs(Integer dockId, Integer repairRequestId, RepairStatus status);
+    List<RepairResponse> getRepairs(Integer dockId, Integer repairRequestId, RepairStatus status, Integer operatorId);
+
+    default List<RepairResponse> getRepairs(Integer dockId, Integer repairRequestId, RepairStatus status) {
+        return getRepairs(dockId, repairRequestId, status, null);
+    }
 
     RepairResponse getRepairById(Integer id);
 
@@ -18,6 +22,8 @@ public interface RepairService {
     RepairResponse updateRepair(Integer id, UpdateRepairRequest request);
 
     RepairResponse updateStatus(Integer id, RepairStatus status);
+
+    RepairResponse updateOperator(Integer id, Integer operatorId);
 
     void deleteRepair(Integer id);
 }

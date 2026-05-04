@@ -9,4 +9,5 @@ public interface RepairRepository extends JpaRepository<Repair, Integer> {
     List<Repair> findByDockId(int dockId);
     List<Repair> findByStatus(RepairStatus status);
     List<Repair> findByRepairRequestId(int repairRequestId);
+    List<Repair> findByOperatorId(int operatorId);
 }

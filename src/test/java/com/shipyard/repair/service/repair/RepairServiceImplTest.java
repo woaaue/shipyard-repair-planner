@@ -6,11 +6,14 @@ import com.shipyard.repair.dto.repair.UpdateRepairRequest;
 import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.Repair;
 import com.shipyard.repair.entity.RepairRequest;
+import com.shipyard.repair.entity.User;
 import com.shipyard.repair.enums.RepairStatus;
+import com.shipyard.repair.enums.UserRole;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.repository.DockRepository;
 import com.shipyard.repair.repository.RepairRepository;
 import com.shipyard.repair.repository.RepairRequestRepository;
+import com.shipyard.repair.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +40,8 @@ class RepairServiceImplTest {
     private RepairRequestRepository repairRequestRepository;
     @Mock
     private DockRepository dockRepository;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private RepairServiceImpl repairService;
@@ -87,6 +92,48 @@ class RepairServiceImplTest {
         assertEquals(2, response.repairRequestId());
         assertEquals(3, response.dockId());
         assertEquals(RepairStatus.STARTED, response.status());
+    }
+
+    @Test
+    void createRepair_WithOperator_ReturnsOperator() {
+        CreateRepairRequest request = new CreateRepairRequest(
+                2,
+                3,
+                RepairStatus.STARTED,
+                LocalDate.now(),
+                null,
+                10,
+                new BigDecimal("30000.00"),
+                "start",
+                8
+        );
+
+        RepairRequest repairRequest = new RepairRequest();
+        repairRequest.setId(2);
+
+        Dock dock = new Dock();
+        dock.setId(3);
+        dock.setName("Dock A");
+
+        User operator = new User();
+        operator.setId(8);
+        operator.setFirstName("Olga");
+        operator.setLastName("Operator");
+        operator.setRole(UserRole.OPERATOR);
+
+        when(repairRequestRepository.findById(2)).thenReturn(Optional.of(repairRequest));
+        when(dockRepository.findById(3)).thenReturn(Optional.of(dock));
+        when(userRepository.findById(8)).thenReturn(Optional.of(operator));
+        when(repairRepository.save(any(Repair.class))).thenAnswer(invocation -> {
+            Repair saved = invocation.getArgument(0);
+            saved.setId(10);
+            return saved;
+        });
+
+        RepairResponse response = repairService.createRepair(request);
+
+        assertEquals(8, response.operatorId());
+        assertEquals("Operator Olga", response.operatorFullName());
     }
 
     @Test

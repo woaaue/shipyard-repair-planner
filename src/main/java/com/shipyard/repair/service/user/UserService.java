@@ -11,6 +11,7 @@ public interface UserService {
 
     List<UserResponse> getAllUsers();
     UserResponse getUserById(Integer id);
+    List<UserResponse> getSubordinates(Integer id);
     UserResponse createUser(CreateUserRequest request);
     UserResponse updateUser(Integer id, UpdateUserRequest request);
     UserResponse blockUser(Integer id);
