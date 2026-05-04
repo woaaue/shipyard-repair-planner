@@ -10,6 +10,13 @@ import type { ExtendedRepair } from '../types/repair';
 type ReportType = 'repairs' | 'ships' | 'budget' | 'docks';
 type Period = 'week' | 'month' | 'quarter' | 'year';
 
+const PERIOD_LABELS: Record<Period, string> = {
+  week: 'Неделя',
+  month: 'Месяц',
+  quarter: 'Квартал',
+  year: 'Год',
+};
+
 export default function Reports() {
   const { user } = useAuth();
   const [reportType, setReportType] = useState<ReportType>('repairs');
@@ -74,7 +81,8 @@ export default function Reports() {
     setIsGenerating(true);
     setTimeout(() => {
       setIsGenerating(false);
-      window.alert(`Отчет сформирован: ${reportType}, период ${period}.`);
+      const selectedReportType = reportTypes.find((item) => item.id === reportType);
+      window.alert(`Отчет сформирован: ${selectedReportType?.name ?? reportType}, период: ${PERIOD_LABELS[period]}.`);
     }, 1000);
   };
 
