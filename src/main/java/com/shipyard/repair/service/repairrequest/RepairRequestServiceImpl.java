@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -123,6 +124,45 @@ public class RepairRequestServiceImpl implements RepairRequestService {
 
     @Override
     @Transactional
+    public RepairRequestResponse acceptByClient(Integer id, String clientEmail, String note) {
+        if (id == null) {
+            throw new BadRequestException(ErrorCode.ID_IS_NULL);
+        }
+        if (clientEmail == null || clientEmail.isBlank()) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST);
+        }
+
+        RepairRequest existing = repairRequestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_REQUEST_NOT_FOUND));
+
+        User client = userRepository.findByEmail(clientEmail)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        if (existing.getClient() == null || existing.getClient().getId() != client.getId()) {
+            throw new ResourceNotFoundException(ErrorCode.REPAIR_REQUEST_NOT_FOUND);
+        }
+
+        if (existing.getStatus() == RepairRequestStatus.CLIENT_ACCEPTED) {
+            existing.setClientAcceptanceNote(note);
+            RepairRequest saved = repairRequestRepository.save(existing);
+            return toResponse(saved);
+        }
+
+        if (existing.getStatus() != RepairRequestStatus.COMPLETED) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST);
+        }
+
+        existing.setClientAccepted(true);
+        existing.setClientAcceptedAt(LocalDateTime.now());
+        existing.setClientAcceptanceNote(note);
+        existing.setStatus(RepairRequestStatus.CLIENT_ACCEPTED);
+
+        RepairRequest saved = repairRequestRepository.save(existing);
+        return toResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public void deleteRepairRequest(Integer id) {
         if (id == null) {
             throw new BadRequestException(ErrorCode.ID_IS_NULL);
@@ -184,6 +224,9 @@ public class RepairRequestServiceImpl implements RepairRequestService {
                 repairRequest.getTotalCost(),
                 repairRequest.getDescription(),
                 repairRequest.getNotes(),
+                repairRequest.isClientAccepted(),
+                repairRequest.getClientAcceptedAt(),
+                repairRequest.getClientAcceptanceNote(),
                 repairRequest.getCreatedAt(),
                 repairRequest.getUpdatedAt()
         );

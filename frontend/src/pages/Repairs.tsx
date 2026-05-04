@@ -19,7 +19,7 @@ import {
   Users,
   BarChart3,
 } from 'lucide-react';
-import { createRepairRequest, getRepairRequests } from '../services/repairRequests';
+import { acceptRepairRequestByClient, createRepairRequest, getRepairRequests } from '../services/repairRequests';
 import { getRepairs, updateRepairOperator } from '../services/repairs';
 import { getWorkItems } from '../services/workItems';
 import { useAuth } from '../context/AuthContext';
@@ -47,6 +47,7 @@ export default function Repairs() {
   const [dockFilter, setDockFilter] = useState<string>('все');
   const [showOnlyUnassigned, setShowOnlyUnassigned] = useState(false);
   const [showReadyForAcceptanceOnly, setShowReadyForAcceptanceOnly] = useState(false);
+  const [acceptingRepairRequestId, setAcceptingRepairRequestId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<keyof ExtendedRepair>('startDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showRepairForm, setShowRepairForm] = useState(searchParams.get('new') === 'true');
@@ -101,6 +102,9 @@ export default function Repairs() {
           repairType: tasks.length > 0 ? 'Текущий ремонт' : 'Доковый ремонт',
           priority: 'средний',
           manager: repair.operatorFullName ?? 'Не назначен',
+          requestStatus: request?.status ?? undefined,
+          clientAccepted: request?.clientAccepted ?? false,
+          acceptanceAction: '',
           startDate: toDateString(repair.actualStartDate ?? repair.startDate),
           endDate: toDateString(repair.actualEndDate ?? repair.endDate),
           tasks,
@@ -203,6 +207,7 @@ export default function Repairs() {
       result = result.filter(
         (repair) =>
           repair.status === 'завершён' &&
+          !repair.clientAccepted &&
           repair.tasks.length > 0 &&
           repair.tasks.every((task) => task.reviewStatus === 'APPROVED')
       );
@@ -241,6 +246,7 @@ export default function Repairs() {
     const readyForAcceptance = repairs.filter(
       (repair) =>
         repair.status === 'завершён' &&
+        !repair.clientAccepted &&
         repair.tasks.length > 0 &&
         repair.tasks.every((task) => task.reviewStatus === 'APPROVED')
     ).length;
@@ -392,6 +398,52 @@ export default function Repairs() {
       ),
     },
   ];
+
+  if (user?.role === 'client') {
+    columns.push({
+      header: 'Приемка',
+      accessor: 'acceptanceAction' as keyof ExtendedRepair,
+      sortable: false,
+      align: 'center' as const,
+      cell: (_value: string, repair: ExtendedRepair) => {
+        if (repair.clientAccepted) {
+          return <span className="text-xs font-medium text-green-700">Принято</span>;
+        }
+
+        const readyForAcceptance =
+          repair.status === 'завершён' &&
+          repair.tasks.length > 0 &&
+          repair.tasks.every((task) => task.reviewStatus === 'APPROVED');
+
+        if (!readyForAcceptance) {
+          return <span className="text-xs text-gray-500">Ожидает готовности</span>;
+        }
+
+        return (
+          <Button
+            size="sm"
+            onClick={() => {
+              void (async () => {
+                setError(null);
+                setAcceptingRepairRequestId(repair.shipId);
+                try {
+                  await acceptRepairRequestByClient(repair.shipId);
+                  await loadRepairs();
+                } catch {
+                  setError('Не удалось подтвердить приемку');
+                } finally {
+                  setAcceptingRepairRequestId(null);
+                }
+              })();
+            }}
+            disabled={acceptingRepairRequestId === repair.shipId}
+          >
+            {acceptingRepairRequestId === repair.shipId ? 'Подтверждение...' : 'Подтвердить'}
+          </Button>
+        );
+      },
+    });
+  }
 
   const handleSort = (column: keyof ExtendedRepair) => {
     if (sortBy === column) {

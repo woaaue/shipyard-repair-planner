@@ -24,6 +24,9 @@ export interface Repair {
   manager: string;
   operatorId?: number;
   operatorFullName?: string;
+  requestStatus?: string;
+  clientAccepted?: boolean;
+  acceptanceAction?: string;
 }
 
 export interface RepairTask {
