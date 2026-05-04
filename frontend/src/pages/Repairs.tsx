@@ -20,10 +20,11 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { createRepairRequest, getRepairRequests } from '../services/repairRequests';
-import { getRepairs } from '../services/repairs';
+import { getRepairs, updateRepairOperator } from '../services/repairs';
 import { getWorkItems } from '../services/workItems';
 import { useAuth } from '../context/AuthContext';
 import { createShip, getShips } from '../services/ships';
+import { getSubordinates } from '../services/users';
 
 function toDateString(input?: string | null): string {
   if (!input) return new Date().toISOString().slice(0, 10);
@@ -37,6 +38,7 @@ export default function Repairs() {
 
   const [repairs, setRepairs] = useState<ExtendedRepair[]>([]);
   const [ships, setShips] = useState<Array<{ id: number; name: string; imo: string }>>([]);
+  const [operators, setOperators] = useState<Array<{ id: number; fullName: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,14 +53,23 @@ export default function Repairs() {
     setLoading(true);
     setError(null);
     try {
+      const repairFilters =
+        user?.role === 'operator' && typeof user.id === 'number'
+          ? { operatorId: user.id }
+          : undefined;
+
       const [repairsData, requestsData, workItemsData, shipsData] = await Promise.all([
-        getRepairs(),
+        getRepairs(repairFilters),
         getRepairRequests(),
         getWorkItems(),
         getShips(),
       ]);
 
       const requestMap = new Map(requestsData.map((request) => [request.id, request]));
+      const subordinateOperators =
+        user?.role === 'dispatcher' && typeof user.id === 'number'
+          ? (await getSubordinates(user.id)).filter((member) => member.role === 'operator')
+          : [];
 
       const mapped = repairsData.map((repair) => {
         const request = requestMap.get(repair.shipId);
@@ -78,7 +89,7 @@ export default function Repairs() {
           shipName: request?.shipName ?? repair.shipName,
           repairType: tasks.length > 0 ? 'Текущий ремонт' : 'Доковый ремонт',
           priority: 'средний',
-          manager: 'Не назначен',
+          manager: repair.operatorFullName ?? 'Не назначен',
           startDate: toDateString(repair.actualStartDate ?? repair.startDate),
           endDate: toDateString(repair.actualEndDate ?? repair.endDate),
           tasks,
@@ -87,6 +98,7 @@ export default function Repairs() {
 
       setRepairs(mapped);
       setShips(shipsData.map((ship) => ({ id: ship.id, name: ship.name, imo: ship.imo })));
+      setOperators(subordinateOperators.map((operator) => ({ id: operator.id, fullName: operator.fullName })));
     } catch {
       setError('Не удалось загрузить ремонты');
     } finally {
@@ -96,7 +108,18 @@ export default function Repairs() {
 
   useEffect(() => {
     void loadRepairs();
-  }, []);
+  }, [user?.id, user?.role]);
+
+  const handleAssignOperator = async (repairId: number, operatorIdRaw: string) => {
+    setError(null);
+    try {
+      const operatorId = operatorIdRaw ? Number(operatorIdRaw) : null;
+      await updateRepairOperator(repairId, operatorId);
+      await loadRepairs();
+    } catch {
+      setError('Не удалось назначить оператора');
+    }
+  };
 
   const handleCloseForm = () => {
     setShowRepairForm(false);
@@ -277,13 +300,28 @@ export default function Repairs() {
       header: 'Менеджер',
       accessor: 'manager' as keyof ExtendedRepair,
       sortable: true,
-      cell: (value: string) => (
-        <div className="flex items-center">
-          <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-            <Users className="h-4 w-4 text-blue-600" />
+      cell: (value: string, repair: ExtendedRepair) => (
+        user?.role === 'dispatcher' ? (
+          <select
+            value={repair.operatorId ?? ''}
+            onChange={(event) => void handleAssignOperator(repair.id, event.target.value)}
+            className="text-sm border rounded px-2 py-1 max-w-[220px]"
+          >
+            <option value="">Не назначен</option>
+            {operators.map((operator) => (
+              <option key={operator.id} value={operator.id}>
+                {operator.fullName}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="flex items-center">
+            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+              <Users className="h-4 w-4 text-blue-600" />
+            </div>
+            <span className="font-medium text-gray-900">{value}</span>
           </div>
-          <span className="font-medium text-gray-900">{value}</span>
-        </div>
+        )
       ),
     },
   ];
