@@ -7,21 +7,21 @@ import { getDocks } from '../services/docks';
 import type { ExtendedRepair } from '../types/repair';
 
 const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
+  'Январь',
+  'Февраль',
+  'Март',
+  'Апрель',
+  'Май',
+  'Июнь',
+  'Июль',
+  'Август',
+  'Сентябрь',
+  'Октябрь',
+  'Ноябрь',
+  'Декабрь',
 ];
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 const STATUS_COLORS: Record<string, string> = {
   'в работе': 'bg-blue-500',
@@ -48,7 +48,7 @@ export default function Calendar() {
         setRepairs(repairsData);
         setDocks(docksData.map((dock) => dock.name));
       } catch {
-        setError('Failed to load calendar data.');
+        setError('Не удалось загрузить календарь ремонтов.');
       } finally {
         setIsLoading(false);
       }
@@ -103,7 +103,7 @@ export default function Calendar() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Repair calendar</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Календарь ремонтов</h1>
 
         <div className="flex items-center gap-4">
           <select
@@ -111,7 +111,7 @@ export default function Calendar() {
             onChange={(e) => setSelectedDock(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All docks</option>
+            <option value="">Все доки</option>
             {docks.map((dock) => (
               <option key={dock} value={dock}>
                 {dock}
@@ -139,7 +139,7 @@ export default function Calendar() {
         </div>
 
         {isLoading ? (
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-gray-500">Загрузка...</div>
         ) : (
           <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
             {DAYS.map((day) => (
@@ -177,7 +177,7 @@ export default function Calendar() {
                             {repair.shipName}
                           </div>
                         ))}
-                        {dayRepairs.length > 2 && <div className="text-xs text-gray-500">+{dayRepairs.length - 2} more</div>}
+                        {dayRepairs.length > 2 && <div className="text-xs text-gray-500">+{dayRepairs.length - 2} еще</div>}
                       </div>
                     </>
                   )}
@@ -189,7 +189,7 @@ export default function Calendar() {
       </Card>
 
       <Card>
-        <h3 className="font-semibold mb-4">Status legend</h3>
+        <h3 className="font-semibold mb-4">Легенда статусов</h3>
         <div className="flex flex-wrap gap-4">
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
             <div key={status} className="flex items-center gap-2">

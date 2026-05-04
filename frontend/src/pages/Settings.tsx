@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 import { createDock, deleteDock, getDocks } from '../services/docks';
 import type { Dock } from '../services/docks';
 
-const REPAIR_TYPES = ['Dry Dock', 'Current Repair', 'Intermediate Repair', 'Major Repair', 'Emergency Repair'];
+const REPAIR_TYPES = ['Доковый ремонт', 'Текущий ремонт', 'Средний ремонт', 'Капитальный ремонт', 'Аварийный ремонт'];
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<'general' | 'docks' | 'repairs'>('general');
@@ -24,7 +24,7 @@ export default function Settings() {
       const data = await getDocks();
       setDocks(data);
     } catch {
-      setError('Failed to load docks.');
+      setError('Не удалось загрузить список доков.');
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +56,7 @@ export default function Settings() {
       setShowAddDock(false);
       await loadDocks();
     } catch {
-      setError('Failed to create dock.');
+      setError('Не удалось создать док.');
     }
   };
 
@@ -65,21 +65,21 @@ export default function Settings() {
       await deleteDock(dockId);
       setDocks((prev) => prev.filter((dock) => dock.id !== dockId));
     } catch {
-      setError('Failed to delete dock.');
+      setError('Не удалось удалить док.');
     }
   };
 
   const tabs = [
-    { id: 'general', name: 'General' },
-    { id: 'docks', name: 'Docks' },
-    { id: 'repairs', name: 'Repair Types' },
+    { id: 'general', name: 'Общие' },
+    { id: 'docks', name: 'Доки' },
+    { id: 'repairs', name: 'Типы ремонтов' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <SettingsIcon className="h-8 w-8 text-gray-600" />
-        <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Системные настройки</h1>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
@@ -102,27 +102,27 @@ export default function Settings() {
 
       {activeTab === 'general' && (
         <Card>
-          <h2 className="font-semibold mb-4">General Settings</h2>
+          <h2 className="font-semibold mb-4">Общие настройки</h2>
           <div className="space-y-4 max-w-lg">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Название организации</label>
               <input
                 type="text"
-                defaultValue="Dock Plan"
+                defaultValue="Shipyard Repair Planner"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Валюта</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>RUB (R)</option>
+                <option>RUB (₽)</option>
                 <option>USD ($)</option>
                 <option>EUR (EUR)</option>
               </select>
             </div>
             <Button>
               <Save className="h-4 w-4 mr-2" />
-              Save changes
+              Сохранить изменения
             </Button>
           </div>
         </Card>
@@ -131,10 +131,10 @@ export default function Settings() {
       {activeTab === 'docks' && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Dock Management</h2>
+            <h2 className="font-semibold">Управление доками</h2>
             <Button size="sm" onClick={() => setShowAddDock(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              Add dock
+              Добавить док
             </Button>
           </div>
 
@@ -144,28 +144,28 @@ export default function Settings() {
                 type="text"
                 value={newDockName}
                 onChange={(e) => setNewDockName(e.target.value)}
-                placeholder="Dock name"
+                placeholder="Название дока"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
               <input
                 type="number"
                 value={newDockLength}
                 onChange={(e) => setNewDockLength(e.target.value)}
-                placeholder="Length (m)"
+                placeholder="Длина (м)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
               <input
                 type="number"
                 value={newDockShipyardId}
                 onChange={(e) => setNewDockShipyardId(e.target.value)}
-                placeholder="Shipyard ID"
+                placeholder="ID верфи"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 min={1}
               />
               <div className="flex gap-2">
-                <Button onClick={handleAddDock}>Create</Button>
+                <Button onClick={handleAddDock}>Создать</Button>
                 <Button variant="secondary" onClick={() => setShowAddDock(false)}>
-                  Cancel
+                  Отмена
                 </Button>
               </div>
             </div>
@@ -173,13 +173,13 @@ export default function Settings() {
 
           <div className="space-y-3">
             {isLoading ? (
-              <div className="text-gray-500 text-center py-4">Loading...</div>
+              <div className="text-gray-500 text-center py-4">Загрузка...</div>
             ) : (
               docks.map((dock) => (
                 <div key={dock.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <div className="font-medium">{dock.name}</div>
-                    <div className="text-sm text-gray-500">Length: {dock.length}m</div>
+                    <div className="text-sm text-gray-500">Длина: {dock.length} м</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
@@ -187,12 +187,12 @@ export default function Settings() {
                         dock.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {dock.status}
+                      {dock.status === 'active' ? 'Активен' : 'Неактивен'}
                     </span>
                     <button
                       className="text-gray-400 hover:text-red-600"
                       onClick={() => void handleDeleteDock(dock.id)}
-                      aria-label={`Delete dock ${dock.name}`}
+                      aria-label={`Удалить док ${dock.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -207,10 +207,10 @@ export default function Settings() {
       {activeTab === 'repairs' && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Repair Types</h2>
+            <h2 className="font-semibold">Типы ремонтов</h2>
             <Button size="sm" disabled>
               <Plus className="h-4 w-4 mr-1" />
-              Add type
+              Добавить тип
             </Button>
           </div>
           <div className="space-y-2">
