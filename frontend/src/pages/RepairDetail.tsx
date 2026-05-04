@@ -9,7 +9,7 @@ import ProgressCircle from '../components/ui/ProgressCircle';
 import Modal from '../components/ui/Modal';
 import { useAuth } from '../context/AuthContext';
 import { getRepair, updateRepairStatus, type BackendRepairStatus } from '../services/repairs';
-import { getRepairRequest } from '../services/repairRequests';
+import { acceptRepairRequestByClient, getRepairRequest, type RepairRequestResponse } from '../services/repairRequests';
 import { getWorkItems } from '../services/workItems';
 import type { ExtendedRepair } from '../types/repair';
 
@@ -33,9 +33,11 @@ export default function RepairDetail() {
   const { user } = useAuth();
 
   const [repair, setRepair] = useState<ExtendedRepair | null>(null);
+  const [repairRequest, setRepairRequest] = useState<RepairRequestResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [newPriority, setNewPriority] = useState<string>('средний');
 
@@ -62,7 +64,8 @@ export default function RepairDetail() {
         completed: item.status === 'COMPLETED',
         estimatedHours: item.estimatedHours,
         actualHours: item.actualHours,
-        worker: 'Не назначен',
+        worker: item.assigneeFullName ?? 'Не назначен',
+        reviewStatus: item.reviewStatus,
       }));
 
       const mapped: ExtendedRepair = {
@@ -73,13 +76,17 @@ export default function RepairDetail() {
         repairType: (tasks.length > 0 ? 'Текущий ремонт' : 'Доковый ремонт') as ExtendedRepair['repairType'],
         priority: 'средний',
         manager: 'Не назначен',
+        requestStatus: request?.status,
+        clientAccepted: request?.clientAccepted ?? false,
         tasks,
       };
 
       setRepair(mapped);
+      setRepairRequest(request);
       setNewPriority(mapped.priority);
     } catch {
       setRepair(null);
+      setRepairRequest(null);
     } finally {
       setIsLoading(false);
     }
@@ -112,8 +119,17 @@ export default function RepairDetail() {
   const canEdit =
     user?.role === 'admin' ||
     user?.role === 'dispatcher' ||
-    user?.role === 'operator' ||
+    (user?.role === 'operator' && typeof user.id === 'number' && repair.operatorId === user.id) ||
     (user?.role === 'master' && user.dock === repair.dock);
+
+  const canAcceptByClient =
+    user?.role === 'client' &&
+    typeof user.id === 'number' &&
+    repairRequest?.clientId === user.id &&
+    repair.status === 'завершён' &&
+    !repair.clientAccepted &&
+    repair.tasks.length > 0 &&
+    repair.tasks.every((task) => task.reviewStatus === 'APPROVED');
 
   const handleStatusUpdate = async () => {
     setActionError(null);
@@ -132,6 +148,20 @@ export default function RepairDetail() {
       setActionError('Не удалось обновить статус ремонта');
     } finally {
       setIsStatusUpdating(false);
+    }
+  };
+
+  const handleClientAcceptance = async () => {
+    if (!repairRequest) return;
+    setActionError(null);
+    setIsAccepting(true);
+    try {
+      await acceptRepairRequestByClient(repairRequest.id);
+      await loadRepair();
+    } catch {
+      setActionError('Не удалось подтвердить приемку ремонта');
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -272,6 +302,26 @@ export default function RepairDetail() {
                   <Button className="w-full" onClick={handleStatusUpdate} disabled={isStatusUpdating}>
                     {isStatusUpdating ? 'Обновление...' : 'Обновить статус'}
                   </Button>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {user?.role === 'client' && (
+            <Card>
+              <h2 className="font-semibold mb-4">Приемка клиента</h2>
+              <div className="space-y-3 text-sm">
+                <div className="text-gray-600">
+                  Статус: {repair.clientAccepted ? 'Принято клиентом' : 'Не принято'}
+                </div>
+                {canAcceptByClient ? (
+                  <Button className="w-full" onClick={handleClientAcceptance} disabled={isAccepting}>
+                    {isAccepting ? 'Подтверждение...' : 'Подтвердить приемку'}
+                  </Button>
+                ) : (
+                  <div className="text-gray-500">
+                    {repair.clientAccepted ? 'Действие не требуется.' : 'Приемка станет доступна после завершения и проверки всех работ.'}
+                  </div>
                 )}
               </div>
             </Card>
