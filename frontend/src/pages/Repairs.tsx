@@ -250,6 +250,27 @@ export default function Repairs() {
       ),
     },
     {
+      header: 'Проверка работ',
+      accessor: 'tasks' as keyof ExtendedRepair,
+      align: 'center' as const,
+      cell: (_value: ExtendedRepair['tasks'], repair: ExtendedRepair) => {
+        const totalTasks = repair.tasks.length;
+        if (totalTasks === 0) {
+          return <span className="text-xs text-gray-500">Нет данных</span>;
+        }
+
+        const approved = repair.tasks.filter((task) => task.completed).length;
+        const pending = totalTasks - approved;
+
+        return (
+          <div className="text-xs text-center">
+            <div className="font-medium text-gray-800">{approved}/{totalTasks} принято</div>
+            <div className="text-gray-500">{pending} ожидает</div>
+          </div>
+        );
+      },
+    },
+    {
       header: 'Тип / Приоритет',
       accessor: 'repairType' as keyof ExtendedRepair,
       sortable: true,
@@ -319,7 +340,9 @@ export default function Repairs() {
             <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
               <Users className="h-4 w-4 text-blue-600" />
             </div>
-            <span className="font-medium text-gray-900">{value}</span>
+            <span className="font-medium text-gray-900">
+              {user?.role === 'client' ? 'Назначен верфью' : value}
+            </span>
           </div>
         )
       ),
