@@ -8,6 +8,7 @@ import { getRepairs } from '../services/repairs';
 import { getRepairRequests } from '../services/repairRequests';
 import { getSubordinates } from '../services/users';
 import { useAuth } from '../context/AuthContext';
+import { WORK_REVIEW_STATUS_LABELS, WORK_STATUS_LABELS } from '../constants/labels';
 
 type TaskRow = WorkItemResponse & {
   repairEntityId: number | null;
@@ -179,9 +180,13 @@ export default function Tasks() {
                         {task.shipName} • {task.dock}
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">{task.status}</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                      {WORK_STATUS_LABELS[task.status] ?? task.status}
+                    </span>
                   </div>
-                  <div className="text-xs text-gray-500">Проверка: {task.reviewStatus}</div>
+                  <div className="text-xs text-gray-500">
+                    Проверка: {WORK_REVIEW_STATUS_LABELS[task.reviewStatus] ?? task.reviewStatus}
+                  </div>
                   <div className="flex items-center justify-between mt-3">
                     <div className="text-sm text-gray-600">
                       {task.actualHours || task.estimatedHours}ч / план {task.estimatedHours}ч
