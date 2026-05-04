@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import { getWorkItems, updateWorkItemStatus, type WorkItemResponse } from '../services/workItems';
 import { getRepairs } from '../services/repairs';
 import { getRepairRequests } from '../services/repairRequests';
+import { getSubordinates } from '../services/users';
 import { useAuth } from '../context/AuthContext';
 
 type TaskRow = WorkItemResponse & {
@@ -19,6 +20,7 @@ export default function Tasks() {
   const navigate = useNavigate();
 
   const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [subordinateIds, setSubordinateIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,10 +32,11 @@ export default function Tasks() {
         user?.role === 'worker' && typeof user.id === 'number'
           ? { assigneeId: user.id }
           : undefined;
-      const [items, repairs, requests] = await Promise.all([
+      const [items, repairs, requests, subordinates] = await Promise.all([
         getWorkItems(workItemFilters),
         getRepairs(),
         getRepairRequests(),
+        user?.role === 'master' && typeof user.id === 'number' ? getSubordinates(user.id) : Promise.resolve([]),
       ]);
       const repairsMap = new Map(repairs.map((repair) => [repair.id, repair]));
       const requestsMap = new Map(requests.map((request) => [request.id, request]));
@@ -50,6 +53,7 @@ export default function Tasks() {
       });
 
       setTasks(mapped);
+      setSubordinateIds(subordinates.map((member) => member.id));
     } catch {
       setError('Не удалось загрузить задачи');
     } finally {
@@ -66,16 +70,27 @@ export default function Tasks() {
     [tasks]
   );
   const completedTasks = useMemo(() => tasks.filter((task) => task.status === 'COMPLETED'), [tasks]);
+  const pendingReviewTasks = useMemo(
+    () => tasks.filter((task) => task.reviewStatus === 'PENDING_REVIEW'),
+    [tasks]
+  );
 
   const visiblePendingTasks = useMemo(() => {
     if (user?.role === 'worker') {
       return pendingTasks;
     }
-    if (user?.role === 'master' && user.dock) {
-      return pendingTasks.filter((task) => task.dock === user.dock);
+    if (user?.role === 'master') {
+      return pendingTasks.filter((task) => task.assigneeId !== null && subordinateIds.includes(task.assigneeId));
     }
     return pendingTasks;
-  }, [pendingTasks, user]);
+  }, [pendingTasks, subordinateIds, user]);
+
+  const visiblePendingReviewTasks = useMemo(() => {
+    if (user?.role === 'master') {
+      return pendingReviewTasks.filter((task) => task.assigneeId !== null && subordinateIds.includes(task.assigneeId));
+    }
+    return pendingReviewTasks;
+  }, [pendingReviewTasks, subordinateIds, user]);
 
   const handleCompleteTask = async (taskId: number) => {
     setError(null);
@@ -106,7 +121,7 @@ export default function Tasks() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
       {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 ${user?.role === 'master' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
         <Card>
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-500" />
@@ -154,6 +169,41 @@ export default function Tasks() {
             )}
           </div>
         </Card>
+
+        {user?.role === 'master' && (
+          <Card>
+            <h2 className="font-semibold mb-4 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-500" />
+              На проверке ({visiblePendingReviewTasks.length})
+            </h2>
+            <div className="space-y-3">
+              {visiblePendingReviewTasks.length === 0 ? (
+                <div className="text-gray-500 text-center py-4">Нет задач на проверке</div>
+              ) : (
+                visiblePendingReviewTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  >
+                    <div className="font-medium">{task.name}</div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {task.assigneeFullName || 'Не назначен'} • {task.shipName}
+                    </div>
+                    <div className="flex justify-end mt-3">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => navigate(`/repairs/${task.repairEntityId ?? 0}/tasks/${task.id}`)}
+                      >
+                        Открыть проверку
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card>
           <h2 className="font-semibold mb-4 flex items-center gap-2">
