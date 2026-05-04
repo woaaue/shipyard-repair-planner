@@ -45,6 +45,7 @@ export default function Repairs() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('все');
   const [dockFilter, setDockFilter] = useState<string>('все');
+  const [showOnlyUnassigned, setShowOnlyUnassigned] = useState(false);
   const [sortBy, setSortBy] = useState<keyof ExtendedRepair>('startDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showRepairForm, setShowRepairForm] = useState(searchParams.get('new') === 'true');
@@ -185,6 +186,9 @@ export default function Repairs() {
     if (dockFilter !== 'все') {
       result = result.filter((repair) => repair.dock === dockFilter);
     }
+    if (user?.role === 'dispatcher' && showOnlyUnassigned) {
+      result = result.filter((repair) => !repair.operatorId);
+    }
 
     result.sort((a, b) => {
       const aValue = a[sortBy];
@@ -198,13 +202,14 @@ export default function Repairs() {
       return 0;
     });
     return result;
-  }, [repairs, search, statusFilter, dockFilter, sortBy, sortDirection]);
+  }, [repairs, search, statusFilter, dockFilter, showOnlyUnassigned, sortBy, sortDirection, user?.role]);
 
   const stats = useMemo(() => {
     const total = repairs.length;
     const inProgress = repairs.filter((repair) => repair.status === 'в работе').length;
     const planned = repairs.filter((repair) => repair.status === 'запланирован').length;
     const completed = repairs.filter((repair) => repair.status === 'завершён').length;
+    const unassignedOperators = repairs.filter((repair) => !repair.operatorId).length;
     const totalBudget = repairs.reduce((sum, repair) => sum + repair.budget, 0);
     const totalSpent = repairs.reduce((sum, repair) => sum + repair.spent, 0);
     return {
@@ -212,6 +217,7 @@ export default function Repairs() {
       inProgress,
       planned,
       completed,
+      unassignedOperators,
       totalBudget,
       totalSpent,
       budgetUtilization: totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0,
@@ -326,6 +332,7 @@ export default function Repairs() {
           <select
             value={repair.operatorId ?? ''}
             onChange={(event) => void handleAssignOperator(repair.id, event.target.value)}
+            onClick={(event) => event.stopPropagation()}
             className="text-sm border rounded px-2 py-1 max-w-[220px]"
           >
             <option value="">Не назначен</option>
@@ -388,7 +395,7 @@ export default function Repairs() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
       {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-2 gap-4 ${user?.role === 'dispatcher' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
         <Card>
           <div className="text-center p-4">
             <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
@@ -413,10 +420,18 @@ export default function Repairs() {
             <p className="text-sm text-gray-600">Завершено</p>
           </div>
         </Card>
+        {user?.role === 'dispatcher' && (
+          <Card>
+            <div className="text-center p-4">
+              <p className="text-2xl font-bold text-amber-700">{stats.unassignedOperators}</p>
+              <p className="text-sm text-gray-600">Без оператора</p>
+            </div>
+          </Card>
+        )}
       </div>
 
       <Card title="Фильтры и поиск">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={`grid grid-cols-1 gap-4 ${user?.role === 'dispatcher' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Поиск</label>
             <div className="relative">
@@ -461,6 +476,18 @@ export default function Repairs() {
               ))}
             </select>
           </div>
+          {user?.role === 'dispatcher' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Очередь решений</label>
+              <Button
+                variant={showOnlyUnassigned ? 'primary' : 'outline'}
+                className="w-full"
+                onClick={() => setShowOnlyUnassigned((value) => !value)}
+              >
+                {showOnlyUnassigned ? 'Показать все ремонты' : 'Только без оператора'}
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -475,6 +502,7 @@ export default function Repairs() {
                 setSearch('');
                 setStatusFilter('все');
                 setDockFilter('все');
+                setShowOnlyUnassigned(false);
               }}
             >
               Сбросить фильтры
