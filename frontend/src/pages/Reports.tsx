@@ -4,6 +4,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { getRepairs } from '../services/repairs';
+import { getSubordinates } from '../services/users';
 import type { ExtendedRepair } from '../types/repair';
 
 type ReportType = 'repairs' | 'ships' | 'budget' | 'docks';
@@ -23,8 +24,18 @@ export default function Reports() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getRepairs();
-        setRepairs(data);
+        const baseRepairs =
+          user?.role === 'operator' && typeof user.id === 'number'
+            ? await getRepairs({ operatorId: user.id })
+            : await getRepairs();
+
+        if (user?.role === 'dispatcher' && typeof user.id === 'number') {
+          const subordinates = await getSubordinates(user.id);
+          const operatorIds = new Set(subordinates.filter((member) => member.role === 'operator').map((member) => member.id));
+          setRepairs(baseRepairs.filter((repair) => typeof repair.operatorId === 'number' && operatorIds.has(repair.operatorId)));
+        } else {
+          setRepairs(baseRepairs);
+        }
       } catch {
         setError('Failed to load report data.');
       } finally {
@@ -33,14 +44,10 @@ export default function Reports() {
     };
 
     void loadRepairs();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const filteredRepairs = useMemo(() => {
     let current = [...repairs];
-
-    if (user?.role === 'operator' && user.dock) {
-      current = current.filter((repair) => repair.dock === user.dock);
-    }
 
     if (user?.role === 'client' && user.shipId) {
       current = current.filter((repair) => repair.shipId === user.shipId);

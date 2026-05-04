@@ -11,6 +11,7 @@ import { getRepairs } from '../services/repairs';
 import { getRepairRequests } from '../services/repairRequests';
 import { getWorkItems } from '../services/workItems';
 import { getDocks } from '../services/docks';
+import { getSubordinates } from '../services/users';
 
 interface QuickAction {
   label: string;
@@ -53,15 +54,38 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
       try {
-        const [repairsData, repairRequestsData, workItemsData, docksData] = await Promise.all([
-          getRepairs(),
-          getRepairRequests(),
-          getWorkItems(),
+        const repairsPromise =
+          user?.role === 'operator' && typeof user.id === 'number'
+            ? getRepairs({ operatorId: user.id })
+            : getRepairs();
+        const repairRequestsPromise =
+          user?.role === 'client' && typeof user.id === 'number'
+            ? getRepairRequests({ clientId: user.id })
+            : getRepairRequests();
+        const workItemsPromise =
+          user?.role === 'worker' && typeof user.id === 'number'
+            ? getWorkItems({ assigneeId: user.id })
+            : getWorkItems();
+
+        const [repairsData, repairRequestsData, workItemsData, docksData, subordinates] = await Promise.all([
+          repairsPromise,
+          repairRequestsPromise,
+          workItemsPromise,
           getDocks(),
+          (user?.role === 'master' || user?.role === 'dispatcher') && typeof user.id === 'number'
+            ? getSubordinates(user.id)
+            : Promise.resolve([]),
         ]);
+
+        const subordinateIds = new Set(subordinates.map((item) => item.id));
+        const scopedWorkItems =
+          user?.role === 'master'
+            ? workItemsData.filter((item) => item.assigneeId !== null && subordinateIds.has(item.assigneeId))
+            : workItemsData;
+
         setRepairs(repairsData);
         setRepairRequestsCount(repairRequestsData.length);
-        setWorkItemsCount(workItemsData.length);
+        setWorkItemsCount(scopedWorkItems.length);
         setDocksCount(docksData.length);
       } catch {
         setError('Не удалось загрузить данные дашборда');
@@ -71,7 +95,7 @@ export default function Dashboard() {
     };
 
     void loadDashboard();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const activeRepairs = useMemo(
     () => repairs.filter((repair) => repair.status === 'в работе' || repair.status === 'запланирован'),
