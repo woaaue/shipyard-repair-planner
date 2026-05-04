@@ -2,11 +2,21 @@ import { useState } from 'react';
 import { Save, UserPlus } from 'lucide-react';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
+import type { User } from '../../context/AuthContext';
 
 interface UserFormProps {
   onClose: () => void;
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: {
+    fullName: string;
+    email: string;
+    password: string;
+    role: User['role'];
+    dock?: string;
+    shipId?: string;
+    reportsToUserId?: number;
+  }) => void;
   docks?: string[];
+  users?: User[];
 }
 
 const ROLES = [
@@ -17,26 +27,38 @@ const ROLES = [
   { value: 'client', label: 'Владелец судна' }
 ] as const;
 
-export default function UserForm({ onClose, onSubmit, docks = [] }: UserFormProps) {
+const SUPERVISOR_ROLE_BY_ROLE: Partial<Record<User['role'], User['role']>> = {
+  worker: 'master',
+  master: 'operator',
+  operator: 'dispatcher',
+};
+
+export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: UserFormProps) {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
-    role: ROLES[4].value as string,
+    role: ROLES[4].value as User['role'],
     dock: '',
-    shipId: ''
+    shipId: '',
+    reportsToUserId: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        reportsToUserId: formData.reportsToUserId ? Number(formData.reportsToUserId) : undefined,
+      });
     }
     onClose();
   };
 
   const showDock = ['operator', 'master', 'worker'].includes(formData.role);
   const showShipId = formData.role === 'client';
+  const requiredSupervisorRole = SUPERVISOR_ROLE_BY_ROLE[formData.role];
+  const supervisorCandidates = users.filter((candidate) => candidate.role === requiredSupervisorRole);
 
   return (
     <Modal isOpen={true} onClose={onClose} title="Добавить пользователя" icon={UserPlus}>
@@ -82,7 +104,7 @@ export default function UserForm({ onClose, onSubmit, docks = [] }: UserFormProp
             <label className="block text-sm font-medium text-gray-700 mb-1">Роль *</label>
             <select
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as User['role'] })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -120,6 +142,25 @@ export default function UserForm({ onClose, onSubmit, docks = [] }: UserFormProp
                 placeholder="9456789"
                 required
               />
+            </div>
+          )}
+
+          {requiredSupervisorRole && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Руководитель *</label>
+              <select
+                value={formData.reportsToUserId}
+                onChange={(e) => setFormData({ ...formData, reportsToUserId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Выберите руководителя</option>
+                {supervisorCandidates.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {candidate.fullName}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
         </div>
