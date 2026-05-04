@@ -292,7 +292,7 @@ export default function UserDetail() {
               <h2 className="font-semibold mb-4">Действия</h2>
               <div className="space-y-2">
                 <Button variant="secondary" className="w-full" disabled>
-                  Редактирование (скоро)
+                  Редактирование недоступно
                 </Button>
                 <Button variant="danger" className="w-full" onClick={() => setShowBlockModal(true)} disabled={isActionLoading}>
                   <UserX className="h-4 w-4 mr-2" />

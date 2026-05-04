@@ -296,7 +296,7 @@ export default function RepairDetail() {
                 </Button>
                 <Button variant="secondary" className="w-full" disabled>
                   <Calendar className="h-4 w-4 mr-2" />
-                  Назначить док (скоро)
+                  Назначение дока недоступно
                 </Button>
                 {user?.role !== 'client' && (
                   <Button className="w-full" onClick={handleStatusUpdate} disabled={isStatusUpdating}>
