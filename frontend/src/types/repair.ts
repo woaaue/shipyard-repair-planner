@@ -22,6 +22,8 @@ export interface Repair {
   budget: number;
   spent: number;
   manager: string;
+  operatorId?: number;
+  operatorFullName?: string;
 }
 
 export interface RepairTask {

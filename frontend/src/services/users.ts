@@ -20,7 +20,10 @@ interface BackendUserResponse {
   lastName: string;
   patronymic: string | null;
   role: BackendUserRole;
+  enabled: boolean;
   dock: BackendDockRef | null;
+  reportsToUserId: number | null;
+  reportsToFullName: string | null;
   createdAt: string;
 }
 
@@ -32,6 +35,7 @@ interface BackendCreateUserRequest {
   patronymic?: string | null;
   role: BackendUserRole;
   dockId?: number | null;
+  reportsToUserId?: number | null;
 }
 
 interface BackendUpdateUserRequest {
@@ -41,6 +45,7 @@ interface BackendUpdateUserRequest {
   patronymic?: string | null;
   role: BackendUserRole;
   dockId?: number | null;
+  reportsToUserId?: number | null;
 }
 
 interface BackendResetPasswordResponse {
@@ -73,6 +78,9 @@ function toUiUser(user: BackendUserResponse): User {
     fullName,
     role: backendToUiRole[user.role] ?? 'client',
     dock: user.dock?.name ?? undefined,
+    enabled: user.enabled,
+    reportsToUserId: user.reportsToUserId,
+    reportsToFullName: user.reportsToFullName,
   };
 }
 
@@ -115,6 +123,7 @@ export const createUser = async (
     patronymic: names.patronymic,
     role: uiToBackendRole[data.role],
     dockId: data.dockId ?? null,
+    reportsToUserId: data.reportsToUserId ?? null,
   };
 
   const response = await api.post<BackendUserResponse>('/users', payload);
@@ -133,6 +142,7 @@ export const updateUser = async (
     patronymic: names.patronymic,
     role: uiToBackendRole[data.role],
     dockId: data.dockId ?? null,
+    reportsToUserId: data.reportsToUserId ?? null,
   };
 
   const response = await api.put<BackendUserResponse>(`/users/${id}`, payload);
@@ -152,4 +162,9 @@ export const unblockUser = async (id: number): Promise<User> => {
 export const resetPassword = async (id: number): Promise<string> => {
   const response = await api.post<BackendResetPasswordResponse>(`/users/${id}/reset-password`);
   return response.data.tempPassword;
+};
+
+export const getSubordinates = async (id: number): Promise<User[]> => {
+  const response = await api.get<BackendUserResponse[]>(`/users/${id}/subordinates`);
+  return response.data.map(toUiUser);
 };

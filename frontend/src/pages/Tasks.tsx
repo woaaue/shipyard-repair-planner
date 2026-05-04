@@ -26,7 +26,15 @@ export default function Tasks() {
     setLoading(true);
     setError(null);
     try {
-      const [items, repairs, requests] = await Promise.all([getWorkItems(), getRepairs(), getRepairRequests()]);
+      const workItemFilters =
+        user?.role === 'worker' && typeof user.id === 'number'
+          ? { assigneeId: user.id }
+          : undefined;
+      const [items, repairs, requests] = await Promise.all([
+        getWorkItems(workItemFilters),
+        getRepairs(),
+        getRepairRequests(),
+      ]);
       const repairsMap = new Map(repairs.map((repair) => [repair.id, repair]));
       const requestsMap = new Map(requests.map((request) => [request.id, request]));
 
@@ -51,7 +59,7 @@ export default function Tasks() {
 
   useEffect(() => {
     void loadTasks();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const pendingTasks = useMemo(
     () => tasks.filter((task) => task.status === 'PENDING' || task.status === 'IN_PROGRESS'),
@@ -122,6 +130,7 @@ export default function Tasks() {
                     </div>
                     <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">{task.status}</span>
                   </div>
+                  <div className="text-xs text-gray-500">Проверка: {task.reviewStatus}</div>
                   <div className="flex items-center justify-between mt-3">
                     <div className="text-sm text-gray-600">
                       {task.actualHours || task.estimatedHours}ч / план {task.estimatedHours}ч

@@ -141,6 +141,7 @@ export default function Users() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Email</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Роль</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Док</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Руководитель</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Статус</th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Действия</th>
                 </tr>
@@ -163,8 +164,15 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{user.dock || '-'}</td>
+                    <td className="px-4 py-3 text-gray-600">{user.reportsToFullName || '-'}</td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Активен</span>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          user.enabled === false ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {user.enabled === false ? 'Заблокирован' : 'Активен'}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button

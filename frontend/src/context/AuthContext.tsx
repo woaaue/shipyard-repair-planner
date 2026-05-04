@@ -9,6 +9,9 @@ export interface User {
   fullName: string;
   role: 'admin' | 'dispatcher' | 'operator' | 'client' | 'master' | 'worker';
   dock?: string;
+  enabled?: boolean;
+  reportsToUserId?: number | null;
+  reportsToFullName?: string | null;
   shipId?: number;
   avatar?: string;
 }
