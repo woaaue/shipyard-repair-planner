@@ -1,10 +1,17 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Clock, FileText } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { useAuth } from '../context/AuthContext';
-import { getWorkItem, updateWorkItemStatus, type WorkItemResponse } from '../services/workItems';
+import { useAuth, type User } from '../context/AuthContext';
+import { getSubordinates } from '../services/users';
+import {
+  getWorkItem,
+  updateWorkItemStatus,
+  updateWorkItemAssignee,
+  updateWorkItemReview,
+  type WorkItemResponse,
+} from '../services/workItems';
 
 export default function TaskDetail() {
   const { repairId, taskId } = useParams();
@@ -12,9 +19,13 @@ export default function TaskDetail() {
   const { user } = useAuth();
 
   const [task, setTask] = useState<WorkItemResponse | null>(null);
+  const [subordinates, setSubordinates] = useState<User[]>([]);
+  const [selectedAssignee, setSelectedAssignee] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const numericTaskId = Number(taskId || '0');
   const numericRepairId = Number(repairId || '0');
@@ -41,6 +52,29 @@ export default function TaskDetail() {
     void loadTask();
   }, [numericTaskId]);
 
+  useEffect(() => {
+    const loadSubordinates = async () => {
+      if (user?.role !== 'master' || typeof user.id !== 'number') {
+        setSubordinates([]);
+        return;
+      }
+
+      try {
+        const data = await getSubordinates(user.id);
+        setSubordinates(data.filter((member) => member.role === 'worker'));
+      } catch {
+        setSubordinates([]);
+      }
+    };
+
+    void loadSubordinates();
+  }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    if (!task) return;
+    setSelectedAssignee(task.assigneeId ? String(task.assigneeId) : '');
+  }, [task]);
+
   if (loading) {
     return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
   }
@@ -58,6 +92,7 @@ export default function TaskDetail() {
 
   const completed = task.status === 'COMPLETED';
   const canEdit = user?.role === 'master' || user?.role === 'dispatcher' || user?.role === 'admin';
+  const canReview = user?.role === 'master';
 
   const handleComplete = async () => {
     setActionError(null);
@@ -69,6 +104,33 @@ export default function TaskDetail() {
       setActionError('Не удалось завершить задачу');
     } finally {
       setIsCompleting(false);
+    }
+  };
+
+  const handleAssign = async () => {
+    setActionError(null);
+    setIsAssigning(true);
+    try {
+      const assigneeId = selectedAssignee ? Number(selectedAssignee) : null;
+      await updateWorkItemAssignee(task.id, assigneeId);
+      await loadTask();
+    } catch {
+      setActionError('Не удалось назначить исполнителя');
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleReview = async (reviewStatus: 'APPROVED' | 'REJECTED') => {
+    setActionError(null);
+    setIsReviewing(true);
+    try {
+      await updateWorkItemReview(task.id, reviewStatus);
+      await loadTask();
+    } catch {
+      setActionError('Не удалось обновить результат проверки');
+    } finally {
+      setIsReviewing(false);
     }
   };
 
@@ -113,6 +175,14 @@ export default function TaskDetail() {
                   {completed ? 'Выполнено' : 'В работе'}
                 </div>
               </div>
+              <div>
+                <div className="text-sm text-gray-500">Проверка</div>
+                <div className="font-medium">{task.reviewStatus}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Исполнитель</div>
+                <div className="font-medium">{task.assigneeFullName || 'Не назначен'}</div>
+              </div>
               {task.description && (
                 <div>
                   <div className="text-sm text-gray-500">Описание</div>
@@ -155,6 +225,52 @@ export default function TaskDetail() {
                 <Button variant="secondary" className="w-full" disabled>
                   Редактировать (скоро)
                 </Button>
+              </div>
+            </Card>
+          )}
+
+          {canReview && (
+            <Card>
+              <h2 className="font-semibold mb-4">Назначение и проверка</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Исполнитель</label>
+                  <select
+                    value={selectedAssignee}
+                    onChange={(event) => setSelectedAssignee(event.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Не назначен</option>
+                    {subordinates.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  onClick={() => void handleAssign()}
+                  disabled={isAssigning}
+                >
+                  {isAssigning ? 'Сохранение...' : 'Назначить исполнителя'}
+                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => void handleReview('REJECTED')}
+                    disabled={isReviewing || task.reviewStatus !== 'PENDING_REVIEW'}
+                  >
+                    Вернуть
+                  </Button>
+                  <Button
+                    onClick={() => void handleReview('APPROVED')}
+                    disabled={isReviewing || task.reviewStatus !== 'PENDING_REVIEW'}
+                  >
+                    Принять
+                  </Button>
+                </div>
               </div>
             </Card>
           )}
