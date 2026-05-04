@@ -1,4 +1,5 @@
 import type { WorkCategory, WorkItemReviewStatus, WorkItemStatus } from '../services/workItems';
+import type { RepairRequestStatus } from '../services/repairRequests';
 
 export const WORK_CATEGORY_LABELS: Record<WorkCategory, string> = {
   HULL: 'Корпус',
@@ -26,4 +27,16 @@ export const WORK_STATUS_LABELS: Record<WorkItemStatus, string> = {
   IN_PROGRESS: 'В работе',
   COMPLETED: 'Выполнено',
   CANCELLED: 'Отменено',
+};
+
+export const REPAIR_REQUEST_STATUS_LABELS: Record<RepairRequestStatus, string> = {
+  DRAFT: 'Черновик',
+  SUBMITTED: 'Подана',
+  UNDER_REVIEW: 'На рассмотрении',
+  APPROVED: 'Согласована',
+  REJECTED: 'Отклонена',
+  IN_PROGRESS: 'В работе',
+  CLIENT_ACCEPTED: 'Принята клиентом',
+  COMPLETED: 'Завершена',
+  CANCELLED: 'Отменена',
 };
