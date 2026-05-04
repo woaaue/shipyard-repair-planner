@@ -1,8 +1,10 @@
+import { UI_STATUS_BADGE_CONFIG, UI_STATUS_COMPACT_LABELS } from '../../constants/labels';
+
 interface StatusBadgeProps {
   status: string;
   size?: 'sm' | 'md' | 'lg';
   showDot?: boolean;
-  compact?: boolean; // Новый пропс для компактного отображения
+  compact?: boolean;
 }
 
 export default function StatusBadge({ 
@@ -11,69 +13,12 @@ export default function StatusBadge({
   showDot = true,
   compact = false
 }: StatusBadgeProps) {
-  
-  // Компактные названия статусов для мобилок
-  const compactNames: Record<string, string> = {
-    'в ремонте': 'Ремонт',
-    'в плавании': 'Плавание',
-    'ожидает': 'Ожидает',
-    'в работе': 'В работе',
-    'запланирован': 'План',
-    'завершён': 'Готов',
-    'отменён': 'Отменён'
+  const displayName = compact ? UI_STATUS_COMPACT_LABELS[status] || status : status;
+  const { dotColor, bgColor, textColor } = UI_STATUS_BADGE_CONFIG[status] || {
+    dotColor: 'bg-gray-400',
+    bgColor: 'bg-gray-100',
+    textColor: 'text-gray-700',
   };
-
-  // Выбираем отображаемое имя
-  const displayName = compact ? compactNames[status] || status : status;
-
-  // Полная конфигурация для каждого статуса
-  const getStatusConfig = (status: string) => {
-    const configs: Record<string, { dotColor: string, bgColor: string, textColor: string }> = {
-      'в ремонте': {
-        dotColor: 'bg-orange-500',
-        bgColor: 'bg-orange-50',
-        textColor: 'text-orange-800'
-      },
-      'ожидает': {
-        dotColor: 'bg-red-500',
-        bgColor: 'bg-red-50',
-        textColor: 'text-red-800'
-      },
-      'в плавании': {
-        dotColor: 'bg-green-500',
-        bgColor: 'bg-green-50',
-        textColor: 'text-green-800'
-      },
-      'в работе': {
-        dotColor: 'bg-blue-500',
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-800'
-      },
-      'запланирован': {
-        dotColor: 'bg-purple-500',
-        bgColor: 'bg-purple-50',
-        textColor: 'text-purple-800'
-      },
-      'завершён': {
-        dotColor: 'bg-gray-500',
-        bgColor: 'bg-gray-50',
-        textColor: 'text-gray-800'
-      },
-      'отменён': {
-        dotColor: 'bg-gray-400',
-        bgColor: 'bg-gray-100',
-        textColor: 'text-gray-700'
-      }
-    };
-
-    return configs[status] || {
-      dotColor: 'bg-gray-400',
-      bgColor: 'bg-gray-100',
-      textColor: 'text-gray-700'
-    };
-  };
-
-  const { dotColor, bgColor, textColor } = getStatusConfig(status);
   
   const sizeClasses = {
     sm: 'px-2.5 py-1 text-xs',
@@ -81,7 +26,6 @@ export default function StatusBadge({
     lg: 'px-4 py-2 text-base'
   };
 
-  // Для компактного режима уменьшаем отступы
   const compactPadding = compact ? 'px-2 py-0.5' : '';
 
   return (
