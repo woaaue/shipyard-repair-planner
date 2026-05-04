@@ -34,6 +34,7 @@ export default function Users() {
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [hierarchyFilter, setHierarchyFilter] = useState<'all' | 'without_supervisor'>('all');
   const [showUserForm, setShowUserForm] = useState(false);
 
   const loadData = async () => {
@@ -62,9 +63,15 @@ export default function Users() {
         if (u.dock !== currentUser.dock) return false;
       }
       if (!q) return true;
-      return u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      const matchesSearch = u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+      if (hierarchyFilter === 'without_supervisor') {
+        const requiresSupervisor = ['worker', 'master', 'operator'].includes(u.role);
+        return requiresSupervisor && !u.reportsToUserId;
+      }
+      return true;
     });
-  }, [users, currentUser, searchQuery]);
+  }, [users, currentUser, hierarchyFilter, searchQuery]);
 
   const handleAddUser = async (formData: {
     fullName: string;
@@ -72,6 +79,7 @@ export default function Users() {
     password: string;
     role: AuthUser['role'];
     dock?: string;
+    reportsToUserId?: number;
   }) => {
     const dockId = formData.dock
       ? docks.find((dock) => dock.name === formData.dock)?.id
@@ -86,6 +94,7 @@ export default function Users() {
         role: formData.role,
         dock: formData.dock,
         dockId,
+        reportsToUserId: formData.reportsToUserId,
       });
 
       setShowUserForm(false);
@@ -128,6 +137,14 @@ export default function Users() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <select
+            value={hierarchyFilter}
+            onChange={(e) => setHierarchyFilter(e.target.value as 'all' | 'without_supervisor')}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Все пользователи</option>
+            <option value="without_supervisor">Без руководителя</option>
+          </select>
         </div>
 
         {isLoading ? (
@@ -199,6 +216,7 @@ export default function Users() {
           onClose={() => setShowUserForm(false)}
           onSubmit={handleAddUser}
           docks={docks.map((dock) => dock.name)}
+          users={users}
         />
       )}
     </div>

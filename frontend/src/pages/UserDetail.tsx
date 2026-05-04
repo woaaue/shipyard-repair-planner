@@ -4,8 +4,8 @@ import { ArrowLeft, Mail, Shield, MapPin, Calendar, UserX, RefreshCw, ShieldChec
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { useAuth } from '../context/AuthContext';
-import { blockUser, getUser, resetPassword, unblockUser } from '../services/users';
+import { useAuth, type User as AuthUser } from '../context/AuthContext';
+import { blockUser, getUser, getUsers, resetPassword, unblockUser, updateUser } from '../services/users';
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Администратор',
@@ -28,13 +28,9 @@ export default function UserDetail() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
-  const [user, setUser] = useState<{
-    id: number;
-    email: string;
-    fullName: string;
-    role: string;
-    dock?: string;
-  } | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [users, setUsers] = useState<AuthUser[]>([]);
+  const [selectedSupervisor, setSelectedSupervisor] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showUnblockModal, setShowUnblockModal] = useState(false);
@@ -42,6 +38,12 @@ export default function UserDetail() {
   const [tempPassword, setTempPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
+
+  const requiredSupervisorRoleByRole: Partial<Record<AuthUser['role'], AuthUser['role']>> = {
+    worker: 'master',
+    master: 'operator',
+    operator: 'dispatcher',
+  };
 
   const userId = useMemo(() => Number(id || '0'), [id]);
 
@@ -55,8 +57,10 @@ export default function UserDetail() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getUser(userId);
+      const [data, allUsers] = await Promise.all([getUser(userId), getUsers()]);
       setUser(data);
+      setUsers(allUsers);
+      setSelectedSupervisor(data.reportsToUserId ? String(data.reportsToUserId) : '');
     } catch {
       setUser(null);
     } finally {
@@ -84,6 +88,8 @@ export default function UserDetail() {
   }
 
   const canEdit = currentUser?.role === 'admin';
+  const requiredSupervisorRole = user ? requiredSupervisorRoleByRole[user.role as AuthUser['role']] : undefined;
+  const supervisorCandidates = users.filter((candidate) => candidate.role === requiredSupervisorRole);
 
   const handleBlock = async () => {
     if (!userId) return;
@@ -124,6 +130,25 @@ export default function UserDetail() {
       setTempPassword(password);
     } catch {
       setError('Не удалось сбросить пароль');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleSupervisorSave = async () => {
+    if (!user) return;
+
+    setError(null);
+    setIsActionLoading(true);
+    try {
+      const { id, ...restUser } = user;
+      const updated = await updateUser(user.id, {
+        ...restUser,
+        reportsToUserId: selectedSupervisor ? Number(selectedSupervisor) : null,
+      });
+      setUser(updated);
+    } catch {
+      setError('Не удалось обновить руководителя');
     } finally {
       setIsActionLoading(false);
     }
@@ -173,8 +198,38 @@ export default function UserDetail() {
                 <div className="text-sm text-gray-500">Док</div>
                 <div className="font-medium">{user.dock || 'Не привязан'}</div>
               </div>
+              <div>
+                <div className="text-sm text-gray-500">Руководитель</div>
+                <div className="font-medium">{user.reportsToFullName || 'Не назначен'}</div>
+              </div>
             </div>
           </Card>
+
+          {canEdit && requiredSupervisorRole && (
+            <Card>
+              <h2 className="font-semibold mb-4">Подчиненность</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Руководитель ({ROLE_LABELS[requiredSupervisorRole]})</label>
+                  <select
+                    value={selectedSupervisor}
+                    onChange={(event) => setSelectedSupervisor(event.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Не назначен</option>
+                    {supervisorCandidates.map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>
+                        {candidate.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button onClick={() => void handleSupervisorSave()} disabled={isActionLoading}>
+                  Сохранить руководителя
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">
