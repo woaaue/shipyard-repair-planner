@@ -25,7 +25,7 @@ import { getWorkItems } from '../services/workItems';
 import { useAuth } from '../context/AuthContext';
 import { createShip, getShips } from '../services/ships';
 import { getSubordinates } from '../services/users';
-import { WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
+import { REPAIR_REQUEST_STATUS_LABELS, WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
 
 function toDateString(input?: string | null): string {
   if (!input) return new Date().toISOString().slice(0, 10);
@@ -278,7 +278,12 @@ export default function Repairs() {
           </div>
           <div>
             <p className="font-semibold text-gray-900">{value}</p>
-            <p className="text-sm text-gray-600">{repair.dock}</p>
+            <p className="text-sm text-gray-600">
+              {repair.dock}
+              {repair.requestStatus
+                ? ` • ${REPAIR_REQUEST_STATUS_LABELS[repair.requestStatus as keyof typeof REPAIR_REQUEST_STATUS_LABELS] ?? repair.requestStatus}`
+                : ''}
+            </p>
           </div>
         </div>
       ),
