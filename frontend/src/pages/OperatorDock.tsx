@@ -67,7 +67,12 @@ export default function OperatorDock() {
     void loadRepairs();
   }, [user?.id, user?.role]);
 
-  const dockRepairs = useMemo(() => repairs.filter((repair) => repair.dock === userDock), [repairs, userDock]);
+  const dockRepairs = useMemo(() => {
+    if (user?.role === 'operator') {
+      return repairs;
+    }
+    return repairs.filter((repair) => repair.dock === userDock);
+  }, [repairs, user?.role, userDock]);
   const activeRepairs = useMemo(
     () => dockRepairs.filter((repair) => repair.progress > 0 && repair.progress < 100),
     [dockRepairs]
