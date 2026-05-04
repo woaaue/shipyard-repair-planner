@@ -40,3 +40,54 @@ export const REPAIR_REQUEST_STATUS_LABELS: Record<RepairRequestStatus, string> =
   COMPLETED: 'Завершена',
   CANCELLED: 'Отменена',
 };
+
+export const UI_STATUS_COMPACT_LABELS: Record<string, string> = {
+  'в ремонте': 'Ремонт',
+  'в плавании': 'Плавание',
+  ожидает: 'Ожидает',
+  'в работе': 'В работе',
+  запланирован: 'План',
+  завершён: 'Готов',
+  отменён: 'Отменён',
+};
+
+export const UI_STATUS_BADGE_CONFIG: Record<
+  string,
+  { dotColor: string; bgColor: string; textColor: string }
+> = {
+  'в ремонте': {
+    dotColor: 'bg-orange-500',
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-800',
+  },
+  ожидает: {
+    dotColor: 'bg-red-500',
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-800',
+  },
+  'в плавании': {
+    dotColor: 'bg-green-500',
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-800',
+  },
+  'в работе': {
+    dotColor: 'bg-blue-500',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-800',
+  },
+  запланирован: {
+    dotColor: 'bg-purple-500',
+    bgColor: 'bg-purple-50',
+    textColor: 'text-purple-800',
+  },
+  завершён: {
+    dotColor: 'bg-gray-500',
+    bgColor: 'bg-gray-50',
+    textColor: 'text-gray-800',
+  },
+  отменён: {
+    dotColor: 'bg-gray-400',
+    bgColor: 'bg-gray-100',
+    textColor: 'text-gray-700',
+  },
+};
