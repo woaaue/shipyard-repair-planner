@@ -46,6 +46,7 @@ export default function Repairs() {
   const [statusFilter, setStatusFilter] = useState<string>('все');
   const [dockFilter, setDockFilter] = useState<string>('все');
   const [showOnlyUnassigned, setShowOnlyUnassigned] = useState(false);
+  const [showReadyForAcceptanceOnly, setShowReadyForAcceptanceOnly] = useState(false);
   const [sortBy, setSortBy] = useState<keyof ExtendedRepair>('startDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showRepairForm, setShowRepairForm] = useState(searchParams.get('new') === 'true');
@@ -58,10 +59,14 @@ export default function Repairs() {
         user?.role === 'operator' && typeof user.id === 'number'
           ? { operatorId: user.id }
           : undefined;
+      const requestFilters =
+        user?.role === 'client' && typeof user.id === 'number'
+          ? { clientId: user.id }
+          : undefined;
 
       const [repairsData, requestsData, workItemsData, shipsData] = await Promise.all([
         getRepairs(repairFilters),
-        getRepairRequests(),
+        getRepairRequests(requestFilters),
         getWorkItems(),
         getShips(),
       ]);
@@ -71,8 +76,12 @@ export default function Repairs() {
         user?.role === 'dispatcher' && typeof user.id === 'number'
           ? (await getSubordinates(user.id)).filter((member) => member.role === 'operator')
           : [];
+      const scopedRepairs =
+        user?.role === 'client'
+          ? repairsData.filter((repair) => requestMap.has(repair.shipId))
+          : repairsData;
 
-      const mapped = repairsData.map((repair) => {
+      const mapped = scopedRepairs.map((repair) => {
         const request = requestMap.get(repair.shipId);
         const tasks = workItemsData
           .filter((item) => item.repairId === repair.id)
@@ -82,7 +91,8 @@ export default function Repairs() {
             completed: item.status === 'COMPLETED',
             estimatedHours: item.estimatedHours,
             actualHours: item.actualHours,
-            worker: 'Не назначен',
+            worker: item.assigneeFullName || 'Не назначен',
+            reviewStatus: item.reviewStatus,
           }));
 
         return {
@@ -189,6 +199,14 @@ export default function Repairs() {
     if (user?.role === 'dispatcher' && showOnlyUnassigned) {
       result = result.filter((repair) => !repair.operatorId);
     }
+    if (user?.role === 'client' && showReadyForAcceptanceOnly) {
+      result = result.filter(
+        (repair) =>
+          repair.status === 'завершён' &&
+          repair.tasks.length > 0 &&
+          repair.tasks.every((task) => task.reviewStatus === 'APPROVED')
+      );
+    }
 
     result.sort((a, b) => {
       const aValue = a[sortBy];
@@ -202,7 +220,17 @@ export default function Repairs() {
       return 0;
     });
     return result;
-  }, [repairs, search, statusFilter, dockFilter, showOnlyUnassigned, sortBy, sortDirection, user?.role]);
+  }, [
+    repairs,
+    search,
+    statusFilter,
+    dockFilter,
+    showOnlyUnassigned,
+    showReadyForAcceptanceOnly,
+    sortBy,
+    sortDirection,
+    user?.role,
+  ]);
 
   const stats = useMemo(() => {
     const total = repairs.length;
@@ -210,6 +238,12 @@ export default function Repairs() {
     const planned = repairs.filter((repair) => repair.status === 'запланирован').length;
     const completed = repairs.filter((repair) => repair.status === 'завершён').length;
     const unassignedOperators = repairs.filter((repair) => !repair.operatorId).length;
+    const readyForAcceptance = repairs.filter(
+      (repair) =>
+        repair.status === 'завершён' &&
+        repair.tasks.length > 0 &&
+        repair.tasks.every((task) => task.reviewStatus === 'APPROVED')
+    ).length;
     const totalBudget = repairs.reduce((sum, repair) => sum + repair.budget, 0);
     const totalSpent = repairs.reduce((sum, repair) => sum + repair.spent, 0);
     return {
@@ -218,6 +252,7 @@ export default function Repairs() {
       planned,
       completed,
       unassignedOperators,
+      readyForAcceptance,
       totalBudget,
       totalSpent,
       budgetUtilization: totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0,
@@ -265,13 +300,15 @@ export default function Repairs() {
           return <span className="text-xs text-gray-500">Нет данных</span>;
         }
 
-        const approved = repair.tasks.filter((task) => task.completed).length;
-        const pending = totalTasks - approved;
+        const approved = repair.tasks.filter((task) => task.reviewStatus === 'APPROVED').length;
+        const pendingReview = repair.tasks.filter((task) => task.reviewStatus === 'PENDING_REVIEW').length;
+        const inWork = totalTasks - approved - pendingReview;
 
         return (
           <div className="text-xs text-center">
             <div className="font-medium text-gray-800">{approved}/{totalTasks} принято</div>
-            <div className="text-gray-500">{pending} ожидает</div>
+            <div className="text-gray-500">{pendingReview} на проверке</div>
+            {inWork > 0 && <div className="text-gray-400">{inWork} в работе</div>}
           </div>
         );
       },
@@ -395,7 +432,7 @@ export default function Repairs() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
       {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
 
-      <div className={`grid grid-cols-2 gap-4 ${user?.role === 'dispatcher' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+      <div className={`grid grid-cols-2 gap-4 ${user?.role === 'dispatcher' || user?.role === 'client' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
         <Card>
           <div className="text-center p-4">
             <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
@@ -428,10 +465,18 @@ export default function Repairs() {
             </div>
           </Card>
         )}
+        {user?.role === 'client' && (
+          <Card>
+            <div className="text-center p-4">
+              <p className="text-2xl font-bold text-emerald-700">{stats.readyForAcceptance}</p>
+              <p className="text-sm text-gray-600">К приемке</p>
+            </div>
+          </Card>
+        )}
       </div>
 
       <Card title="Фильтры и поиск">
-        <div className={`grid grid-cols-1 gap-4 ${user?.role === 'dispatcher' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+        <div className={`grid grid-cols-1 gap-4 ${user?.role === 'dispatcher' || user?.role === 'client' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Поиск</label>
             <div className="relative">
@@ -488,6 +533,18 @@ export default function Repairs() {
               </Button>
             </div>
           )}
+          {user?.role === 'client' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Приемка</label>
+              <Button
+                variant={showReadyForAcceptanceOnly ? 'primary' : 'outline'}
+                className="w-full"
+                onClick={() => setShowReadyForAcceptanceOnly((value) => !value)}
+              >
+                {showReadyForAcceptanceOnly ? 'Показать все ремонты' : 'Только к приемке'}
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -503,6 +560,7 @@ export default function Repairs() {
                 setStatusFilter('все');
                 setDockFilter('все');
                 setShowOnlyUnassigned(false);
+                setShowReadyForAcceptanceOnly(false);
               }}
             >
               Сбросить фильтры
