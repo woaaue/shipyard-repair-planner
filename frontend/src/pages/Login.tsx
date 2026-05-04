@@ -215,7 +215,7 @@ export default function Login() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-white/20">
-            <p className="text-xs text-slate-400 mb-3 text-center">Быстрый ввод email для теста:</p>
+            <p className="text-xs text-slate-400 mb-3 text-center">Быстрый тестовый вход:</p>
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => {
@@ -226,40 +226,23 @@ export default function Login() {
                 Админ
               </button>
               <button
-                onClick={() => quickLogin('admin@shipyard.local', 'admin12345')}
+                onClick={() => quickLogin('operator@shipyard.local', 'operator12345')}
                 className="px-2 py-2 text-xs bg-blue-600/50 hover:bg-blue-600 text-white rounded transition-colors"
               >
-                Диспетчер
-              </button>
-              <button
-                onClick={() => {
-                  quickLogin('operator@shipyard.local', 'operator12345');
-                }}
-                className="px-2 py-2 text-xs bg-green-600/50 hover:bg-green-600 text-white rounded transition-colors"
-              >
                 Оператор
-              </button>
-              <button
-                onClick={() => quickLogin('admin@shipyard.local', 'admin12345')}
-                className="px-2 py-2 text-xs bg-orange-600/50 hover:bg-orange-600 text-white rounded transition-colors"
-              >
-                Мастер
-              </button>
-              <button
-                onClick={() => quickLogin('admin@shipyard.local', 'admin12345')}
-                className="px-2 py-2 text-xs bg-yellow-600/50 hover:bg-yellow-600 text-white rounded transition-colors"
-              >
-                Рабочий
               </button>
               <button
                 onClick={() => {
                   quickLogin('client@shipyard.local', 'client12345');
                 }}
-                className="px-2 py-2 text-xs bg-pink-600/50 hover:bg-pink-600 text-white rounded transition-colors"
+                className="px-2 py-2 text-xs bg-green-600/50 hover:bg-green-600 text-white rounded transition-colors"
               >
                 Клиент
               </button>
             </div>
+            <p className="text-[11px] text-slate-500 mt-3 text-center">
+              Отображаются только подтвержденные тестовые учетные записи.
+            </p>
           </div>
         </div>
       </div>
