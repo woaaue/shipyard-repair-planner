@@ -12,6 +12,7 @@ import { getRepair, updateRepairStatus, type BackendRepairStatus } from '../serv
 import { acceptRepairRequestByClient, getRepairRequest, type RepairRequestResponse } from '../services/repairRequests';
 import { getWorkItems } from '../services/workItems';
 import type { ExtendedRepair } from '../types/repair';
+import { WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
 
 const PRIORITIES = ['низкий', 'средний', 'высокий', 'критический'] as const;
 
@@ -243,7 +244,10 @@ export default function RepairDetail() {
                     <div className={`font-medium ${task.completed ? 'text-gray-500 line-through' : ''}`}>
                       {task.name}
                     </div>
-                    <div className="text-sm text-gray-500">{task.worker}</div>
+                    <div className="text-sm text-gray-500">
+                      {task.worker}
+                      {task.reviewStatus ? ` • ${WORK_REVIEW_STATUS_LABELS[task.reviewStatus] ?? task.reviewStatus}` : ''}
+                    </div>
                   </div>
                   <div className="text-sm text-gray-600">{task.actualHours || task.estimatedHours} ч</div>
                 </div>
