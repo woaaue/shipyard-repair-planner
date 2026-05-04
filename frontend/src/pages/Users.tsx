@@ -36,6 +36,11 @@ export default function Users() {
   const [searchQuery, setSearchQuery] = useState('');
   const [hierarchyFilter, setHierarchyFilter] = useState<'all' | 'without_supervisor'>('all');
   const [showUserForm, setShowUserForm] = useState(false);
+  const canCreateUser =
+    currentUser?.role === 'admin' ||
+    currentUser?.role === 'dispatcher' ||
+    currentUser?.role === 'operator' ||
+    currentUser?.role === 'master';
 
   const loadData = async () => {
     setIsLoading(true);
@@ -129,10 +134,12 @@ export default function Users() {
           <UsersIcon className="h-8 w-8 text-gray-600" />
           <h1 className="text-2xl font-bold text-gray-900">Пользователи</h1>
         </div>
-        <Button onClick={() => setShowUserForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Добавить пользователя
-        </Button>
+        {canCreateUser && (
+          <Button onClick={() => setShowUserForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Добавить пользователя
+          </Button>
+        )}
       </div>
 
       {error && (

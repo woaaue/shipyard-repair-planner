@@ -5,7 +5,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { useAuth, type User as AuthUser } from '../context/AuthContext';
-import { blockUser, getUser, getUsers, resetPassword, unblockUser, updateUser } from '../services/users';
+import { blockUser, getSubordinates, getUser, getUsers, resetPassword, unblockUser, updateUser } from '../services/users';
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Администратор',
@@ -30,6 +30,7 @@ export default function UserDetail() {
 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [users, setUsers] = useState<AuthUser[]>([]);
+  const [subordinateIds, setSubordinateIds] = useState<Set<number>>(new Set());
   const [selectedSupervisor, setSelectedSupervisor] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -57,9 +58,14 @@ export default function UserDetail() {
     setIsLoading(true);
     setError(null);
     try {
-      const [data, allUsers] = await Promise.all([getUser(userId), getUsers()]);
+      const [data, allUsers, subordinates] = await Promise.all([
+        getUser(userId),
+        getUsers(),
+        typeof currentUser?.id === 'number' ? getSubordinates(currentUser.id) : Promise.resolve([]),
+      ]);
       setUser(data);
       setUsers(allUsers);
+      setSubordinateIds(new Set(subordinates.map((item) => item.id)));
       setSelectedSupervisor(data.reportsToUserId ? String(data.reportsToUserId) : '');
     } catch {
       setUser(null);
@@ -70,7 +76,7 @@ export default function UserDetail() {
 
   useEffect(() => {
     void loadUser();
-  }, [userId]);
+  }, [currentUser?.id, userId]);
 
   if (isLoading) {
     return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
@@ -87,9 +93,34 @@ export default function UserDetail() {
     );
   }
 
-  const canEdit = currentUser?.role === 'admin';
+  const canAccessUser =
+    currentUser?.role === 'admin' ||
+    currentUser?.id === user.id ||
+    subordinateIds.has(user.id);
+
+  const canEdit =
+    currentUser?.role === 'admin' ||
+    ((currentUser?.role === 'dispatcher' || currentUser?.role === 'operator' || currentUser?.role === 'master') &&
+      subordinateIds.has(user.id));
+
+  if (!canAccessUser) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold text-gray-900">Доступ ограничен</h2>
+        <p className="text-gray-600 mt-2">Вы можете просматривать только свой профиль и своих подчиненных.</p>
+        <Button onClick={() => navigate('/users')} className="mt-4">
+          Вернуться к списку
+        </Button>
+      </div>
+    );
+  }
+
   const requiredSupervisorRole = user ? requiredSupervisorRoleByRole[user.role as AuthUser['role']] : undefined;
-  const supervisorCandidates = users.filter((candidate) => candidate.role === requiredSupervisorRole);
+  const supervisorCandidates = users.filter((candidate) => {
+    if (candidate.role !== requiredSupervisorRole) return false;
+    if (currentUser?.role === 'admin') return true;
+    return subordinateIds.has(candidate.id) || candidate.id === currentUser?.id;
+  });
 
   const handleBlock = async () => {
     if (!userId) return;
