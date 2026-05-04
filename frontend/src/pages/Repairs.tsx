@@ -634,7 +634,7 @@ export default function Repairs() {
           sortDirection={sortDirection}
           onSort={handleSort}
           className="mt-4"
-          emptyMessage="Не найдено ремонтов"
+          emptyMessage="Ремонты не найдены"
         />
       </Card>
 
