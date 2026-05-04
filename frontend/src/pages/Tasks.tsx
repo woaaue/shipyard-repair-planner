@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 type TaskRow = WorkItemResponse & {
   repairEntityId: number | null;
+  operatorId: number | null;
   shipName: string;
   dock: string;
 };
@@ -21,6 +22,7 @@ export default function Tasks() {
 
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [subordinateIds, setSubordinateIds] = useState<number[]>([]);
+  const [dispatcherOperatorIds, setDispatcherOperatorIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +38,9 @@ export default function Tasks() {
         getWorkItems(workItemFilters),
         getRepairs(),
         getRepairRequests(),
-        user?.role === 'master' && typeof user.id === 'number' ? getSubordinates(user.id) : Promise.resolve([]),
+        (user?.role === 'master' || user?.role === 'dispatcher') && typeof user.id === 'number'
+          ? getSubordinates(user.id)
+          : Promise.resolve([]),
       ]);
       const repairsMap = new Map(repairs.map((repair) => [repair.id, repair]));
       const requestsMap = new Map(requests.map((request) => [request.id, request]));
@@ -47,13 +51,25 @@ export default function Tasks() {
         return {
           ...item,
           repairEntityId: repair?.id ?? null,
+          operatorId: repair?.operatorId ?? null,
           shipName: request?.shipName ?? `Repair Request #${item.repairRequestId}`,
           dock: repair?.dock ?? '-',
         };
       });
 
       setTasks(mapped);
-      setSubordinateIds(subordinates.map((member) => member.id));
+      if (user?.role === 'master') {
+        setSubordinateIds(subordinates.map((member) => member.id));
+      } else {
+        setSubordinateIds([]);
+      }
+      if (user?.role === 'dispatcher') {
+        setDispatcherOperatorIds(
+          subordinates.filter((member) => member.role === 'operator').map((member) => member.id)
+        );
+      } else {
+        setDispatcherOperatorIds([]);
+      }
     } catch {
       setError('Не удалось загрузить задачи');
     } finally {
@@ -65,31 +81,45 @@ export default function Tasks() {
     void loadTasks();
   }, [user?.id, user?.role]);
 
-  const pendingTasks = useMemo(
-    () => tasks.filter((task) => task.status === 'PENDING' || task.status === 'IN_PROGRESS'),
-    [tasks]
-  );
-  const completedTasks = useMemo(() => tasks.filter((task) => task.status === 'COMPLETED'), [tasks]);
-  const pendingReviewTasks = useMemo(
-    () => tasks.filter((task) => task.reviewStatus === 'PENDING_REVIEW'),
-    [tasks]
-  );
-
-  const visiblePendingTasks = useMemo(() => {
+  const visibleTasks = useMemo(() => {
     if (user?.role === 'worker') {
-      return pendingTasks;
+      return tasks;
     }
     if (user?.role === 'master') {
-      return pendingTasks.filter((task) => task.assigneeId !== null && subordinateIds.includes(task.assigneeId));
+      return tasks.filter((task) => task.assigneeId !== null && subordinateIds.includes(task.assigneeId));
     }
-    return pendingTasks;
-  }, [pendingTasks, subordinateIds, user]);
+    if (user?.role === 'operator' && typeof user.id === 'number') {
+      return tasks.filter((task) => task.operatorId === user.id);
+    }
+    if (user?.role === 'dispatcher') {
+      return tasks.filter((task) => {
+        if (typeof task.operatorId !== 'number') return false;
+        return dispatcherOperatorIds.includes(task.operatorId);
+      });
+    }
+    return tasks;
+  }, [tasks, subordinateIds, dispatcherOperatorIds, user]);
+
+  const pendingTasks = useMemo(
+    () => visibleTasks.filter((task) => task.status === 'PENDING' || task.status === 'IN_PROGRESS'),
+    [visibleTasks]
+  );
+  const completedTasks = useMemo(() => visibleTasks.filter((task) => task.status === 'COMPLETED'), [visibleTasks]);
+  const pendingReviewTasks = useMemo(
+    () => visibleTasks.filter((task) => task.reviewStatus === 'PENDING_REVIEW'),
+    [visibleTasks]
+  );
+
+  const visiblePendingTasks = pendingTasks;
 
   const visiblePendingReviewTasks = useMemo(() => {
     if (user?.role === 'master') {
       return pendingReviewTasks.filter((task) => task.assigneeId !== null && subordinateIds.includes(task.assigneeId));
     }
-    return pendingReviewTasks;
+    if (user?.role === 'operator' || user?.role === 'dispatcher') {
+      return pendingReviewTasks;
+    }
+    return [];
   }, [pendingReviewTasks, subordinateIds, user]);
 
   const handleCompleteTask = async (taskId: number) => {
@@ -105,7 +135,7 @@ export default function Tasks() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Мои задачи</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{user?.role === 'worker' ? 'Мои задачи' : 'Задачи'}</h1>
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-500" />
@@ -121,7 +151,13 @@ export default function Tasks() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
       {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
 
-      <div className={`grid grid-cols-1 ${user?.role === 'master' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
+      <div
+        className={`grid grid-cols-1 ${
+          user?.role === 'master' || user?.role === 'operator' || user?.role === 'dispatcher'
+            ? 'lg:grid-cols-3'
+            : 'lg:grid-cols-2'
+        } gap-6`}
+      >
         <Card>
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-500" />
@@ -170,7 +206,7 @@ export default function Tasks() {
           </div>
         </Card>
 
-        {user?.role === 'master' && (
+        {(user?.role === 'master' || user?.role === 'operator' || user?.role === 'dispatcher') && (
           <Card>
             <h2 className="font-semibold mb-4 flex items-center gap-2">
               <Clock className="h-5 w-5 text-blue-500" />
