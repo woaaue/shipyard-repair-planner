@@ -126,7 +126,7 @@ export default function Dashboard() {
         change: 0,
         icon: 'check-circle',
         color: 'green' as const,
-        description: 'Work items в системе',
+        description: 'Задачи в системе',
       },
       {
         title: 'Доки',

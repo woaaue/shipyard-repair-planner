@@ -169,7 +169,7 @@ export default function OperatorDock() {
             {isOverloaded && (
               <div className="flex items-center justify-center gap-1 mt-1 text-xs text-red-600">
                 <AlertTriangle className="h-3 w-3" />
-                Перегруз
+                Перегрузка
               </div>
             )}
           </div>
