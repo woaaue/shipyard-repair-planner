@@ -115,6 +115,7 @@ function mapToUiShip(ship: BackendShip): Ship {
     type: (typeToUi[ship.shipType] ?? 'Другое') as Ship['type'],
     status: (statusToUi[ship.shipStatus] ?? 'ожидает') as Ship['status'],
     buildYear: Number.isNaN(createdDate.getFullYear()) ? new Date().getFullYear() : createdDate.getFullYear(),
+    ownerId: ship.userId,
     owner: ship.ownerName,
     lastRepairDate: Number.isNaN(createdDate.getTime()) ? new Date().toISOString().slice(0, 10) : ship.createdAt.slice(0, 10),
     nextRepairDate: Number.isNaN(updatedDate.getTime()) ? new Date().toISOString().slice(0, 10) : ship.updatedAt.slice(0, 10),

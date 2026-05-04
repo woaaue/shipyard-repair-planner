@@ -5,6 +5,7 @@ export interface Ship {
   type: 'Контейнеровоз' | 'Танкер' | 'Балкер' | 'Ролкер';
   status: 'в ремонте' | 'ожидает' | 'в плавании';
   buildYear: number;
+  ownerId?: number;
   owner: string;
   lastRepairDate: string;
   nextRepairDate: string;
