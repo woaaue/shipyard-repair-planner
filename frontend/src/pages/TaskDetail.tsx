@@ -11,30 +11,8 @@ import {
   updateWorkItemAssignee,
   updateWorkItemReview,
   type WorkItemResponse,
-  type WorkCategory,
-  type WorkItemReviewStatus,
 } from '../services/workItems';
-
-const CATEGORY_LABELS: Record<WorkCategory, string> = {
-  HULL: 'Корпус',
-  MECHANICAL: 'Механика',
-  ELECTRICAL: 'Электрика',
-  PAINTING: 'Окраска',
-  PIPING: 'Трубопроводы',
-  VALVES: 'Арматура',
-  PROPULSION: 'Движитель',
-  STEEL: 'Металлоконструкции',
-  TANKS: 'Танки/цистерны',
-  SAFETY: 'Безопасность',
-  OTHER: 'Другое',
-};
-
-const REVIEW_LABELS: Record<WorkItemReviewStatus, string> = {
-  NOT_REVIEWED: 'Не проверялась',
-  PENDING_REVIEW: 'Ожидает проверки',
-  APPROVED: 'Принято',
-  REJECTED: 'Возвращено',
-};
+import { WORK_CATEGORY_LABELS, WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
 
 export default function TaskDetail() {
   const { repairId, taskId } = useParams();
@@ -185,7 +163,7 @@ export default function TaskDetail() {
               </div>
               <div>
                 <div className="text-sm text-gray-500">Категория</div>
-                <div className="font-medium">{CATEGORY_LABELS[task.category] ?? task.category}</div>
+                <div className="font-medium">{WORK_CATEGORY_LABELS[task.category] ?? task.category}</div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">Статус</div>
@@ -200,7 +178,7 @@ export default function TaskDetail() {
               </div>
               <div>
                 <div className="text-sm text-gray-500">Проверка</div>
-                <div className="font-medium">{REVIEW_LABELS[task.reviewStatus] ?? task.reviewStatus}</div>
+                <div className="font-medium">{WORK_REVIEW_STATUS_LABELS[task.reviewStatus] ?? task.reviewStatus}</div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">Исполнитель</div>

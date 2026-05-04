@@ -25,6 +25,7 @@ import { getWorkItems } from '../services/workItems';
 import { useAuth } from '../context/AuthContext';
 import { createShip, getShips } from '../services/ships';
 import { getSubordinates } from '../services/users';
+import { WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
 
 function toDateString(input?: string | null): string {
   if (!input) return new Date().toISOString().slice(0, 10);
@@ -143,7 +144,7 @@ export default function Repairs() {
 
   const handleAddRepairRequest = async (repairData: RepairRequestFormData) => {
     if (!user?.id) {
-      setError('User session is required to create a repair request');
+      setError('Не удалось определить пользователя для создания заявки');
       return;
     }
 
@@ -313,7 +314,7 @@ export default function Repairs() {
         return (
           <div className="text-xs text-center">
             <div className="font-medium text-gray-800">{approved}/{totalTasks} принято</div>
-            <div className="text-gray-500">{pendingReview} на проверке</div>
+            <div className="text-gray-500">{pendingReview} {WORK_REVIEW_STATUS_LABELS.PENDING_REVIEW.toLowerCase()}</div>
             {inWork > 0 && <div className="text-gray-400">{inWork} в работе</div>}
           </div>
         );
