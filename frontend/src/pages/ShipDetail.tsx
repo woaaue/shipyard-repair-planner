@@ -182,10 +182,10 @@ export default function ShipDetail() {
               <h2 className="font-semibold mb-4">Действия</h2>
               <div className="space-y-2">
                 <Button variant="secondary" className="w-full" disabled>
-                  Редактировать (скоро)
+                  Редактирование недоступно
                 </Button>
                 <Button variant="danger" className="w-full" disabled>
-                  Удалить (скоро)
+                  Удаление недоступно
                 </Button>
               </div>
             </Card>

@@ -223,7 +223,7 @@ export default function TaskDetail() {
                   </Button>
                 )}
                 <Button variant="secondary" className="w-full" disabled>
-                  Редактировать (скоро)
+                  Редактирование недоступно
                 </Button>
               </div>
             </Card>
