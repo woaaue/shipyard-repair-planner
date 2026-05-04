@@ -29,6 +29,7 @@ export {
   createRepairRequest,
   updateRepairRequest,
   updateRepairRequestStatus,
+  acceptRepairRequestByClient,
   deleteRepairRequest,
 } from './repairRequests';
 export type { RepairRequestStatus, RepairRequestResponse, CreateRepairRequestPayload } from './repairRequests';

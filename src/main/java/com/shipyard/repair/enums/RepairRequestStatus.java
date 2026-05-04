@@ -8,5 +8,6 @@ public enum RepairRequestStatus {
     REJECTED,
     IN_PROGRESS,
     COMPLETED,
+    CLIENT_ACCEPTED,
     CANCELLED
 }

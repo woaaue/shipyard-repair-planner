@@ -215,6 +215,57 @@ class AccessControlTest {
     }
 
     @Test
+    void repairRequestAcceptance_forClient_allowed() throws Exception {
+        RepairRequestResponse response = new RepairRequestResponse(
+                91,
+                20,
+                "North Wind",
+                12,
+                "Client User",
+                RepairRequestStatus.CLIENT_ACCEPTED,
+                LocalDate.of(2026, 5, 2),
+                null,
+                null,
+                null,
+                12,
+                2,
+                0,
+                null,
+                "Hull checks",
+                null,
+                true,
+                LocalDateTime.of(2026, 5, 12, 10, 0),
+                "Accepted",
+                LocalDateTime.of(2026, 4, 24, 12, 0),
+                LocalDateTime.of(2026, 5, 12, 10, 0)
+        );
+        when(repairRequestService.acceptByClient(eq(91), eq("client@mail.com"), eq("Accepted"))).thenReturn(response);
+
+        mockMvc.perform(patch("/api/repair-requests/{id}/acceptance", 91)
+                        .with(SecurityMockMvcRequestPostProcessors.user("client@mail.com").roles("CLIENT"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "note": "Accepted"
+                                }
+                                """))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void repairRequestAcceptance_forDispatcher_forbidden() throws Exception {
+        mockMvc.perform(patch("/api/repair-requests/{id}/acceptance", 91)
+                        .with(SecurityMockMvcRequestPostProcessors.user("dispatcher@mail.com").roles("DISPATCHER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "note": "Accepted"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void workItemCreate_forWorker_forbidden() throws Exception {
         mockMvc.perform(post("/api/work-items")
                         .with(SecurityMockMvcRequestPostProcessors.user("worker@mail.com").roles("WORKER"))

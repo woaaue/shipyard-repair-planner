@@ -5,7 +5,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { useAuth, type User as AuthUser } from '../context/AuthContext';
 import UserForm from '../components/forms/UserForm';
-import { createUser, getUsers, type UserFilters } from '../services/users';
+import { createUser, getSubordinates, getUsers, type UserFilters } from '../services/users';
 import { getDocks } from '../services/docks';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,6 +36,11 @@ export default function Users() {
   const [searchQuery, setSearchQuery] = useState('');
   const [hierarchyFilter, setHierarchyFilter] = useState<'all' | 'without_supervisor'>('all');
   const [showUserForm, setShowUserForm] = useState(false);
+  const canCreateUser =
+    currentUser?.role === 'admin' ||
+    currentUser?.role === 'dispatcher' ||
+    currentUser?.role === 'operator' ||
+    currentUser?.role === 'master';
 
   const loadData = async () => {
     setIsLoading(true);
@@ -43,7 +48,21 @@ export default function Users() {
     try {
       const filters: UserFilters = searchQuery ? { search: searchQuery } : {};
       const [usersData, docksData] = await Promise.all([getUsers(filters), getDocks()]);
-      setUsers(usersData);
+      let scopedUsers = usersData;
+
+      if (currentUser?.role === 'dispatcher' || currentUser?.role === 'operator' || currentUser?.role === 'master') {
+        if (typeof currentUser.id === 'number') {
+          const subordinates = await getSubordinates(currentUser.id);
+          const allowedIds = new Set<number>([currentUser.id, ...subordinates.map((u) => u.id)]);
+          scopedUsers = usersData.filter((u) => allowedIds.has(u.id));
+        }
+      } else if (currentUser?.role === 'worker' || currentUser?.role === 'client') {
+        if (typeof currentUser.id === 'number') {
+          scopedUsers = usersData.filter((u) => u.id === currentUser.id);
+        }
+      }
+
+      setUsers(scopedUsers);
       setDocks(docksData.map((dock) => ({ id: dock.id, name: dock.name })));
     } catch {
       setError('Не удалось загрузить пользователей');
@@ -62,13 +81,13 @@ export default function Users() {
       if (currentUser?.role === 'operator' && currentUser.dock && u.dock) {
         if (u.dock !== currentUser.dock) return false;
       }
+      if (hierarchyFilter === 'without_supervisor') {
+        const requiresSupervisor = ['worker', 'master', 'operator'].includes(u.role);
+        if (!(requiresSupervisor && !u.reportsToUserId)) return false;
+      }
       if (!q) return true;
       const matchesSearch = u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
       if (!matchesSearch) return false;
-      if (hierarchyFilter === 'without_supervisor') {
-        const requiresSupervisor = ['worker', 'master', 'operator'].includes(u.role);
-        return requiresSupervisor && !u.reportsToUserId;
-      }
       return true;
     });
   }, [users, currentUser, hierarchyFilter, searchQuery]);
@@ -115,10 +134,12 @@ export default function Users() {
           <UsersIcon className="h-8 w-8 text-gray-600" />
           <h1 className="text-2xl font-bold text-gray-900">Пользователи</h1>
         </div>
-        <Button onClick={() => setShowUserForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Добавить пользователя
-        </Button>
+        {canCreateUser && (
+          <Button onClick={() => setShowUserForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Добавить пользователя
+          </Button>
+        )}
       </div>
 
       {error && (

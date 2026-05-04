@@ -7,6 +7,7 @@ import com.shipyard.repair.entity.RepairRequest;
 import com.shipyard.repair.entity.Ship;
 import com.shipyard.repair.entity.User;
 import com.shipyard.repair.enums.RepairRequestStatus;
+import com.shipyard.repair.exception.BadRequestException;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.repository.RepairRequestRepository;
 import com.shipyard.repair.repository.ShipRepository;
@@ -136,6 +137,56 @@ class RepairRequestServiceImplTest {
         RepairRequestResponse response = repairRequestService.updateStatus(4, RepairRequestStatus.CANCELLED);
 
         assertEquals(RepairRequestStatus.CANCELLED, response.status());
+    }
+
+    @Test
+    void acceptByClient_Success() {
+        RepairRequest existing = buildRepairRequest(10);
+        existing.setStatus(RepairRequestStatus.COMPLETED);
+
+        User currentClient = existing.getClient();
+        currentClient.setEmail("client@mail.com");
+
+        when(repairRequestRepository.findById(10)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("client@mail.com")).thenReturn(Optional.of(currentClient));
+        when(repairRequestRepository.save(existing)).thenReturn(existing);
+
+        RepairRequestResponse response = repairRequestService.acceptByClient(10, "client@mail.com", "Accepted by client");
+
+        assertEquals(RepairRequestStatus.CLIENT_ACCEPTED, response.status());
+        assertTrue(response.clientAccepted());
+        assertEquals("Accepted by client", response.clientAcceptanceNote());
+    }
+
+    @Test
+    void acceptByClient_NotCompleted_Throws() {
+        RepairRequest existing = buildRepairRequest(11);
+        existing.setStatus(RepairRequestStatus.IN_PROGRESS);
+
+        User currentClient = existing.getClient();
+        currentClient.setEmail("client@mail.com");
+
+        when(repairRequestRepository.findById(11)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("client@mail.com")).thenReturn(Optional.of(currentClient));
+
+        assertThrows(BadRequestException.class,
+                () -> repairRequestService.acceptByClient(11, "client@mail.com", "note"));
+    }
+
+    @Test
+    void acceptByClient_ForeignClient_Throws() {
+        RepairRequest existing = buildRepairRequest(12);
+        existing.setStatus(RepairRequestStatus.COMPLETED);
+
+        User anotherClient = new User();
+        anotherClient.setId(99);
+        anotherClient.setEmail("another@mail.com");
+
+        when(repairRequestRepository.findById(12)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("another@mail.com")).thenReturn(Optional.of(anotherClient));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> repairRequestService.acceptByClient(12, "another@mail.com", "note"));
     }
 
     private RepairRequest buildRepairRequest(int id) {

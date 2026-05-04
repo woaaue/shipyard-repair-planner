@@ -2,6 +2,7 @@ package com.shipyard.repair.controller;
 
 import com.shipyard.repair.dto.repairrequest.CreateRepairRequest;
 import com.shipyard.repair.dto.repairrequest.RepairRequestResponse;
+import com.shipyard.repair.dto.repairrequest.UpdateRepairRequestAcceptanceRequest;
 import com.shipyard.repair.dto.repairrequest.UpdateRepairRequest;
 import com.shipyard.repair.dto.repairrequest.UpdateRepairRequestStatusRequest;
 import com.shipyard.repair.enums.RepairRequestStatus;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,6 +58,16 @@ public class RepairRequestController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(repairRequestService.updateStatus(id, request.status()));
+    }
+
+    @PatchMapping("/{id}/acceptance")
+    public ResponseEntity<RepairRequestResponse> acceptByClient(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateRepairRequestAcceptanceRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(repairRequestService.acceptByClient(id, authentication.getName(), request.note()));
     }
 
     @DeleteMapping("/{id}")

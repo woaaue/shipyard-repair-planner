@@ -7,6 +7,7 @@ export type RepairRequestStatus =
   | 'APPROVED'
   | 'REJECTED'
   | 'IN_PROGRESS'
+  | 'CLIENT_ACCEPTED'
   | 'COMPLETED'
   | 'CANCELLED';
 
@@ -27,6 +28,9 @@ export interface RepairRequestResponse {
   totalCost: number | null;
   description: string | null;
   notes: string | null;
+  clientAccepted: boolean;
+  clientAcceptedAt: string | null;
+  clientAcceptanceNote: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -86,6 +90,14 @@ export const updateRepairRequestStatus = async (
   status: RepairRequestStatus
 ): Promise<RepairRequestResponse> => {
   const response = await api.patch<RepairRequestResponse>(`/repair-requests/${id}/status`, { status });
+  return response.data;
+};
+
+export const acceptRepairRequestByClient = async (
+  id: number,
+  note?: string
+): Promise<RepairRequestResponse> => {
+  const response = await api.patch<RepairRequestResponse>(`/repair-requests/${id}/acceptance`, { note: note ?? null });
   return response.data;
 };
 

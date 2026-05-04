@@ -62,6 +62,15 @@ public class RepairRequest {
     @Column(length = 500)
     private String notes;
 
+    @Column(name = "client_accepted", nullable = false)
+    private boolean clientAccepted;
+
+    @Column(name = "client_accepted_at")
+    private LocalDateTime clientAcceptedAt;
+
+    @Column(name = "client_acceptance_note", length = 500)
+    private String clientAcceptanceNote;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

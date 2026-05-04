@@ -19,5 +19,7 @@ public interface RepairRequestService {
 
     RepairRequestResponse updateStatus(Integer id, RepairRequestStatus status);
 
+    RepairRequestResponse acceptByClient(Integer id, String clientEmail, String note);
+
     void deleteRepairRequest(Integer id);
 }

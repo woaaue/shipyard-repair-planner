@@ -66,6 +66,7 @@ public class SecurityConfig {
 
                     .requestMatchers(HttpMethod.POST, "/api/repair-requests").hasAnyRole("CLIENT", "ADMIN", "DISPATCHER")
                     .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/*/status").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR")
+                    .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/*/acceptance").hasAnyRole("CLIENT", "ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
                     .requestMatchers(HttpMethod.DELETE, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
 

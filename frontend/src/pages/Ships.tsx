@@ -8,8 +8,10 @@ import Card from '../components/ui/Card';
 import ShipForm from '../components/forms/ShipForm';
 import { Search, Filter, Ship as ShipIcon, Plus, Download } from 'lucide-react';
 import { createShip, getShips } from '../services/ships';
+import { useAuth } from '../context/AuthContext';
 
 export default function Ships() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [ships, setShips] = useState<Ship[]>([]);
@@ -26,7 +28,11 @@ export default function Ships() {
     setError(null);
     try {
       const data = await getShips({ search, status: statusFilter });
-      setShips(data);
+      const scopedData =
+        user?.role === 'client' && typeof user.id === 'number'
+          ? data.filter((ship) => ship.ownerId === user.id)
+          : data;
+      setShips(scopedData);
     } catch {
       setError('Не удалось загрузить суда');
     } finally {
@@ -36,7 +42,7 @@ export default function Ships() {
 
   useEffect(() => {
     void fetchShips();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const handleCloseForm = () => {
     setShowShipForm(false);
@@ -159,6 +165,8 @@ export default function Ships() {
     navigate(`/ships/${ship.id}`);
   };
 
+  const canCreateShip = user?.role === 'admin' || user?.role === 'client';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -168,7 +176,11 @@ export default function Ships() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" icon={Download}>Экспорт</Button>
-          <Button variant="primary" icon={Plus} onClick={() => setShowShipForm(true)}>Добавить судно</Button>
+          {canCreateShip && (
+            <Button variant="primary" icon={Plus} onClick={() => setShowShipForm(true)}>
+              Добавить судно
+            </Button>
+          )}
         </div>
       </div>
 

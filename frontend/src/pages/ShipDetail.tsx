@@ -62,6 +62,18 @@ export default function ShipDetail() {
     );
   }
 
+  if (user?.role === 'client' && typeof user.id === 'number' && ship.ownerId !== user.id) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold text-gray-900">Доступ ограничен</h2>
+        <p className="text-gray-600 mt-2">Это судно не относится к вашему аккаунту.</p>
+        <Button onClick={() => navigate('/ships')} className="mt-4">
+          Вернуться к списку
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">

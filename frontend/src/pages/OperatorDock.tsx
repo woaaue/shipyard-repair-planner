@@ -20,12 +20,12 @@ import type { ExtendedRepair } from '../types/repair';
 import type { BackendRepairStatus } from '../services/repairs';
 
 const STATUS_LABELS: Record<BackendRepairStatus, string> = {
-  SCHEDULED: 'Scheduled',
-  STARTED: 'Started',
-  IN_PROGRESS: 'In progress',
-  QA: 'QA',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+  SCHEDULED: 'Запланирован',
+  STARTED: 'Начат',
+  IN_PROGRESS: 'В работе',
+  QA: 'Проверка',
+  COMPLETED: 'Завершен',
+  CANCELLED: 'Отменен',
 };
 
 function toBackendStatus(repair: ExtendedRepair): BackendRepairStatus {
@@ -45,7 +45,7 @@ export default function OperatorDock() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const userDock = user?.dock ?? 'Dock';
+  const userDock = user?.dock ?? 'Док не назначен';
 
   const loadRepairs = async () => {
     setIsLoading(true);
@@ -57,7 +57,7 @@ export default function OperatorDock() {
           : await getRepairs();
       setRepairs(data);
     } catch {
-      setError('Failed to load dock repairs.');
+      setError('Не удалось загрузить ремонты дока.');
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +67,12 @@ export default function OperatorDock() {
     void loadRepairs();
   }, [user?.id, user?.role]);
 
-  const dockRepairs = useMemo(() => repairs.filter((repair) => repair.dock === userDock), [repairs, userDock]);
+  const dockRepairs = useMemo(() => {
+    if (user?.role === 'operator') {
+      return repairs;
+    }
+    return repairs.filter((repair) => repair.dock === userDock);
+  }, [repairs, user?.role, userDock]);
   const activeRepairs = useMemo(
     () => dockRepairs.filter((repair) => repair.progress > 0 && repair.progress < 100),
     [dockRepairs]
@@ -88,9 +93,9 @@ export default function OperatorDock() {
     try {
       await updateRepairStatus(repairId, 'IN_PROGRESS');
       await loadRepairs();
-      window.alert(`Repair #${repairId} started.`);
+      window.alert(`Ремонт #${repairId} переведен в статус "В работе".`);
     } catch {
-      window.alert('Failed to update repair status.');
+      window.alert('Не удалось обновить статус ремонта.');
     } finally {
       setSelectedRepairId(null);
       setActualDate('');
@@ -103,7 +108,7 @@ export default function OperatorDock() {
       await updateRepairStatus(repairId, newStatus);
       await loadRepairs();
     } catch {
-      window.alert('Failed to update repair status.');
+      window.alert('Не удалось обновить статус ремонта.');
     }
   };
 
@@ -113,22 +118,22 @@ export default function OperatorDock() {
         <div className="flex items-center gap-3">
           <Anchor className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My dock</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Мой док</h1>
             <p className="text-gray-500">{userDock}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => navigate('/reports')}>
             <FileText className="h-4 w-4 mr-2" />
-            Report
+            Отчеты
           </Button>
-          <Button variant="secondary" onClick={() => window.alert('Exported')}>
+          <Button variant="secondary" onClick={() => window.alert('Экспорт выполнен.')}>
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Экспорт
           </Button>
           <Button variant="secondary" onClick={() => setShowDowntimeForm(true)}>
             <CloudOff className="h-4 w-4 mr-2" />
-            Downtime
+            Простой
           </Button>
         </div>
       </div>
@@ -140,31 +145,31 @@ export default function OperatorDock() {
           <div className="text-center">
             <Activity className="h-6 w-6 mx-auto mb-2 text-blue-600" />
             <div className="text-2xl font-bold text-gray-900">{activeRepairs.length}</div>
-            <div className="text-sm text-gray-500">In progress</div>
+            <div className="text-sm text-gray-500">В работе</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
             <Calendar className="h-6 w-6 mx-auto mb-2 text-orange-600" />
             <div className="text-2xl font-bold text-gray-900">{plannedRepairs.length}</div>
-            <div className="text-sm text-gray-500">Planned</div>
+            <div className="text-sm text-gray-500">Запланировано</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
             <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-600" />
             <div className="text-2xl font-bold text-gray-900">{completedRepairs.length}</div>
-            <div className="text-sm text-gray-500">Completed</div>
+            <div className="text-sm text-gray-500">Завершено</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
             <div className={`text-2xl font-bold ${isOverloaded ? 'text-red-600' : 'text-green-600'}`}>{loadPercentage}%</div>
-            <div className="text-sm text-gray-500">Load</div>
+            <div className="text-sm text-gray-500">Загрузка</div>
             {isOverloaded && (
               <div className="flex items-center justify-center gap-1 mt-1 text-xs text-red-600">
                 <AlertTriangle className="h-3 w-3" />
-                Overload
+                Перегруз
               </div>
             )}
           </div>
@@ -175,13 +180,13 @@ export default function OperatorDock() {
         <Card>
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-500" />
-            Current repairs ({activeRepairs.length})
+            Текущие ремонты ({activeRepairs.length})
           </h2>
           <div className="space-y-3">
             {isLoading ? (
-              <div className="text-gray-500 text-center py-4">Loading...</div>
+              <div className="text-gray-500 text-center py-4">Загрузка...</div>
             ) : activeRepairs.length === 0 ? (
-              <div className="text-gray-500 text-center py-4">No active repairs</div>
+              <div className="text-gray-500 text-center py-4">Нет активных ремонтов</div>
             ) : (
               activeRepairs.map((repair) => (
                 <div key={repair.id} className="p-4 border rounded-lg">
@@ -205,8 +210,8 @@ export default function OperatorDock() {
                     </select>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>Progress: {repair.progress}%</span>
-                    <span>Manager: {repair.manager}</span>
+                    <span>Прогресс: {repair.progress}%</span>
+                    <span>Ответственный: {repair.manager}</span>
                   </div>
                 </div>
               ))
@@ -217,20 +222,20 @@ export default function OperatorDock() {
         <Card>
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5 text-orange-500" />
-            Planned repairs ({plannedRepairs.length})
+            Запланированные ремонты ({plannedRepairs.length})
           </h2>
           <div className="space-y-3">
             {isLoading ? (
-              <div className="text-gray-500 text-center py-4">Loading...</div>
+              <div className="text-gray-500 text-center py-4">Загрузка...</div>
             ) : plannedRepairs.length === 0 ? (
-              <div className="text-gray-500 text-center py-4">No planned repairs</div>
+              <div className="text-gray-500 text-center py-4">Нет запланированных ремонтов</div>
             ) : (
               plannedRepairs.map((repair) => (
                 <div key={repair.id} className="p-4 border rounded-lg bg-gray-50">
                   <div className="flex items-start justify-between mb-2">
                     <div className="font-medium">{repair.shipName}</div>
                     <Button size="sm" onClick={() => setSelectedRepairId(repair.id)}>
-                      Confirm placement
+                      Подтвердить постановку
                     </Button>
                   </div>
                   <div className="text-sm text-gray-500">
@@ -246,10 +251,10 @@ export default function OperatorDock() {
       {selectedRepairId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Confirm vessel placement</h3>
+            <h3 className="text-lg font-semibold mb-4">Подтверждение постановки судна</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Actual placement date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Фактическая дата постановки</label>
                 <input
                   type="date"
                   value={actualDate}
@@ -258,13 +263,13 @@ export default function OperatorDock() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Comment (optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Комментарий (необязательно)</label>
                 <textarea
                   rows={3}
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Details"
+                  placeholder="Уточнение по постановке"
                 />
               </div>
               <div className="flex gap-3">
@@ -277,10 +282,10 @@ export default function OperatorDock() {
                     setComment('');
                   }}
                 >
-                  Cancel
+                  Отмена
                 </Button>
                 <Button className="flex-1" onClick={() => handleConfirmPlacement(selectedRepairId)}>
-                  Confirm
+                  Подтвердить
                 </Button>
               </div>
             </div>

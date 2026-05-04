@@ -5,6 +5,7 @@ export interface Ship {
   type: 'Контейнеровоз' | 'Танкер' | 'Балкер' | 'Ролкер';
   status: 'в ремонте' | 'ожидает' | 'в плавании';
   buildYear: number;
+  ownerId?: number;
   owner: string;
   lastRepairDate: string;
   nextRepairDate: string;
@@ -24,6 +25,9 @@ export interface Repair {
   manager: string;
   operatorId?: number;
   operatorFullName?: string;
+  requestStatus?: string;
+  clientAccepted?: boolean;
+  acceptanceAction?: string;
 }
 
 export interface RepairTask {
