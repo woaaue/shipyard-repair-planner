@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Диспетчер · v7</title>
+  <link rel="stylesheet" href="v7.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Диспетчер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Операторы</a><a href="#">Ремонты</a><a href="#">Доки</a><a href="#">Исключения</a><a href="index.html">Все v7</a></nav>
+    <div class="profile"><div><strong>role: DISPATCHER</strong><span>планирование и доки</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Операторы и распределение ремонтов</h1><p>Диспетчер работает с подчиненными операторами через `GET /api/users/{id}/subordinates` и назначает оператора ремонту через `PATCH /api/repairs/{id}/operator`.</p></div>
+      <div class="actions"><button class="btn primary">Назначить оператора</button><button class="btn">Переназначить док</button></div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Подчиненные операторы</h2><span>/api/users/3/subordinates</span></div>
+      <table class="table"><thead><tr><th>User</th><th>Role</th><th>Dock</th><th>Repairs</th><th>Availability</th></tr></thead><tbody><tr><td><strong>operator.a@shipyard.local</strong></td><td>OPERATOR</td><td>Dock 1</td><td>1</td><td>ready</td></tr><tr><td><strong>operator.b@shipyard.local</strong></td><td>OPERATOR</td><td>Dock 2</td><td>2</td><td>loaded</td></tr><tr><td><strong>operator.c@shipyard.local</strong></td><td>OPERATOR</td><td>Dock 3</td><td>0</td><td>maintenance</td></tr></tbody></table>
+    </section>
+
+    <div class="layout-2" style="margin-top:16px;">
+      <section class="panel"><div class="panel-title"><h2>Repairs без назначения</h2><span>/api/repairs + operatorId</span></div><table class="table"><thead><tr><th>Repair</th><th>Ship</th><th>Dock</th><th>Operator</th><th>Status</th></tr></thead><tbody><tr><td>41</td><td>North Wind</td><td>Dock 2</td><td>Не назначен</td><td><span class="state">PLANNED</span></td></tr><tr><td>42</td><td>Aurora</td><td>Dock 1</td><td>operator.a</td><td><span class="state">STARTED</span></td></tr></tbody></table></section>
+      <aside class="stack"><section class="panel"><div class="panel-title"><h2>Dock load</h2><span>/api/docks/{id}/load</span></div><table class="table"><tbody><tr><td>Dock 1</td><td>33%</td></tr><tr><td>Dock 2</td><td>67%</td></tr><tr><td>Dock 3</td><td>0%</td></tr></tbody></table></section><section class="panel"><div class="panel-title"><h2>Open issues / downtimes</h2><span>/api/issues, /api/downtimes</span></div><table class="table"><tbody><tr><td>Materials shortage</td><td>HIGH</td></tr><tr><td>Dock 3 maintenance</td><td>active</td></tr></tbody></table></section></aside>
+    </div>
+  </main>
+</body>
+</html>
+

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оператор дока · v2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Оператор дока</span></div></div>
+    <nav class="nav"><a class="active" href="#">Док №2</a><a href="#">Мастера</a><a href="#">Ресурсы</a><a href="index.html">Все v2</a></nav>
+    <div class="user"><div><strong>Мария Кузнецова</strong><span>1 оператор на Северный док №2</span></div></div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Северный док №2 · 4 мастера</h1>
+        <p>Оператор отвечает за один док, принимает этапы у мастеров и синхронизирует ресурсные решения с диспетчером.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn primary"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>Принять этап</button>
+        <button class="btn warn"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>Диспетчеру</button>
+      </div>
+    </div>
+
+    <div class="metric-row">
+      <div class="metric"><span>Мастера</span><strong>4</strong></div>
+      <div class="metric"><span>Рабочие через мастеров</span><strong>27</strong></div>
+      <div class="metric"><span>Этапы на приемку</span><strong>5</strong></div>
+      <div class="metric"><span>Риск ресурса</span><strong>кран 16 т</strong></div>
+    </div>
+
+    <div class="split">
+      <section class="panel pad">
+        <div class="panel-title"><h2>План дока по мастерам</h2><span>цепочка: мастер -> оператор -> диспетчер</span></div>
+        <div class="dock-board">
+          <div class="dock-column"><h3>Орлов</h3><div class="meta">сварка · 8 рабочих</div><div class="lane"><div class="lane-card"><strong>Зачистка шва</strong><span>2 этапа на приемку</span></div><div class="lane-card"><strong>Расходники</strong><span>круги 125 мм · риск</span></div></div></div>
+          <div class="dock-column"><h3>Малинин</h3><div class="meta">окраска · 7 рабочих</div><div class="lane"><div class="lane-card"><strong>Грунтовка</strong><span>старт после приемки Орлова</span></div><div class="lane-card"><strong>Окно работ</strong><span>15:30-18:00</span></div></div></div>
+          <div class="dock-column"><h3>Седова</h3><div class="meta">слесари · 6 рабочих</div><div class="lane"><div class="lane-card"><strong>Накладка</strong><span>нужен кран 16 т</span></div><div class="lane-card"><strong>Резерв</strong><span>2 человека после 16:00</span></div></div></div>
+        </div>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel pad">
+          <div class="panel-title"><h2>Диспетчер</h2><span>уровень выше</span></div>
+          <table class="table"><tbody><tr><td><strong>Елена Баранова</strong><span class="muted">сводит 3 оператора доков</span></td></tr><tr><td>Сверка по крану 16 т в 15:00</td></tr></tbody></table>
+        </section>
+        <section class="notice"><strong>Конфликт</strong>Кран 16 т нужен доку №2 и складу металла одновременно. Нужно подтвердить приоритет диспетчеру.</section>
+        <section class="panel pad">
+          <div class="panel-title"><h2>Загрузка</h2><span>док №2</span></div>
+          <div class="lane"><div class="progress"><span style="width:86%"></span></div><div class="muted">86% загрузки, 1 свободное окно после 17:30.</div></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

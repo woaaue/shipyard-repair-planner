@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рабочий · v6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Рабочий</span></div></div>
+    <nav class="nav"><a class="active" href="#">Работы</a><a href="#">Статус</a><a href="#">Уведомления</a><a href="index.html">Все v6</a></nav>
+    <div class="profile"><div><strong>role: WORKER</strong><span>может PATCH status</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>WorkItems доступные рабочему</h1><p>В текущей модели нет `assigneeId`, поэтому экран не может честно отфильтровать “мои задания”. Можно показывать работы по ремонту/категории и разрешить смену статуса.</p></div>
+      <div class="actions"><button class="btn primary">Отметить COMPLETED</button></div>
+    </div>
+
+    <div class="filters"><span class="field">status=IN_PROGRESS</span><span class="field">category=HULL</span><span class="field">repairId=32</span></div>
+
+    <section class="panel" style="margin-top:14px;">
+      <div class="panel-title"><h2>Список работ</h2><span>/api/work-items</span></div>
+      <table class="table">
+        <thead><tr><th>ID</th><th>Repair</th><th>Категория</th><th>Название</th><th>Часы</th><th>Notes</th><th>Статус</th></tr></thead>
+        <tbody>
+          <tr><td>501</td><td>32</td><td>HULL</td><td><strong>Зачистка шва</strong><span class="muted">Fix hull crack / description</span></td><td>4 / 3</td><td>Текстовая заметка из notes.</td><td><span class="state">IN_PROGRESS</span></td></tr>
+          <tr><td>506</td><td>32</td><td>STEEL</td><td><strong>Подготовка накладки</strong><span class="muted">mandatory=true</span></td><td>5 / 0</td><td>-</td><td><span class="state">PENDING</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="note" style="margin-top:16px;"><strong>Действие backend</strong>Рабочий по security может только `PATCH /api/work-items/{id}/status`. Создавать work item, issue или downtime рабочий сейчас не может.</section>
+  </main>
+</body>
+</html>

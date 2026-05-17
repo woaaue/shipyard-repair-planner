@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Диспетчер · v6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Диспетчер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Доки</a><a href="#">Заявки</a><a href="#">Простои</a><a href="#">Проблемы</a><a href="index.html">Все v6</a></nav>
+    <div class="profile"><div><strong>role: DISPATCHER</strong><span>планирование и доки</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Доки, расписание, простои</h1><p>Диспетчерский экран можно собрать из `/api/docks`, `/api/docks/{id}/load`, `/schedule`, `/repair-requests`, `/issues`, `/downtimes`.</p></div>
+      <div class="actions"><button class="btn primary">Создать ремонт</button><button class="btn">Создать dock downtime</button></div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Dock load</h2><span>maxConcurrentRepairs=3 в сервисе</span></div>
+      <table class="table"><thead><tr><th>Dock</th><th>Status</th><th>Load</th><th>Active repairs</th><th>Active downtime</th></tr></thead><tbody><tr><td><strong>Dock 1</strong></td><td>AVAILABLE</td><td>33%</td><td>1</td><td>-</td></tr><tr><td><strong>Dock 2</strong></td><td>OCCUPIED</td><td>67%</td><td>2</td><td>Materials unavailable</td></tr><tr><td><strong>Dock 3</strong></td><td>MAINTENANCE</td><td>0%</td><td>0</td><td>Planned maintenance</td></tr></tbody></table>
+    </section>
+
+    <div class="layout-2" style="margin-top:16px;">
+      <section class="panel"><div class="panel-title"><h2>RepairRequests</h2><span>status filter</span></div><table class="table"><thead><tr><th>ID</th><th>Ship</th><th>Client</th><th>Scheduled</th><th>Status</th></tr></thead><tbody><tr><td>91</td><td>Анна Мария</td><td>Client User</td><td>02.05-05.05</td><td><span class="state">APPROVED</span></td></tr><tr><td>92</td><td>North Wind</td><td>Client User</td><td>-</td><td><span class="state">UNDER_REVIEW</span></td></tr></tbody></table></section>
+      <aside class="stack"><section class="panel"><div class="panel-title"><h2>Open issues</h2><span>/api/issues?status=OPEN</span></div><table class="table"><tbody><tr><td>Materials shortage</td><td>HIGH</td></tr><tr><td>Technical malfunction</td><td>MEDIUM</td></tr></tbody></table></section><section class="panel"><div class="panel-title"><h2>Active downtimes</h2><span>activeOnly=true</span></div><table class="table"><tbody><tr><td>Dock 2</td><td>Materials unavailable</td></tr><tr><td>Dock 3</td><td>Planned maintenance</td></tr></tbody></table></section></aside>
+    </div>
+  </main>
+</body>
+</html>

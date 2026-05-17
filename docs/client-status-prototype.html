@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Статус ремонта - владелец судна</title>
+  <style>
+    :root {
+      --bg: #f4f7f9;
+      --surface: #ffffff;
+      --surface-soft: #f8fafb;
+      --line: #d9e2e8;
+      --line-strong: #c3d0d8;
+      --text: #102535;
+      --muted: #617383;
+      --faint: #8797a4;
+      --navy: #15364c;
+      --blue: #2d6988;
+      --blue-soft: #e9f3f7;
+      --green: #268365;
+      --green-soft: #e8f5ef;
+      --amber: #a46b16;
+      --amber-soft: #fbf0dc;
+      --red: #b94a48;
+      --red-soft: #fae9e8;
+      --shadow: 0 14px 34px rgba(22, 45, 61, 0.08);
+      --radius: 8px;
+      --font: "Segoe UI", "Noto Sans", Tahoma, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(244, 247, 249, 0.96) 34%),
+        repeating-linear-gradient(90deg, rgba(21, 54, 76, 0.025) 0 1px, transparent 1px 96px),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px 16px;
+      background: #0f293b;
+      color: #dce8ee;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 8px 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: var(--radius);
+      background: #173a52;
+      color: #9dd8c5;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.15;
+      color: #ffffff;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: #98afbd;
+    }
+
+    .nav {
+      display: grid;
+      gap: 4px;
+      margin-top: 22px;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 40px;
+      padding: 9px 10px;
+      border-radius: 7px;
+      color: #c6d5dd;
+      text-decoration: none;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      background: rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+    }
+
+    .nav a.active {
+      box-shadow: inset 3px 0 0 #6ec7a7;
+    }
+
+    .nav svg,
+    .icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .sidebar-footer {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 18px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar-footer .label {
+      font-size: 12px;
+      color: #98afbd;
+    }
+
+    .sidebar-footer strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 14px;
+      color: #ffffff;
+    }
+
+    .main {
+      min-width: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 70px;
+      padding: 14px 30px;
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+    }
+
+    .context {
+      min-width: 0;
+    }
+
+    .context h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .context p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: #245c78;
+      background: #245c78;
+      color: #ffffff;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(28, 54, 72, 0.1);
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 22px;
+      padding: 26px 30px 40px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .panel {
+      min-width: 0;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .panel.flat {
+      box-shadow: none;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px 0;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.25;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .panel-note {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .vessel-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .vessel-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .ship-avatar {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border-radius: var(--radius);
+      background: var(--blue-soft);
+      color: var(--blue);
+      border: 1px solid #d0e5ee;
+    }
+
+    .vessel-title h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    .vessel-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-block {
+      display: grid;
+      align-content: center;
+      gap: 7px;
+      min-width: 250px;
+      padding-left: 18px;
+      border-left: 1px solid var(--line);
+    }
+
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-line strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .phase {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      padding: 5px 9px;
+      border: 1px solid #d8b770;
+      border-radius: 999px;
+      background: var(--amber-soft);
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(118px, 1fr));
+      gap: 0;
+      max-width: 100%;
+      padding: 22px 20px 20px;
+      overflow-x: auto;
+    }
+
+    .step {
+      position: relative;
+      min-width: 118px;
+      padding-right: 16px;
+    }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      top: 11px;
+      left: 20px;
+      right: -4px;
+      height: 2px;
+      background: var(--line-strong);
+    }
+
+    .step:last-child::before {
+      display: none;
+    }
+
+    .dot {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--faint);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .step.done .dot {
+      border-color: var(--green);
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .step.active .dot {
+      border-color: var(--blue);
+      background: #ffffff;
+      color: var(--blue);
+      box-shadow: 0 0 0 5px var(--blue-soft);
+    }
+
+    .step h3 {
+      margin: 13px 0 4px;
+      font-size: 13px;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      margin: 0 20px 20px;
+      padding: 15px;
+      border: 1px solid #e4c178;
+      border-radius: var(--radius);
+      background: #fff7e8;
+    }
+
+    .action-row strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #704706;
+      font-size: 14px;
+    }
+
+    .action-row span {
+      color: #765b2d;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .work-list {
+      padding: 7px 20px 18px;
+    }
+
+    .work-item {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .work-item:last-child {
+      border-bottom: 0;
+    }
+
+    .date {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .work-item h3 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .work-item p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .tag.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .tag.amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .table th,
+    .table td {
+      padding: 12px 20px;
+      border-top: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    .table th {
+      color: var(--muted);
+      font-weight: 700;
+      background: var(--surface-soft);
+    }
+
+    .table td {
+      color: var(--text);
+    }
+
+    .side {
+      display: grid;
+      align-content: start;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .contact {
+      padding: 18px;
+    }
+
+    .person {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #dcebf1;
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .person strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .person span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .contact-actions {
+      display: grid;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .doc-list {
+      display: grid;
+      gap: 10px;
+      padding: 16px 18px 18px;
+    }
+
+    .doc {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface-soft);
+    }
+
+    .doc-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--blue);
+      border: 1px solid var(--line);
+    }
+
+    .doc strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .doc span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 16px 18px 18px;
+    }
+
+    .photo {
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background:
+        linear-gradient(135deg, rgba(15, 41, 59, 0.72), rgba(45, 105, 136, 0.34)),
+        repeating-linear-gradient(135deg, #d8e5eb 0 12px, #c7d8e0 12px 24px);
+      color: #ffffff;
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .summary-lines {
+      display: grid;
+      gap: 12px;
+      padding: 16px 18px 18px;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .summary-line strong {
+      color: var(--text);
+      text-align: right;
+    }
+
+    @media (max-width: 1120px) {
+      .app {
+        grid-template-columns: 76px minmax(0, 1fr);
+      }
+
+      .brand div:not(.mark),
+      .nav span,
+      .sidebar-footer {
+        display: none;
+      }
+
+      .brand {
+        justify-content: center;
+        padding-inline: 0;
+      }
+
+      .nav a {
+        justify-content: center;
+      }
+
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        padding: 12px;
+      }
+
+      .brand,
+      .sidebar-footer {
+        display: none;
+      }
+
+      .nav {
+        display: flex;
+        gap: 6px;
+        margin: 0;
+        overflow-x: auto;
+      }
+
+      .nav a {
+        flex: 0 0 auto;
+        justify-content: flex-start;
+        min-height: 38px;
+      }
+
+      .nav span {
+        display: inline;
+      }
+
+      .topbar {
+        position: static;
+        display: grid;
+        padding: 16px;
+      }
+
+      .top-actions {
+        flex-wrap: wrap;
+        white-space: normal;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .vessel-strip,
+      .action-row {
+        grid-template-columns: 1fr;
+      }
+
+      .status-block {
+        min-width: 0;
+        padding: 14px 0 0;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .timeline {
+        display: flex;
+        max-width: 100%;
+      }
+
+      .step {
+        flex: 0 0 156px;
+      }
+
+      .work-item {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        align-items: start;
+      }
+
+      .table {
+        display: block;
+        overflow: visible;
+        white-space: normal;
+      }
+
+      .table thead {
+        display: none;
+      }
+
+      .table tbody,
+      .table tr,
+      .table td {
+        display: block;
+        width: 100%;
+      }
+
+      .table tr {
+        padding: 12px 20px;
+        border-top: 1px solid var(--line);
+      }
+
+      .table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 7px 0;
+        border-top: 0;
+        text-align: right;
+      }
+
+      .table td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-weight: 700;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Навигация клиента">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M7 17V8l5-3 5 3v9"></path><path d="M9 11h6"></path></svg>
+        </div>
+        <div>
+          <strong>DockPlan</strong>
+          <span>Кабинет владельца</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="active" href="#">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+          <span>Статус ремонта</span>
+        </a>
+        <a href="#">
+          <svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 19V8l5-3 5 3v11"></path><path d="M9 13h6"></path></svg>
+          <span>Мои суда</span>
+        </a>
+        <a href="#">
+          <svg viewBox="0 0 24 24"><path d="M7 3h10l3 4v14H4V3h3Z"></path><path d="M8 12h8"></path><path d="M8 16h6"></path></svg>
+          <span>Документы</span>
+        </a>
+        <a href="#">
+          <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>
+          <span>Сообщения</span>
+        </a>
+        <a href="#">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a8 8 0 0 0 0-6"></path><path d="M4.6 9a8 8 0 0 0 0 6"></path><path d="M8 3.8a9 9 0 0 1 8 0"></path><path d="M16 20.2a9 9 0 0 1-8 0"></path></svg>
+          <span>Настройки</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="label">Договор</div>
+        <strong>SR-2026-0418</strong>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="context">
+          <h1>Статус ремонта</h1>
+          <p>Судно «Анна Мария» · IMO 9456789 · Северный док №2</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>
+            Скачать отчет
+          </button>
+          <button class="btn primary">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>
+            Согласовать акт
+          </button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="stack">
+          <section class="panel">
+            <div class="vessel-strip">
+              <div class="vessel-title">
+                <div class="ship-avatar" aria-hidden="true">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M3 18h18"></path><path d="M5 18l2-9h10l2 9"></path><path d="M9 9V5h6v4"></path><path d="M8 13h8"></path></svg>
+                </div>
+                <div>
+                  <h2>Анна Мария</h2>
+                  <p>Плановая сдача: 14 мая · Обновлено сегодня в 11:40</p>
+                </div>
+              </div>
+              <div class="status-block">
+                <span class="phase">Идет приемка корпуса</span>
+                <div class="status-line"><span>Док</span><strong>Северный док №2</strong></div>
+                <div class="status-line"><span>Ответственный</span><strong>Илья Воронцов</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Ход ремонта</h2>
+                <p class="panel-note">Этапы показаны так, как они будут отражены в акте сдачи.</p>
+              </div>
+              <span class="tag blue">68% работ закрыто</span>
+            </div>
+            <div class="timeline" aria-label="Этапы ремонта">
+              <div class="step done">
+                <div class="dot">1</div>
+                <h3>Принято в ремонт</h3>
+                <p>18 апреля · документы проверены</p>
+              </div>
+              <div class="step done">
+                <div class="dot">2</div>
+                <h3>Дефектация</h3>
+                <p>22 апреля · ведомость согласована</p>
+              </div>
+              <div class="step done">
+                <div class="dot">3</div>
+                <h3>Основные работы</h3>
+                <p>Корпус, трубопроводы, окраска</p>
+              </div>
+              <div class="step active">
+                <div class="dot">4</div>
+                <h3>Приемка корпуса</h3>
+                <p>Ожидается согласование акта</p>
+              </div>
+              <div class="step">
+                <div class="dot">5</div>
+                <h3>Готово к выдаче</h3>
+                <p>План: 14 мая</p>
+              </div>
+            </div>
+            <div class="action-row">
+              <div>
+                <strong>Требуется решение владельца</strong>
+                <span>Акт промежуточной приемки корпуса подготовлен. После согласования участок продолжит финальную окраску.</span>
+              </div>
+              <button class="btn primary">Согласовать акт</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Последние работы</h2>
+                <p class="panel-note">Только значимые события, влияющие на срок или приемку.</p>
+              </div>
+            </div>
+            <div class="work-list">
+              <article class="work-item">
+                <div class="date">30 апреля</div>
+                <div>
+                  <h3>Завершена зачистка и контроль швов правого борта</h3>
+                  <p>Фотоотчет добавлен, замечаний от ОТК нет.</p>
+                </div>
+                <span class="tag green">Принято</span>
+              </article>
+              <article class="work-item">
+                <div class="date">29 апреля</div>
+                <div>
+                  <h3>Подготовлен акт промежуточной приемки корпуса</h3>
+                  <p>Документ ожидает согласования владельца.</p>
+                </div>
+                <span class="tag amber">На согласовании</span>
+              </article>
+              <article class="work-item">
+                <div class="date">28 апреля</div>
+                <div>
+                  <h3>Закрыта замена участка трубопровода охлаждения</h3>
+                  <p>Материалы списаны, исполнитель: участок механиков.</p>
+                </div>
+                <span class="tag green">Закрыто</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel flat">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Согласования</h2>
+                <p class="panel-note">Здесь остаются только документы, где требуется действие владельца.</p>
+              </div>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Документ</th>
+                  <th>Дата</th>
+                  <th>Статус</th>
+                  <th>Действие</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td data-label="Документ">Акт приемки корпуса №12</td>
+                  <td data-label="Дата">29 апреля</td>
+                  <td data-label="Статус"><span class="tag amber">Ожидает решения</span></td>
+                  <td data-label="Действие"><button class="btn">Открыть</button></td>
+                </tr>
+                <tr>
+                  <td data-label="Документ">Дополнительная ведомость работ №3</td>
+                  <td data-label="Дата">26 апреля</td>
+                  <td data-label="Статус"><span class="tag green">Согласовано</span></td>
+                  <td data-label="Действие"><button class="btn">Просмотр</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <aside class="side" aria-label="Сводка и документы">
+          <section class="panel">
+            <div class="contact">
+              <h2 class="panel-title">Ответственный от верфи</h2>
+              <p class="panel-note">По вопросам сроков, актов и фотоотчетов.</p>
+              <div class="person">
+                <div class="avatar">ИВ</div>
+                <div>
+                  <strong>Илья Воронцов</strong>
+                  <span>Менеджер ремонта · смена до 19:00</span>
+                </div>
+              </div>
+              <div class="contact-actions">
+                <button class="btn primary">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>
+                  Задать вопрос
+                </button>
+                <button class="btn">Запросить звонок</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Краткая сводка</h2>
+              </div>
+            </div>
+            <div class="summary-lines">
+              <div class="summary-line"><span>Плановая сдача</span><strong>14 мая</strong></div>
+              <div class="summary-line"><span>Риск по сроку</span><strong>Низкий</strong></div>
+              <div class="summary-line"><span>Открытых замечаний</span><strong>2</strong></div>
+              <div class="summary-line"><span>Ожидает владельца</span><strong>1 документ</strong></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Документы</h2>
+              </div>
+            </div>
+            <div class="doc-list">
+              <div class="doc">
+                <div class="doc-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h4"></path></svg></div>
+                <div><strong>Акт приемки корпуса №12.pdf</strong><span>PDF · 1.8 МБ</span></div>
+              </div>
+              <div class="doc">
+                <div class="doc-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M9 13h6"></path><path d="M9 17h4"></path></svg></div>
+                <div><strong>Фотоотчет 30.04.zip</strong><span>ZIP · 24 фото</span></div>
+              </div>
+              <div class="doc">
+                <div class="doc-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h4"></path></svg></div>
+                <div><strong>Дефектная ведомость.pdf</strong><span>PDF · согласовано</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Фотоотчет</h2>
+              </div>
+            </div>
+            <div class="photo-grid">
+              <div class="photo">Правый борт · швы</div>
+              <div class="photo">Корпус · грунтовка</div>
+              <div class="photo">Трубопровод · замена</div>
+              <div class="photo">Док · общий вид</div>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

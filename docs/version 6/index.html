@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Верфь-Ремонт · version 6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">VR</div>
+      <div><strong>Верфь-Ремонт</strong><span>Набор экранов v6</span></div>
+    </div>
+    <nav class="nav">
+      <a class="active" href="index.html">Все</a>
+      <a href="client-home-v6.html">Клиент</a>
+      <a href="worker-home-v6.html">Рабочий</a>
+      <a href="master-home-v6.html">Мастер</a>
+      <a href="operator-home-v6.html">Оператор</a>
+      <a href="dispatcher-home-v6.html">Диспетчер</a>
+      <a href="admin-home-v6.html">Админ</a>
+    </nav>
+    <div class="profile"><div><strong>Version 6</strong><span>по текущему backend</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div>
+        <h1>V6: только то, что backend уже может отдать</h1>
+        <p>Без фото-ревью, материалов, документов, кранов и подчиненности как системных фактов. Такие вещи можно показать только как `Issue`, `Downtime` или `notes`.</p>
+      </div>
+    </div>
+
+    <div class="link-grid">
+      <a class="link-card" href="client-home-v6.html"><strong>Клиент</strong><span>RepairRequest, Repair, WorkItem, Notification. Без issues, потому что клиенту они сейчас закрыты security.</span></a>
+      <a class="link-card" href="worker-home-v6.html"><strong>Рабочий</strong><span>WorkItem list и PATCH status. Нет assignee, поэтому это не “мои” задачи в строгом смысле.</span></a>
+      <a class="link-card" href="master-home-v6.html"><strong>Мастер</strong><span>WorkItem CRUD, Issue, Downtime. Проблемы и простои как отдельные записи.</span></a>
+      <a class="link-card" href="operator-home-v6.html"><strong>Оператор</strong><span>Repair status, WorkItem, Issue, Downtime, Dock load. Привязка только к dock у пользователя.</span></a>
+      <a class="link-card" href="dispatcher-home-v6.html"><strong>Диспетчер</strong><span>Docks, Dock schedule/load, Repairs, Issues, Downtimes, RepairRequests.</span></a>
+      <a class="link-card" href="admin-home-v6.html"><strong>Админ</strong><span>Users, roles, dock assignment, audit logs. Без иерархии reportsTo.</span></a>
+    </div>
+  </main>
+</body>
+</html>

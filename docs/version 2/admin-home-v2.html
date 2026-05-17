@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ · v2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Администратор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Права</a><a href="#">Пользователи</a><a href="#">Справочники</a><a href="index.html">Все v2</a></nav>
+    <div class="user"><div><strong>Павел Никитин</strong><span>Контур production</span></div></div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Роли и подчиненность</h1>
+        <p>Админ не управляет работами, а настраивает доступ так, чтобы пользователь видел свой уровень и подчиненных: рабочий -> мастер -> оператор -> диспетчер.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn primary"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Добавить пользователя</button>
+        <button class="btn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path></svg>Настроить роль</button>
+      </div>
+    </div>
+
+    <div class="split">
+      <section class="panel pad">
+        <div class="panel-title"><h2>Очередь доступа</h2><span>требует проверки</span></div>
+        <table class="table">
+          <thead><tr><th>Пользователь</th><th>Запрошено</th><th>Привязка</th><th>Риск</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ООО СеверСервис</strong><span class="muted">подрядчик</span></td><td>мастер</td><td>оператор дока №2</td><td><span class="status yellow">проверить договор</span></td></tr>
+            <tr><td><strong>Денис Морозов</strong><span class="muted">новый сотрудник</span></td><td>рабочий</td><td>мастер Орлов</td><td><span class="status green">готово</span></td></tr>
+            <tr><td><strong>Анна Романова</strong><span class="muted">оператор</span></td><td>оператор дока №3</td><td>диспетчер Баранова</td><td><span class="status">ожидает подпись</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel pad">
+          <div class="panel-title"><h2>Система</h2><span>сегодня</span></div>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr; margin-bottom:0;">
+            <div class="metric"><span>Активные</span><strong>148</strong></div>
+            <div class="metric"><span>Запросы</span><strong>6</strong></div>
+          </div>
+        </section>
+        <section class="notice"><strong>Правило доступа</strong>Оператор закрепляется за одним доком. Мастер должен быть привязан к оператору, рабочий - к мастеру.</section>
+      </aside>
+    </div>
+
+    <section class="panel pad" style="margin-top:16px;">
+      <div class="panel-title"><h2>Матрица видимости</h2><span>уровень и подчиненные</span></div>
+      <div class="matrix" aria-label="Матрица видимости ролей">
+        <div class="head">Роль</div><div class="head">Свои задачи</div><div class="head">Подчиненные</div><div class="head">Док</div><div class="head">Все доки</div>
+        <div>Рабочий</div><div>да</div><div>нет</div><div>нет</div><div>нет</div>
+        <div>Мастер</div><div>да</div><div>рабочие</div><div>только свой участок</div><div>нет</div>
+        <div>Оператор</div><div>да</div><div>мастера дока</div><div>один док</div><div>нет</div>
+        <div>Диспетчер</div><div>да</div><div>операторы</div><div>все доки смены</div><div>да</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

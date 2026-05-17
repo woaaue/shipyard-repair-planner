@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мастер · v6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Мастер</span></div></div>
+    <nav class="nav"><a class="active" href="#">WorkItems</a><a href="#">Issues</a><a href="#">Downtimes</a><a href="index.html">Все v6</a></nav>
+    <div class="profile"><div><strong>role: MASTER</strong><span>CRUD работ, issues, downtimes</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Работы, проблемы и простои по ремонту</h1><p>Мастерский экран опирается на WorkItem + Issue + Downtime. Нет списка подчиненных рабочих, потому что backend не хранит связь master-worker.</p></div>
+      <div class="actions"><button class="btn primary">Создать WorkItem</button><button class="btn">Report issue</button></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>WorkItems</h2><span>/api/work-items?repairId=32</span></div>
+        <table class="table"><thead><tr><th>ID</th><th>Категория</th><th>Название</th><th>Mandatory</th><th>Discovered</th><th>Часы</th><th>Статус</th></tr></thead><tbody><tr><td>501</td><td>HULL</td><td><strong>Welding</strong><span class="muted">Fix hull crack</span></td><td>true</td><td>false</td><td>8 / 3</td><td><span class="state">IN_PROGRESS</span></td></tr><tr><td>507</td><td>PAINTING</td><td><strong>Primer coat</strong><span class="muted">notes: wait HULL complete</span></td><td>true</td><td>false</td><td>6 / 0</td><td><span class="state">PENDING</span></td></tr></tbody></table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-title"><h2>Issues</h2><span>/api/issues?repairId=32</span></div>
+          <table class="table"><tbody><tr><td><strong>Materials shortage</strong><span class="muted">description из формы issue</span></td><td><span class="state">OPEN</span></td></tr><tr><td><strong>Defect found</strong><span class="muted">impact=HIGH</span></td><td><span class="state">OPEN</span></td></tr></tbody></table>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><h2>Downtimes</h2><span>/api/downtimes?activeOnly=true</span></div>
+          <table class="table"><tbody><tr><td><strong>Dock 2</strong><span class="muted">Materials unavailable · expected 15:05</span></td><td><span class="state">active</span></td></tr></tbody></table>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

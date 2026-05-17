@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Панель администратора</title>
+  <link rel="stylesheet" href="prototype-home.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top-nav">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg>
+        </div>
+        <div>
+          <strong>Верфь-Ремонт</strong>
+          <span>Панель администратора</span>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Разделы администратора">
+        <a class="tab active" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Пользователи
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path></svg>
+          Роли
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8"></path><path d="M8 12h8"></path><path d="M8 16h5"></path></svg>
+          Справочники
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h4"></path></svg>
+          Журнал
+        </a>
+      </nav>
+      <div class="role-head">
+        <div><strong>Павел Никитин</strong><span>Администратор системы</span></div>
+        <div><strong>Контур: production</strong><span>1 мая 2026</span></div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="hero">
+        <article class="panel current">
+          <div class="eyeline">
+            <span class="status">Система стабильна · 99,98%</span>
+            <span>Последний аудит прав: сегодня 13:40</span>
+          </div>
+
+          <h1>Администрирование платформы</h1>
+
+          <div class="location">
+            <span>Организация: <strong>Верфь-Ремонт</strong></span>
+            <span>/</span>
+            <span>Контур: <strong>боевой</strong></span>
+            <span>/</span>
+            <span>Фокус: <strong>права и справочники</strong></span>
+          </div>
+
+          <div class="now-step">
+            <div class="step-num">6</div>
+            <div>
+              <span>Что проверить сейчас</span>
+              <strong>Проверить роли по цепочке: рабочий, мастер, оператор дока, диспетчер и администратор.</strong>
+            </div>
+          </div>
+
+          <div class="micro">
+            <div><span>Пользователи</span><strong>148 активных</strong></div>
+            <div><span>Приглашения</span><strong>6 ожидают</strong></div>
+            <div><span>Интеграции</span><strong>2 требуют внимания</strong></div>
+          </div>
+        </article>
+
+        <aside class="panel side-card">
+          <div class="contact">
+            <div class="avatar">ИТ</div>
+            <div>
+              <strong>Служба ИТ</strong>
+              <span>Поддержка инфраструктуры</span>
+            </div>
+          </div>
+
+          <div class="alert red">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"></path><path d="M12 9v5"></path><path d="M12 18h.01"></path></svg>
+            <div>
+              <strong>Проверить доступ</strong>
+              У подрядчика запрошена роль мастера, но мастер должен быть привязан к оператору конкретного дока.
+            </div>
+          </div>
+
+          <ul class="small-list">
+            <li><span>Новые роли</span><strong>3 запроса</strong></li>
+            <li><span>Справочники</span><strong>12 обновлений</strong></li>
+            <li><span>Ошибки входа</span><strong>5 за сутки</strong></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="sections">
+        <article class="panel section">
+          <h2>Административная очередь</h2>
+          <div class="queue">
+            <div class="task-row">
+              <div>
+                <h3>Приглашение подрядчика: ООО СеверСервис</h3>
+                <p>Нужно привязать рабочих к мастеру, мастера к оператору дока, оператора к диспетчеру</p>
+              </div>
+              <span class="tag yellow">Проверить</span>
+            </div>
+            <div class="task-row">
+              <div>
+                <h3>Обновление справочника материалов</h3>
+                <p>Добавлены круги 125 мм, грунт ЭП-0199 и растворитель Р-646</p>
+              </div>
+              <span class="tag green">Готово</span>
+            </div>
+            <div class="task-row">
+              <div>
+                <h3>Интеграция с почтовым шлюзом</h3>
+                <p>Два письма с вложениями ушли в ручную обработку</p>
+              </div>
+              <span class="tag red">Ошибка</span>
+            </div>
+          </div>
+
+          <details>
+            <summary>Показать журнал аудита</summary>
+            <div class="details-grid">
+              <div>
+                <h3>Последние действия</h3>
+                <p>Изменены роли двух мастеров, добавлен справочник расходников, создан ключ API для тестового контура.</p>
+              </div>
+              <div>
+                <h3>Контроль</h3>
+                <p>После выдачи доступа система проверит, что пользователь видит только свой уровень и подчиненных.</p>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <aside class="panel section">
+          <h2>Состояние модулей</h2>
+          <div class="mini-map" aria-label="Состояние модулей системы">
+            <div class="dock-row"><span>API</span><div class="bar"><span style="width:99%"></span></div><strong>OK</strong></div>
+            <div class="dock-row"><span>Почта</span><div class="bar"><span style="width:74%"></span></div><strong>2 сбоя</strong></div>
+            <div class="dock-row"><span>Файлы</span><div class="bar"><span style="width:91%"></span></div><strong>OK</strong></div>
+          </div>
+          <button class="btn" style="width:100%; margin-top:14px;">Открыть мониторинг</button>
+        </aside>
+      </section>
+    </main>
+
+    <div class="command-bar" aria-label="Действия администратора">
+      <div class="command-inner">
+        <button class="btn primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+          Добавить пользователя
+        </button>
+        <button class="btn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path></svg>
+          Настроить роли
+        </button>
+        <button class="btn warn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h4"></path></svg>
+          Открыть журнал
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

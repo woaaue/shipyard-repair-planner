@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ · v7</title>
+  <link rel="stylesheet" href="v7.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Администратор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Users</a><a href="#">Иерархия</a><a href="#">Audit</a><a href="index.html">Все v7</a></nav>
+    <div class="profile"><div><strong>role: ADMIN</strong><span>полный доступ</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Пользователи, роли и подчиненность</h1><p>В v7 админ настраивает иерархию через `reportsToUserId`: рабочий -> мастер -> оператор -> диспетчер. Это позволяет строить реальные ролевые экраны без искусственных фильтров.</p></div>
+      <div class="actions"><button class="btn primary">Создать пользователя</button><button class="btn">Сбросить пароль</button></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Users</h2><span>/api/users</span></div>
+        <table class="table"><thead><tr><th>ID</th><th>Email</th><th>Role</th><th>Dock</th><th>reportsTo</th><th>Enabled</th></tr></thead><tbody><tr><td>3</td><td>dispatcher@shipyard.local</td><td>DISPATCHER</td><td>-</td><td>-</td><td>true</td></tr><tr><td>5</td><td>operator@shipyard.local</td><td>OPERATOR</td><td>Dock 2</td><td>3</td><td>true</td></tr><tr><td>7</td><td>master@shipyard.local</td><td>MASTER</td><td>Dock 2</td><td>5</td><td>true</td></tr><tr><td>11</td><td>worker@shipyard.local</td><td>WORKER</td><td>Dock 2</td><td>7</td><td>true</td></tr></tbody></table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel"><div class="panel-title"><h2>Audit logs</h2><span>/api/audit-logs</span></div><table class="table"><tbody><tr><td>CREATE / REPAIR / userId 7</td><td>operator@mail.com</td></tr><tr><td>PATCH / WORK_ITEM / userId 11</td><td>worker@mail.com</td></tr></tbody></table></section>
+        <section class="note"><strong>Новые действия</strong>`GET /api/users/{id}/subordinates` возвращает прямых подчиненных. Это ключ к экранам мастера, оператора и диспетчера.</section>
+      </aside>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-title"><h2>Что реально есть в API</h2><span>для проектирования UI</span></div>
+      <div class="api-list">
+        <div class="api-line"><strong>WorkItem</strong><span>... + assigneeId, assigneeFullName, reviewStatus. PATCH assignee и review.</span></div>
+        <div class="api-line"><strong>Issue</strong><span>issueType, description, impact, status, reportedBy, reportedAt, resolvedAt.</span></div>
+        <div class="api-line"><strong>Downtime</strong><span>dockName, reason, startDate, endDate, expectedEndDate, notes.</span></div>
+        <div class="api-line"><strong>Repair</strong><span>... + operatorId, operatorFullName. PATCH operator assignment.</span></div>
+        <div class="api-line"><strong>User</strong><span>role, enabled, dock, reportsToUserId, reportsToFullName.</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+

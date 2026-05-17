@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оператор · v6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Оператор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Мой док</a><a href="#">Repairs</a><a href="#">Issues</a><a href="#">Downtimes</a><a href="index.html">Все v6</a></nav>
+    <div class="profile"><div><strong>role: OPERATOR</strong><span>dockId из User</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Док оператора: repairs и нагрузка</h1><p>Backend хранит у пользователя только `dockId`. Несколько мастеров у оператора сейчас не моделируются, поэтому экран строится вокруг dock schedule/load и работ ремонта.</p></div>
+      <div class="actions"><button class="btn primary">Обновить статус ремонта</button><button class="btn">Зарегистрировать downtime</button></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><span>Dock</span><strong>Dock #2</strong></div>
+      <div class="metric"><span>Load</span><strong>67%</strong></div>
+      <div class="metric"><span>Active repairs</span><strong>2 / 3</strong></div>
+      <div class="metric"><span>Open issues</span><strong>2</strong></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Dock schedule</h2><span>/api/docks/{id}/schedule</span></div>
+        <table class="table"><thead><tr><th>Repair</th><th>Ship</th><th>Dates</th><th>Progress</th><th>Status</th></tr></thead><tbody><tr><td>32 / request 91</td><td><strong>Анна Мария</strong></td><td>02.05-05.05</td><td>58%</td><td><span class="state">IN_PROGRESS</span></td></tr><tr><td>35 / request 94</td><td><strong>Петр I</strong></td><td>01.05-04.05</td><td>30%</td><td><span class="state">STARTED</span></td></tr></tbody></table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel"><div class="panel-title"><h2>Issues</h2><span>repairId=32</span></div><table class="table"><tbody><tr><td>Materials shortage</td><td><span class="state">OPEN</span></td></tr><tr><td>Work delay</td><td><span class="state">OPEN</span></td></tr></tbody></table></section>
+        <section class="panel"><div class="panel-title"><h2>Downtime</h2><span>dockName=Dock 2</span></div><table class="table"><tbody><tr><td>Materials unavailable</td><td>14:00-15:05?</td></tr></tbody></table></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

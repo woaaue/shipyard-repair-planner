@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Верфь-Ремонт · version 2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg>
+      </div>
+      <div>
+        <strong>Верфь-Ремонт</strong>
+        <span>Набор экранов v2</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Роли">
+      <a class="active" href="index.html">Все роли</a>
+      <a href="client-home-v2.html">Клиент</a>
+      <a href="worker-home-v2.html">Рабочий</a>
+      <a href="master-home-v2.html">Мастер</a>
+      <a href="operator-home-v2.html">Оператор</a>
+      <a href="dispatcher-home-v2.html">Диспетчер</a>
+      <a href="admin-home-v2.html">Админ</a>
+    </nav>
+    <div class="user"><div><strong>Version 2</strong><span>Разные рабочие поверхности</span></div></div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Прототипы без шаблонной hero-структуры</h1>
+        <p>Каждый экран собран под реальную роль: клиент видит прозрачный статус ремонта, производство работает по цепочке рабочий -> мастер -> оператор дока -> диспетчер. Админ управляет ролями и привязками.</p>
+      </div>
+    </div>
+
+    <div class="link-grid">
+      <a class="link-card" href="client-home-v2.html"><strong>Клиент</strong><span>Статус ремонта, согласования, смета, документы и подтвержденные события.</span></a>
+      <a class="link-card" href="worker-home-v2.html"><strong>Рабочий</strong><span>Один текущий наряд, шаги, фотофиксация и прямой мастер.</span></a>
+      <a class="link-card" href="master-home-v2.html"><strong>Мастер</strong><span>Рабочие, посты, статусы этапов и передача оператору дока.</span></a>
+      <a class="link-card" href="operator-home-v2.html"><strong>Оператор</strong><span>Один док, несколько мастеров, приемка этапов и связь с диспетчером.</span></a>
+      <a class="link-card" href="dispatcher-home-v2.html"><strong>Диспетчер</strong><span>Несколько доков, операторы, ресурсные конфликты и общий график.</span></a>
+      <a class="link-card" href="admin-home-v2.html"><strong>Админ</strong><span>Пользователи, роли, матрица доступа и аудит подчиненности.</span></a>
+    </div>
+  </main>
+</body>
+</html>

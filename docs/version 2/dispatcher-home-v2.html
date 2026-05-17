@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Диспетчер · v2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Диспетчер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Доки</a><a href="#">Операторы</a><a href="#">Краны</a><a href="index.html">Все v2</a></nav>
+    <div class="user"><div><strong>Елена Баранова</strong><span>3 оператора в смене</span></div></div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Диспетчерская доска доков</h1>
+        <p>Диспетчер видит несколько операторов, каждый оператор закреплен за одним доком. Основная работа - конфликты ресурсов и междоковые окна.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn primary"><svg class="icon" viewBox="0 0 24 24"><path d="M17 3h4v4"></path><path d="M21 3 14 10"></path><path d="M7 21H3v-4"></path><path d="M3 21l7-7"></path></svg>Переназначить ресурс</button>
+        <button class="btn"><svg class="icon" viewBox="0 0 24 24"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>Открыть график</button>
+      </div>
+    </div>
+
+    <div class="metric-row">
+      <div class="metric"><span>Доки</span><strong>3</strong></div>
+      <div class="metric"><span>Операторы</span><strong>3</strong></div>
+      <div class="metric"><span>Мастера ниже</span><strong>12</strong></div>
+      <div class="metric"><span>Конфликты</span><strong>2</strong></div>
+    </div>
+
+    <section class="panel pad">
+      <div class="panel-title"><h2>Доки по операторам</h2><span>горизонт текущей смены</span></div>
+      <div class="dock-board">
+        <div class="dock-column">
+          <h3>Док №1 · Игорь Павлов</h3><div class="meta">4 мастера · 31 рабочий</div>
+          <div class="lane"><div class="lane-card"><strong>Готов отдать резерв</strong><span>2 рабочих после 15:10</span></div><div class="progress"><span style="width:64%"></span></div><span class="status green">64% загрузки</span></div>
+        </div>
+        <div class="dock-column">
+          <h3>Док №2 · Мария Кузнецова</h3><div class="meta">4 мастера · 27 рабочих</div>
+          <div class="lane"><div class="lane-card"><strong>Нужен кран 16 т</strong><span>окно 15:20-16:10</span></div><div class="progress"><span style="width:86%"></span></div><span class="status yellow">ресурсный конфликт</span></div>
+        </div>
+        <div class="dock-column">
+          <h3>Док №3 · Анна Романова</h3><div class="meta">4 мастера · 22 рабочих</div>
+          <div class="lane"><div class="lane-card"><strong>Ждет материалы</strong><span>круги 125 мм со склада</span></div><div class="progress"><span style="width:52%"></span></div><span class="status">52% загрузки</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="command-bar"><div class="command-inner"><button class="btn primary">Подтвердить кран</button><button class="btn">Запросить операторов</button><button class="btn warn">Открыть конфликт</button></div></div>
+  </main>
+</body>
+</html>

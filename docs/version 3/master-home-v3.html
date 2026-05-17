@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мастер · v3</title>
+  <link rel="stylesheet" href="human-v3.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Мастер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Рабочие</a><a href="#">Наряды</a><a href="#">Материалы</a><a href="index.html">Все v3</a></nav>
+    <div class="profile"><div><strong>Алексей Орлов</strong><span>оператор: Мария Кузнецова</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Сварочный участок · правая сторона</h1><p>8 рабочих, 3 поста. Два этапа можно отдать оператору, один пост рискует встать по расходникам.</p></div>
+      <div class="actions"><button class="btn primary">Отдать оператору</button><button class="btn">Выдать наряд</button></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><span>Рабочие</span><strong>8</strong></div>
+      <div class="metric"><span>На проверку</span><strong>2</strong></div>
+      <div class="metric"><span>Просрочка</span><strong>+22 мин</strong></div>
+      <div class="metric"><span>Резерв</span><strong>1 чел.</strong></div>
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Люди и посты</h2><span>обновлено 14:36</span></div>
+        <table class="table">
+          <thead><tr><th>Рабочий</th><th>Пост</th><th>Наряд</th><th>Заметка</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Иван Петров</strong><span class="muted">WR-1842</span></td><td>№1</td><td>Зачистка шва</td><td>переснять фото с линейкой</td><td><span class="status yellow">жду фото</span></td></tr>
+            <tr><td><strong>Олег Соколов</strong><span class="muted">WR-1843</span></td><td>№2</td><td>Дочистка кромки</td><td>круги закончатся через 20 мин</td><td><span class="status red">материалы</span></td></tr>
+            <tr><td><strong>Роман Беляев</strong><span class="muted">WR-1844</span></td><td>№2</td><td>Снятие брызг</td><td>можно перевести к Петрову</td><td><span class="status">резерв</span></td></tr>
+            <tr><td><strong>Денис Морозов</strong><span class="muted">WR-1845</span></td><td>№3</td><td>Подготовка грунта</td><td>готов ждать Малинина</td><td><span class="status green">свободен</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="stack">
+        <section class="note red"><strong>Не забыть</strong>Оператор попросила закрыть правый борт до 15:00. Без фото с линейкой этап не примут.</section>
+        <section class="panel">
+          <div class="panel-title"><h2>На передачу оператору</h2><span>2 позиции</span></div>
+          <div class="log"><div class="log-item"><div class="log-time">14:28</div><div>Зачистка WR-1842, ждет переснимок.</div></div><div class="log-item"><div class="log-time">14:10</div><div>Кромка WR-1843, нужна отметка по материалам.</div></div></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

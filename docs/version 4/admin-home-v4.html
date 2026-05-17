@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ · v4</title>
+  <link rel="stylesheet" href="v4.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Администратор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Доступы</a><a href="#">Аудит</a><a href="#">Справочники</a><a href="index.html">Все v4</a></nav>
+    <div class="profile"><div><strong>Павел Никитин</strong><span>production</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Доступы · привязки · аудит</h1><p>Проверка после приглашения подрядчика и перевода оператора на док №3. Есть одно нарушение правила “мастер привязан к оператору дока”.</p></div>
+      <div class="actions"><button class="btn primary">Исправить привязку</button><button class="btn">Экспорт аудита</button></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Очередь доступа</h2><span>6 запросов, 1 ошибка</span></div>
+        <table class="table">
+          <thead><tr><th>Пользователь</th><th>Роль</th><th>Привязка</th><th>Проверка</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ООО СеверСервис</strong><span class="muted">подрядчик · ИНН 5402...</span></td><td>мастер</td><td><span class="status red">нет оператора</span></td><td>договор только «Анна Мария»</td><td><span class="status red">блок</span></td></tr>
+            <tr><td><strong>Денис Морозов</strong><span class="muted">таб. 0198</span></td><td>рабочий</td><td>Орлов -> Кузнецова</td><td>допуск НД-77 загружен</td><td><span class="status green">готово</span></td></tr>
+            <tr><td><strong>Анна Романова</strong><span class="muted">перевод с дока №1</span></td><td>оператор</td><td>док №3 -> Баранова</td><td>смена с 01.05</td><td><span class="status yellow">подпись</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="stack">
+        <section class="note red"><strong>Правило сработало</strong>Мастер без оператора дока увидит чужие наряды. Доступ СеверСервис не включен.</section>
+        <section class="panel">
+          <div class="panel-title"><h2>Аудит</h2><span>последнее</span></div>
+          <div class="log"><div class="log-item"><div class="log-time">14:46</div><div>СеверСервис: отказ автоправилом R-DOCK-04.</div></div><div class="log-item"><div class="log-time">14:12</div><div>Морозов привязан к мастеру Орлову.</div></div><div class="log-item"><div class="log-time">13:47</div><div>Романовой назначен док №3, ждет подпись начальника смены.</div></div></div>
+        </section>
+      </aside>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-title"><h2>Матрица видимости</h2><span>боевой контур</span></div>
+      <div class="matrix"><div class="head-cell">Роль</div><div class="head-cell">Свое</div><div class="head-cell">Ниже</div><div class="head-cell">Док</div><div class="head-cell">Все доки</div><div>Рабочий</div><div>WR-наряды</div><div>нет</div><div>нет</div><div>нет</div><div>Мастер</div><div>участок</div><div>рабочие</div><div>через оператора</div><div>нет</div><div>Оператор</div><div>один док</div><div>мастера дока</div><div>да</div><div>нет</div><div>Диспетчер</div><div>смена</div><div>операторы</div><div>все доки смены</div><div>да</div></div>
+    </section>
+  </main>
+</body>
+</html>

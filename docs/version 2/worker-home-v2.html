@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рабочий · задание v2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Рабочий</span></div></div>
+    <nav class="nav"><a class="active" href="#">Текущий наряд</a><a href="#">Фото</a><a href="#">Сообщения</a><a href="index.html">Все v2</a></nav>
+    <div class="user"><div><strong>Иван Петров</strong><span>Подчиняется мастеру Орлову</span></div></div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Наряд WR-1842 · правый борт</h1>
+        <p>Судно «Анна Мария», Северный док №2. Рабочий видит только свое задание, требования безопасности и связь с прямым мастером.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn primary"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>Завершить шаг</button>
+        <button class="btn warn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z"></path><path d="M12 9v5"></path><path d="M12 18h.01"></path></svg>Проблема</button>
+      </div>
+    </div>
+
+    <div class="task-focus">
+      <section class="panel work-order">
+        <div class="panel-title"><h2>Зачистка сварного шва до металла</h2><span class="status green">В работе · 01:32</span></div>
+        <p>Зона: корпус · правый борт · шп. 45-50. После зачистки нужно загрузить фото и дождаться проверки мастера.</p>
+        <div class="step-list">
+          <div class="step"><div class="step-num">1</div><div><h3>Проверить страховку и щиток</h3><p>Работа на высоте более 1,3 м.</p></div><span class="status green">готово</span></div>
+          <div class="step"><div class="step-num">2</div><div><h3>Зачистить шов и убрать шлак</h3><p>Текущий шаг, контроль поверхности до фото.</p></div><span class="status yellow">сейчас</span></div>
+          <div class="step"><div class="step-num">3</div><div><h3>Сделать фото после зачистки</h3><p>Мастер получит фото в журнал этапа.</p></div><span class="status">следом</span></div>
+        </div>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel pad">
+          <div class="panel-title"><h2>Мастер</h2><span>прямой руководитель</span></div>
+          <table class="table">
+            <tbody>
+              <tr><td><strong>Алексей Орлов</strong><span class="muted">Сварочный участок</span></td></tr>
+              <tr><td><strong>Оператор выше</strong><span class="muted">Мария Кузнецова · док №2</span></td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="notice"><strong>Безопасность</strong>Перед началом зачистки закрепить страховочный пояс и проверить ограждение лесов.</section>
+        <section class="panel pad">
+          <div class="panel-title"><h2>Материалы</h2><span>на руках</span></div>
+          <table class="table"><tbody><tr><td>Круг 125 мм</td><td>1 шт.</td></tr><tr><td>Щетка</td><td>1 шт.</td></tr><tr><td>Растворитель</td><td>0,2 л</td></tr></tbody></table>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

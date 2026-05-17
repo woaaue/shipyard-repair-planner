@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Верфь-Ремонт · version 7</title>
+  <link rel="stylesheet" href="v7.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">VR</div>
+      <div><strong>Верфь-Ремонт</strong><span>Набор экранов v7</span></div>
+    </div>
+    <nav class="nav">
+      <a class="active" href="index.html">Все</a>
+      <a href="client-home-v7.html">Клиент</a>
+      <a href="worker-home-v7.html">Рабочий</a>
+      <a href="master-home-v7.html">Мастер</a>
+      <a href="operator-home-v7.html">Оператор</a>
+      <a href="dispatcher-home-v7.html">Диспетчер</a>
+      <a href="admin-home-v7.html">Админ</a>
+    </nav>
+    <div class="profile"><div><strong>version 7</strong><span>с учетом нового backend</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div>
+        <h1>V7: UI под новые возможности backend</h1>
+        <p>Добавлены системные связи подчиненности и назначения: `reportsTo`, `subordinates`, `assignee/reviewStatus` у WorkItem и `operator` у Repair. Экран остается честным к API: без выдуманных модулей документов и фото-ревью.</p>
+      </div>
+    </div>
+
+    <div class="link-grid">
+      <a class="link-card" href="client-home-v7.html"><strong>Клиент</strong><span>RepairRequest, Repair, WorkItem, Notification. Открытые клиенту данные без служебных внутренних связей.</span></a>
+      <a class="link-card" href="worker-home-v7.html"><strong>Рабочий</strong><span>Персональные задания через `assigneeId`, смена статуса и отправка на проверку мастеру.</span></a>
+      <a class="link-card" href="master-home-v7.html"><strong>Мастер</strong><span>Подчиненные рабочие, назначение задач, проверка `reviewStatus`, issues и downtimes.</span></a>
+      <a class="link-card" href="operator-home-v7.html"><strong>Оператор</strong><span>Ремонты через `operatorId`, список мастеров в подчинении, нагрузка дока и исключения.</span></a>
+      <a class="link-card" href="dispatcher-home-v7.html"><strong>Диспетчер</strong><span>Управление операторами, назначение оператора на ремонт, контроль нагрузки и простоев.</span></a>
+      <a class="link-card" href="admin-home-v7.html"><strong>Админ</strong><span>Иерархия `reportsTo`, управление ролями и структурой подчиненности.</span></a>
+    </div>
+  </main>
+</body>
+</html>
+

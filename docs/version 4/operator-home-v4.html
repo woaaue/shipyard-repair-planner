@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оператор · v4</title>
+  <link rel="stylesheet" href="v4.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Оператор дока</span></div></div>
+    <nav class="nav"><a class="active" href="#">Док №2</a><a href="#">Приемка</a><a href="#">Мастера</a><a href="index.html">Все v4</a></nav>
+    <div class="profile"><div><strong>Мария Кузнецова</strong><span>1 оператор на док №2</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Док №2 · приемка и ресурсы</h1><p>4 мастера, 27 рабочих. Сверка с диспетчером в 15:00. Кран 16 т спорит со складом металла.</p></div>
+      <div class="actions"><button class="btn primary">Принять WR-1844</button><button class="btn warn">Запросить кран</button></div>
+    </div>
+
+    <div class="layout-wide">
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-title"><h2>Схема дока</h2><span>15:00</span></div>
+          <div class="dock-map"><div class="dock-zone zone-a">Орлов<br><span class="muted">2 этапа</span></div><div class="dock-zone zone-b zone-hot">Седова<br><strong>нужен кран</strong></div><div class="dock-zone zone-c">Малинин<br><span class="muted">ждет грунтовку</span></div></div>
+        </section>
+        <section class="note"><strong>Для диспетчера</strong>Кран нужен с 15:20 до 16:10. Если склад не уступит, накладка Седовой уйдет после 18:00.</section>
+      </aside>
+
+      <section class="panel">
+        <div class="panel-title"><h2>Мастера и приемка</h2><span>док №2</span></div>
+        <table class="table">
+          <thead><tr><th>Мастер</th><th>Рабочие</th><th>Готово к приемке</th><th>Блокер</th><th>Решение</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Орлов</strong><span class="muted">сварка</span></td><td>8</td><td>WR-1844 готов, WR-1842 после фото</td><td>фото без линейки</td><td><span class="status yellow">жду 15:00</span></td></tr>
+            <tr><td><strong>Малинин</strong><span class="muted">окраска</span></td><td>7</td><td>грунтовка после Орлова</td><td>ветер после 18:00</td><td><span class="status">окно 15:30</span></td></tr>
+            <tr><td><strong>Седова</strong><span class="muted">слесари</span></td><td>6</td><td>накладка 1,2 м²</td><td>кран 16 т</td><td><span class="status red">к диспетчеру</span></td></tr>
+            <tr><td><strong>Ким</strong><span class="muted">ОТК</span></td><td>6</td><td>окно 15:20</td><td>нет подписи НД-77</td><td><span class="status yellow">проверить</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-title"><h2>Журнал решений оператора</h2><span>ручные отметки</span></div>
+      <div class="log"><div class="log-item"><div class="log-time">14:41</div><div>WR-1844 приняла по фото, но акт отложила до подписи НД-77.</div></div><div class="log-item"><div class="log-time">14:34</div><div>Вернула Орлову фото WR-1842: нижняя кромка не читается.</div></div><div class="log-item"><div class="log-time">13:55</div><div>Седова просит кран; отправить Барановой до сверки.</div></div></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Кабинет клиента - судоремонт</title>
+  <style>
+    :root {
+      --bg: #eef3f6;
+      --surface: #ffffff;
+      --surface-soft: #f7fafc;
+      --line: #d5e0e7;
+      --line-strong: #b9cad4;
+      --text: #102431;
+      --muted: #647887;
+      --faint: #8a9aa6;
+      --nav: #0f2c3f;
+      --blue: #0c678c;
+      --blue-dark: #075a7d;
+      --blue-soft: #e8f5fb;
+      --green: #20825f;
+      --green-soft: #e6f4ee;
+      --yellow: #aa7116;
+      --yellow-soft: #fff3dc;
+      --red: #b9443d;
+      --red-soft: #fdebea;
+      --shadow: 0 18px 42px rgba(21, 44, 58, 0.08);
+      --radius: 8px;
+      --font: "Segoe UI", "Noto Sans", Tahoma, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.88), rgba(238,243,246,0.98) 38%),
+        repeating-linear-gradient(90deg, rgba(15,44,63,0.025) 0 1px, transparent 1px 96px),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    button,
+    input { font: inherit; }
+
+    .app { min-height: 100vh; }
+
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: minmax(180px, 260px) minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 22px;
+      min-height: 70px;
+      padding: 0 28px;
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius);
+      background: var(--nav);
+      color: #8bd8f4;
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      overflow-x: auto;
+    }
+
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: 0 13px;
+      border-radius: 7px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: var(--nav);
+      color: #ffffff;
+    }
+
+    .client {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .client strong {
+      display: block;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .client span {
+      display: block;
+      margin-top: 2px;
+    }
+
+    .content {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 26px 0 118px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .current { padding: 24px; }
+
+    .eyeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 720px;
+      color: var(--text);
+      font-size: 34px;
+      line-height: 1.12;
+      font-weight: 800;
+    }
+
+    .location {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .location strong { color: var(--blue); }
+
+    .now-step {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      margin-top: 24px;
+      padding: 18px;
+      border: 1px solid #92c6dc;
+      border-radius: var(--radius);
+      background: #eef9fd;
+    }
+
+    .step-num {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .now-step span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .now-step strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--text);
+      font-size: 19px;
+      line-height: 1.35;
+    }
+
+    .micro {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .micro div {
+      min-height: 66px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface-soft);
+    }
+
+    .micro span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .micro strong {
+      display: block;
+      margin-top: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .side-card {
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+    }
+
+    .side-card h2,
+    .section h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .manager {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 7px;
+      background: #dcecf3;
+      color: var(--nav);
+      font-weight: 850;
+    }
+
+    .manager strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .manager span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .notice {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 11px;
+      padding: 13px;
+      border: 1px solid #e4bc67;
+      border-radius: 7px;
+      background: var(--yellow-soft);
+      color: #6d480e;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #5d3c08;
+    }
+
+    .small-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .small-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .small-list strong {
+      color: var(--text);
+      text-align: right;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .section { padding: 18px; }
+
+    .queue {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .task-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .task-row:last-child { border-bottom: 0; }
+
+    .task-row h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .task-row p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    details {
+      border-top: 1px solid var(--line);
+      padding: 14px 0 0;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .details-grid h3 {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .photo-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .photo {
+      min-height: 76px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background:
+        linear-gradient(135deg, rgba(15, 44, 63, 0.72), rgba(70, 128, 150, 0.28)),
+        repeating-linear-gradient(135deg, #bbced8 0 10px, #aabfc9 10px 20px);
+    }
+
+    .command-bar {
+      position: fixed;
+      z-index: 8;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: center;
+      padding: 12px 20px;
+      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 -18px 34px rgba(21, 44, 58, 0.08);
+    }
+
+    .command-inner {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+      width: min(780px, 100%);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--nav);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: var(--blue-dark);
+      background: var(--blue-dark);
+      color: #ffffff;
+    }
+
+    .btn.success {
+      border-color: #4aa17f;
+      background: #ecf8f2;
+      color: #1f7e5d;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 9px 18px rgba(21,44,58,0.1);
+    }
+
+    .icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    @media (max-width: 980px) {
+      .top-nav {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 16px;
+      }
+
+      .client { justify-content: flex-start; }
+
+      .hero,
+      .sections { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .content {
+        width: calc(100% - 28px);
+        padding-top: 16px;
+        padding-bottom: 132px;
+      }
+
+      .brand { display: none; }
+
+      .tabs { margin: -2px -4px 0; }
+
+      .tab {
+        min-height: 36px;
+        padding: 0 11px;
+        font-size: 13px;
+      }
+
+      .client {
+        display: grid;
+        gap: 6px;
+      }
+
+      .current,
+      .side-card,
+      .section { padding: 16px; }
+
+      .eyeline { display: grid; }
+
+      h1 { font-size: 27px; }
+
+      .now-step {
+        grid-template-columns: 1fr;
+        padding: 15px;
+      }
+
+      .step-num {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+      }
+
+      .micro,
+      .details-grid,
+      .command-inner { grid-template-columns: 1fr; }
+
+      .task-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top-nav">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg>
+        </div>
+        <div>
+          <strong>Верфь-Ремонт</strong>
+          <span>Кабинет клиента</span>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Разделы клиента">
+        <a class="tab active" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 12h18"></path><path d="M3 6h18"></path><path d="M3 18h18"></path></svg>
+          Мой ремонт
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h4"></path></svg>
+          Документы
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>
+          Чат
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path></svg>
+          Смета и оплата
+        </a>
+      </nav>
+      <div class="client">
+        <div><strong>ООО МорЛайн</strong><span>Личный кабинет заказчика</span></div>
+        <div><strong>Менеджер: Ольга Смирнова</strong><span>1 мая 2026</span></div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="hero">
+        <article class="panel current">
+          <div class="eyeline">
+            <span class="status">Этап 4 из 7 · в работе</span>
+            <span>Плановая готовность: 5 мая, 18:00</span>
+          </div>
+
+          <h1>Ремонт корпуса судна «Анна Мария»</h1>
+
+          <div class="location">
+            <span>Док: <strong>Северный док №2</strong></span>
+            <span>/</span>
+            <span>Текущая зона: <strong>правый борт · мидель</strong></span>
+            <span>/</span>
+            <span>Статус: <strong>подготовка к грунтовке</strong></span>
+          </div>
+
+          <div class="now-step">
+            <div class="step-num">4</div>
+            <div>
+              <span>Что происходит сейчас</span>
+              <strong>Зачистка сварных швов и подготовка поверхности под контроль ОТК.</strong>
+            </div>
+          </div>
+
+          <div class="micro">
+            <div><span>Выполнено</span><strong>58% от объема</strong></div>
+            <div><span>Последнее обновление</span><strong>Сегодня, 14:28</strong></div>
+            <div><span>Следующий этап</span><strong>Грунтовка корпуса</strong></div>
+          </div>
+        </article>
+
+        <aside class="panel side-card">
+          <div class="manager">
+            <div class="avatar">ОС</div>
+            <div>
+              <strong>Ольга Смирнова</strong>
+              <span>Менеджер проекта</span>
+            </div>
+          </div>
+
+          <div class="notice">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"></path><path d="M12 9v5"></path><path d="M12 18h.01"></path></svg>
+            <div>
+              <strong>Требуется согласование</strong>
+              Подтвердите дополнительную замену листа обшивки (+4,8% к смете).
+            </div>
+          </div>
+
+          <ul class="small-list">
+            <li><span>Договор</span><strong>SRP-2026-041</strong></li>
+            <li><span>Текущая смета</span><strong>2 840 000 ₽</strong></li>
+            <li><span>Оплачено</span><strong>1 988 000 ₽ (70%)</strong></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="sections">
+        <article class="panel section">
+          <h2>Ближайшие этапы</h2>
+          <div class="queue">
+            <div class="task-row">
+              <div>
+                <h3>Грунтовка в районе шп. 45-50</h3>
+                <p>Старт после приемки ОТК, ориентир сегодня 17:30</p>
+              </div>
+              <span class="tag">План</span>
+            </div>
+            <div class="task-row">
+              <div>
+                <h3>Установка усиливающей накладки</h3>
+                <p>По согласованному чертежу и доп. ведомости работ</p>
+              </div>
+              <span class="tag green">Ожидает решения</span>
+            </div>
+          </div>
+
+          <details>
+            <summary>Показать детали и риски</summary>
+            <div class="details-grid">
+              <div>
+                <h3>Что уже сделано</h3>
+                <p>Демонтаж дефектного участка, сварка новой вставки, первичная зачистка, фотофиксация до/после.</p>
+              </div>
+              <div>
+                <h3>Возможные сдвиги</h3>
+                <p>При сильном ветре или осадках наружная грунтовка переносится на следующую смену.</p>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <aside class="panel section">
+          <h2>Фото прогресса</h2>
+          <div class="photo-strip" aria-label="Вложения">
+            <div class="photo"></div>
+            <div class="photo"></div>
+            <div class="photo"></div>
+          </div>
+          <button class="btn" style="width:100%; margin-top:14px;">Открыть галерею</button>
+        </aside>
+      </section>
+    </main>
+
+    <div class="command-bar" aria-label="Действия клиента">
+      <div class="command-inner">
+        <button class="btn primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>
+          Согласовать изменение
+        </button>
+        <button class="btn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 12h16"></path><path d="M4 6h16"></path><path d="M4 18h16"></path></svg>
+          Скачать отчет
+        </button>
+        <button class="btn success">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>
+          Написать менеджеру
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

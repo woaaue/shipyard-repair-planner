@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ · v3</title>
+  <link rel="stylesheet" href="human-v3.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Администратор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Доступы</a><a href="#">Роли</a><a href="#">Справочники</a><a href="index.html">Все v3</a></nav>
+    <div class="profile"><div><strong>Павел Никитин</strong><span>production</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Доступы и привязки смены</h1><p>Проверка прав после добавления подрядчиков и смены оператора на доке №3.</p></div>
+      <div class="actions"><button class="btn primary">Добавить пользователя</button><button class="btn">Проверить роли</button></div>
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Очередь доступа</h2><span>6 запросов</span></div>
+        <table class="table">
+          <thead><tr><th>Кто</th><th>Роль</th><th>Привязка</th><th>Комментарий</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ООО СеверСервис</strong><span class="muted">подрядчик</span></td><td>мастер</td><td>оператор дока №2</td><td>договор только на «Анна Мария»</td><td><span class="status yellow">проверить</span></td></tr>
+            <tr><td><strong>Денис Морозов</strong><span class="muted">новый рабочий</span></td><td>рабочий</td><td>мастер Орлов</td><td>допуск по высоте загружен</td><td><span class="status green">готово</span></td></tr>
+            <tr><td><strong>Анна Романова</strong><span class="muted">перевод</span></td><td>оператор дока №3</td><td>диспетчер Баранова</td><td>смена с 1 мая</td><td><span class="status">ждет подпись</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="stack">
+        <section class="note red"><strong>Найдено правило</strong>У подрядчика нельзя включать роль мастера без привязки к оператору конкретного дока.</section>
+        <section class="panel">
+          <div class="panel-title"><h2>Аудит</h2><span>последние записи</span></div>
+          <div class="log"><div class="log-item"><div class="log-time">14:12</div><div>Роль мастера у СеверСервис отправлена на проверку договора.</div></div><div class="log-item"><div class="log-time">13:47</div><div>Денис Морозов привязан к мастеру Орлову.</div></div><div class="log-item"><div class="log-time">12:30</div><div>Справочник материалов обновлен складом.</div></div></div>
+        </section>
+      </aside>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-title"><h2>Матрица видимости</h2><span>что видит роль</span></div>
+      <div class="matrix">
+        <div class="head-cell">Роль</div><div class="head-cell">Свое</div><div class="head-cell">Ниже</div><div class="head-cell">Док</div><div class="head-cell">Все доки</div>
+        <div>Рабочий</div><div>наряд</div><div>нет</div><div>нет</div><div>нет</div>
+        <div>Мастер</div><div>свои наряды</div><div>рабочие</div><div>участок</div><div>нет</div>
+        <div>Оператор</div><div>док</div><div>мастера</div><div>один док</div><div>нет</div>
+        <div>Диспетчер</div><div>смена</div><div>операторы</div><div>все в смене</div><div>да</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

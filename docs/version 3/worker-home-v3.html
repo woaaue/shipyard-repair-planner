@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рабочий · v3</title>
+  <link rel="stylesheet" href="human-v3.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Рабочий</span></div></div>
+    <nav class="nav"><a class="active" href="#">Наряд</a><a href="#">Фото</a><a href="#">Сообщения</a><a href="index.html">Все v3</a></nav>
+    <div class="profile"><div><strong>Иван Петров</strong><span>мастер: Алексей Орлов</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>WR-1842 · зачистка шва</h1><p>Правый борт, шп. 45-50. Начато 13:04, план закрытия 15:10.</p></div>
+      <div class="actions"><button class="btn primary">Шаг готов</button><button class="btn warn">Не хватает материала</button></div>
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Чек-лист</h2><span>сейчас шаг 2 из 4</span></div>
+        <div class="stack">
+          <div class="work-card"><div class="num">1</div><div><h3>Страховка и щиток проверены</h3><p>Отметка мастера: 13:08.</p></div><span class="status green">готово</span></div>
+          <div class="work-card"><div class="num">2</div><div><h3>Зачистить до чистого металла</h3><p>Не закрывать, пока не снят шлак у нижней кромки.</p></div><span class="status yellow">в работе</span></div>
+          <div class="work-card"><div class="num">3</div><div><h3>Фото с линейкой</h3><p>Мастер отклонил прошлое фото: плохо видно нижний край.</p></div><span class="status red">переснять</span></div>
+          <div class="work-card"><div class="num">4</div><div><h3>Убрать инструмент с прохода</h3><p>Нужно до выхода маляров.</p></div><span class="status">следом</span></div>
+        </div>
+      </section>
+
+      <aside class="stack">
+        <section class="note"><strong>Сообщение мастера, 14:31</strong>Иван, фото норм, но нижнюю кромку пересними с линейкой. Если круг закончится, забери у поста №3, я подтвердил.</section>
+        <section class="panel">
+          <div class="panel-title"><h2>Материалы</h2><span>на посту №1</span></div>
+          <table class="table"><tbody><tr><td>Круг 125 мм</td><td><span class="status yellow">1 шт.</span></td></tr><tr><td>Щетка</td><td>1 шт.</td></tr><tr><td>Растворитель</td><td>0,2 л</td></tr></tbody></table>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><h2>Журнал фото</h2><span>сегодня</span></div>
+          <div class="log"><div class="log-item"><div class="log-time">14:24</div><div>Фото отклонено: нет линейки.</div></div><div class="log-item"><div class="log-time">13:42</div><div>Фото до начала принято мастером.</div></div></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оператор · v3</title>
+  <link rel="stylesheet" href="human-v3.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Оператор дока</span></div></div>
+    <nav class="nav"><a class="active" href="#">Док №2</a><a href="#">Мастера</a><a href="#">Приемка</a><a href="index.html">Все v3</a></nav>
+    <div class="profile"><div><strong>Мария Кузнецова</strong><span>Северный док №2</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Док №2 · мастера и приемка этапов</h1><p>Один оператор на док. 4 мастера, 27 рабочих через мастеров, сверка с диспетчером в 15:00.</p></div>
+      <div class="actions"><button class="btn primary">Принять этап</button><button class="btn warn">Запросить кран</button></div>
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Мастера дока</h2><span>работы до 17:00</span></div>
+        <table class="table">
+          <thead><tr><th>Мастер</th><th>Рабочие</th><th>Ближайший этап</th><th>Проблема</th><th>Решение</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Орлов</strong><span class="muted">сварка</span></td><td>8</td><td>зачистка правого борта</td><td>фото без линейки</td><td><span class="status yellow">жду 15:00</span></td></tr>
+            <tr><td><strong>Малинин</strong><span class="muted">окраска</span></td><td>7</td><td>грунтовка шп. 45-50</td><td>старт зависит от Орлова</td><td><span class="status">держать</span></td></tr>
+            <tr><td><strong>Седова</strong><span class="muted">слесари</span></td><td>6</td><td>накладка 1,2 м²</td><td>нужен кран 16 т</td><td><span class="status red">к диспетчеру</span></td></tr>
+            <tr><td><strong>Ким</strong><span class="muted">ОТК дока</span></td><td>6</td><td>окно приемки</td><td>может в 15:20</td><td><span class="status green">подтвердил</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="stack">
+        <section class="note"><strong>Для диспетчера</strong>Док №2 может взять кран 16 т с 15:20 до 16:10. Если склад не уступит окно, накладка уйдет на вечер.</section>
+        <section class="panel">
+          <div class="panel-title"><h2>Журнал решений</h2><span>сегодня</span></div>
+          <div class="log"><div class="log-item"><div class="log-time">14:34</div><div>Вернула фото Орлову, нужна линейка.</div></div><div class="log-item"><div class="log-time">14:12</div><div>Малинину оставлено окно после 15:30.</div></div><div class="log-item"><div class="log-time">13:55</div><div>Седова попросила кран на накладку.</div></div></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

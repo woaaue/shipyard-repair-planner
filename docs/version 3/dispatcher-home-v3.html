@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Диспетчер · v3</title>
+  <link rel="stylesheet" href="human-v3.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Диспетчер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Доки</a><a href="#">Операторы</a><a href="#">Краны</a><a href="index.html">Все v3</a></nav>
+    <div class="profile"><div><strong>Елена Баранова</strong><span>3 оператора в смене</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Доки, операторы, ресурсы</h1><p>Смена 08:00-20:00. Главный спор сейчас: кран 16 т между доком №2 и складом металла.</p></div>
+      <div class="actions"><button class="btn primary">Закрепить кран</button><button class="btn">Сообщить операторам</button></div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Доки по операторам</h2><span>обновлено 14:38</span></div>
+      <div class="dock-board">
+        <div class="dock"><h3>Док №1 · Павлов</h3><div class="meta">4 мастера · 31 рабочий</div><div class="ticket"><strong>Резерв после 15:10</strong><span>может отдать 2 рабочих на док №2</span></div><div class="progress" style="margin-top:12px;"><span style="width:64%"></span></div></div>
+        <div class="dock"><h3>Док №2 · Кузнецова</h3><div class="meta">4 мастера · 27 рабочих</div><div class="ticket"><strong>Кран 16 т</strong><span>запрошен на 15:20-16:10, конфликт со складом</span></div><div class="progress" style="margin-top:12px;"><span style="width:86%"></span></div></div>
+        <div class="dock"><h3>Док №3 · Романова</h3><div class="meta">4 мастера · 22 рабочих</div><div class="ticket"><strong>Материалы</strong><span>круги 125 мм задержаны до 15:05</span></div><div class="progress" style="margin-top:12px;"><span style="width:52%"></span></div></div>
+      </div>
+    </section>
+
+    <div class="grid-2" style="margin-top:16px;">
+      <section class="panel">
+        <div class="panel-title"><h2>Конфликты смены</h2><span>2 открытых</span></div>
+        <table class="table"><thead><tr><th>Ресурс</th><th>Кому нужен</th><th>Окно</th><th>Статус</th></tr></thead><tbody><tr><td>Кран 16 т</td><td>док №2 / склад</td><td>15:20-16:10</td><td><span class="status red">решить до 14:50</span></td></tr><tr><td>Маляры</td><td>док №2 / док №1</td><td>после 17:30</td><td><span class="status yellow">ждет погоду</span></td></tr></tbody></table>
+      </section>
+      <aside class="panel">
+        <div class="panel-title"><h2>Короткий журнал</h2><span>последнее</span></div>
+        <div class="log"><div class="log-item"><div class="log-time">14:38</div><div>Кузнецова подтвердила готовность зоны под кран.</div></div><div class="log-item"><div class="log-time">14:22</div><div>Павлов обещал резерв двух рабочих после разгрузки.</div></div><div class="log-item"><div class="log-time">13:58</div><div>Склад просит кран на металл, заявка без приоритета.</div></div></div>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

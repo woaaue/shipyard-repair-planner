@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оператор · v7</title>
+  <link rel="stylesheet" href="v7.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Оператор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Мой док</a><a href="#">Мастера</a><a href="#">Ремонты</a><a href="#">Исключения</a><a href="index.html">Все v7</a></nav>
+    <div class="profile"><div><strong>role: OPERATOR</strong><span>operatorId on repairs</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Док оператора и его зона ответственности</h1><p>Оператор получает ремонты через `GET /api/repairs?operatorId=5`, видит мастеров в своем подчинении и контролирует issues/downtimes по доку.</p></div>
+      <div class="actions"><button class="btn primary">Назначить мастеру приоритет</button><button class="btn">Создать downtime</button></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><span>Dock</span><strong>Dock #2</strong></div>
+      <div class="metric"><span>Load</span><strong>67%</strong></div>
+      <div class="metric"><span>Repairs assigned</span><strong>2</strong></div>
+      <div class="metric"><span>Masters</span><strong>3</strong></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Repairs оператора</h2><span>/api/repairs?operatorId=5</span></div>
+        <table class="table"><thead><tr><th>Repair</th><th>Ship</th><th>Dates</th><th>Progress</th><th>Status</th></tr></thead><tbody><tr><td>32 / request 91</td><td><strong>Анна Мария</strong></td><td>02.05-05.05</td><td>58%</td><td><span class="state">IN_PROGRESS</span></td></tr><tr><td>35 / request 94</td><td><strong>Петр I</strong></td><td>01.05-04.05</td><td>30%</td><td><span class="state">STARTED</span></td></tr></tbody></table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel"><div class="panel-title"><h2>Подчиненные мастера</h2><span>/api/users/5/subordinates</span></div><table class="table"><tbody><tr><td>Мастер 1</td><td><span class="state">enabled</span></td></tr><tr><td>Мастер 2</td><td><span class="state">enabled</span></td></tr><tr><td>Мастер 3</td><td><span class="state">enabled</span></td></tr></tbody></table></section>
+        <section class="panel"><div class="panel-title"><h2>Issues и Downtimes</h2><span>dockName=Dock 2</span></div><table class="table"><tbody><tr><td>Materials shortage</td><td><span class="state">OPEN</span></td></tr><tr><td>Materials unavailable</td><td>active downtime</td></tr></tbody></table></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>
+

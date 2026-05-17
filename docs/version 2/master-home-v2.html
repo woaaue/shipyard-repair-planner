@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мастер · смена v2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Мастер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Рабочие</a><a href="#">Наряды</a><a href="#">Фото</a><a href="index.html">Все v2</a></nav>
+    <div class="user"><div><strong>Алексей Орлов</strong><span>Подчиняется оператору дока №2</span></div></div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Мастер Орлов · 8 рабочих на правом борту</h1>
+        <p>Мастер управляет рабочими и этапами участка, принимает фото/результаты и передает закрытые этапы оператору конкретного дока.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn primary"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>Передать оператору</button>
+        <button class="btn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Выдать наряд</button>
+      </div>
+    </div>
+
+    <div class="metric-row">
+      <div class="metric"><span>Рабочие</span><strong>8</strong></div>
+      <div class="metric"><span>В работе</span><strong>5</strong></div>
+      <div class="metric"><span>На проверку</span><strong>2</strong></div>
+      <div class="metric"><span>Свободный резерв</span><strong>1</strong></div>
+    </div>
+
+    <div class="split">
+      <section class="panel pad">
+        <div class="panel-title"><h2>Рабочие и текущие наряды</h2><span>док №2 · смена до 17:00</span></div>
+        <table class="table">
+          <thead><tr><th>Рабочий</th><th>Зона</th><th>Задание</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Иван Петров</strong><span class="muted">пост №1</span></td><td>шп. 45-50</td><td>Зачистка шва, фото после</td><td><span class="status yellow">проверить фото</span></td></tr>
+            <tr><td><strong>Олег Соколов</strong><span class="muted">пост №2</span></td><td>мидель</td><td>Подготовка к грунтовке</td><td><span class="status green">в графике</span></td></tr>
+            <tr><td><strong>Роман Беляев</strong><span class="muted">пост №2</span></td><td>правый борт</td><td>Дочистка кромки</td><td><span class="status red">нет расходников</span></td></tr>
+            <tr><td><strong>Денис Морозов</strong><span class="muted">пост №3</span></td><td>резерв</td><td>Ожидает назначения</td><td><span class="status">свободен</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel pad">
+          <div class="panel-title"><h2>Оператор дока</h2><span>уровень выше</span></div>
+          <table class="table"><tbody><tr><td><strong>Мария Кузнецова</strong><span class="muted">оператор Северного дока №2</span></td></tr><tr><td>Передать 2 этапа до 15:00</td></tr></tbody></table>
+        </section>
+        <section class="notice"><strong>Узел смены</strong>На посту №2 заканчиваются круги 125 мм. Если склад не выдаст до 15:05, этап уйдет в просрочку.</section>
+        <section class="panel pad">
+          <div class="panel-title"><h2>Готово к приемке</h2><span>2 этапа</span></div>
+          <div class="lane"><div class="lane-card"><strong>Зачистка шва</strong><span>Иван Петров · фото загружено</span></div><div class="lane-card"><strong>Проверка кромки</strong><span>Олег Соколов · ожидает подпись</span></div></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

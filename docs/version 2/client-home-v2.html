@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Клиент · статус ремонта v2</title>
+  <link rel="stylesheet" href="prototype-v2.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg>
+      </div>
+      <div>
+        <strong>Верфь-Ремонт</strong>
+        <span>Кабинет клиента</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Разделы клиента">
+      <a class="active" href="#">Статус ремонта</a>
+      <a href="#">Смета</a>
+      <a href="#">Документы</a>
+      <a href="#">Сообщения</a>
+      <a href="index.html">Все v2</a>
+    </nav>
+    <div class="user">
+      <div><strong>ООО МорЛайн</strong><span>Заказчик · судно «Анна Мария»</span></div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="page-head">
+      <div>
+        <h1>Ремонт «Анна Мария» · 58% готовности</h1>
+        <p>Клиентский экран показывает не внутреннюю цепочку подчинения, а прозрачный статус: этапы, согласования, документы, деньги и последние подтвержденные фото.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn primary"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg>Согласовать допработы</button>
+        <button class="btn"><svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h4"></path></svg>Скачать отчет</button>
+      </div>
+    </div>
+
+    <div class="metric-row">
+      <div class="metric"><span>Готовность</span><strong>58%</strong></div>
+      <div class="metric"><span>План сдачи</span><strong>5 мая</strong></div>
+      <div class="metric"><span>Смета</span><strong>2,84 млн ₽</strong></div>
+      <div class="metric"><span>На согласовании</span><strong>1 допработа</strong></div>
+    </div>
+
+    <div class="split">
+      <section class="panel pad">
+        <div class="panel-title">
+          <h2>Клиентская дорожная карта</h2>
+          <span>обновлено сегодня 14:28</span>
+        </div>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div><h3>Дефектация и постановка в док</h3><p>Акт осмотра и фото до ремонта подписаны обеими сторонами.</p></div>
+            <span class="status green">закрыто</span>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div><h3>Сварочные работы правого борта</h3><p>Завершается зачистка швов, мастер готовит участок к приемке оператором дока.</p></div>
+            <span class="status yellow">сейчас</span>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div><h3>Грунтовка и контроль покрытия</h3><p>Старт после внутренней приемки этапа и погодного окна.</p></div>
+            <span class="status">следующий</span>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div><h3>Финальная приемка и документы</h3><p>Будут доступны акт выполненных работ, фотоотчет и закрывающий счет.</p></div>
+            <span class="status">план</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel pad">
+          <div class="panel-title"><h2>Менеджер проекта</h2><span>контакт клиента</span></div>
+          <table class="table">
+            <tbody>
+              <tr><td><strong>Ольга Смирнова</strong><span class="muted">ведет договор SRP-2026-041</span></td></tr>
+              <tr><td><strong>Следующий отчет</strong><span class="muted">сегодня до 18:00</span></td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="notice">
+          <strong>Требуется решение</strong>
+          Замена дополнительного листа обшивки добавит 4,8% к смете и сократит риск повторного ремонта.
+        </section>
+        <section class="panel pad">
+          <div class="panel-title"><h2>Оплата</h2><span>по договору</span></div>
+          <table class="table">
+            <tbody>
+              <tr><td>Оплачено</td><td><strong>70%</strong></td></tr>
+              <tr><td>Следующий счет</td><td><strong>после грунтовки</strong></td></tr>
+              <tr><td>Закрывающие</td><td><strong>готовятся</strong></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </aside>
+    </div>
+
+    <section class="panel pad" style="margin-top:16px;">
+      <div class="panel-title">
+        <h2>Последние подтвержденные события</h2>
+        <span>видит клиент</span>
+      </div>
+      <table class="table">
+        <thead><tr><th>Время</th><th>Событие</th><th>Подтверждение</th><th>Статус</th></tr></thead>
+        <tbody>
+          <tr><td>14:28</td><td><strong>Фото зачистки загружено</strong><span class="muted">правый борт · шп. 45-50</span></td><td>мастер Орлов</td><td><span class="status yellow">внутренняя приемка</span></td></tr>
+          <tr><td>13:40</td><td><strong>Смета допработ обновлена</strong><span class="muted">лист обшивки 1,2 м²</span></td><td>менеджер проекта</td><td><span class="status">ждет клиента</span></td></tr>
+          <tr><td>11:10</td><td><strong>Сварка вставки завершена</strong><span class="muted">фото до/после в отчете</span></td><td>оператор дока №2</td><td><span class="status green">подтверждено</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мастер · v7</title>
+  <link rel="stylesheet" href="v7.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Мастер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Команда</a><a href="#">Назначения</a><a href="#">Проверка</a><a href="index.html">Все v7</a></nav>
+    <div class="profile"><div><strong>role: MASTER</strong><span>subordinates + review</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Подчиненные и проверка работ</h1><p>Мастер видит рабочих через `GET /api/users/{id}/subordinates`, назначает им задачи и принимает результаты через `PATCH /api/work-items/{id}/review`.</p></div>
+      <div class="actions"><button class="btn primary">Назначить работу</button><button class="btn">Принять/вернуть</button></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>WorkItems на проверке</h2><span>/api/work-items?reviewStatus=PENDING_REVIEW</span></div>
+        <table class="table"><thead><tr><th>ID</th><th>Исполнитель</th><th>Название</th><th>Часы</th><th>Статус</th><th>Проверка</th></tr></thead><tbody><tr><td>506</td><td>Илья Петров</td><td><strong>Подготовка накладки</strong><span class="muted">repairId=32</span></td><td>5 / 5</td><td><span class="state">COMPLETED</span></td><td><span class="state">PENDING_REVIEW</span></td></tr><tr><td>509</td><td>Артем Соловьев</td><td><strong>Грунтовка секции B</strong><span class="muted">repairId=32</span></td><td>6 / 6</td><td><span class="state">COMPLETED</span></td><td><span class="state">PENDING_REVIEW</span></td></tr></tbody></table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-title"><h2>Подчиненные рабочие</h2><span>/api/users/7/subordinates</span></div>
+          <table class="table"><tbody><tr><td><strong>Илья Петров</strong><span class="muted">WORKER · dock 2</span></td><td><span class="state">enabled</span></td></tr><tr><td><strong>Артем Соловьев</strong><span class="muted">WORKER · dock 2</span></td><td><span class="state">enabled</span></td></tr></tbody></table>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><h2>Открытые issues</h2><span>/api/issues?repairId=32</span></div>
+          <table class="table"><tbody><tr><td><strong>Materials shortage</strong><span class="muted">impact=HIGH</span></td><td><span class="state">OPEN</span></td></tr><tr><td><strong>Work delay</strong><span class="muted">reportedBy=master</span></td><td><span class="state">OPEN</span></td></tr></tbody></table>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>
+

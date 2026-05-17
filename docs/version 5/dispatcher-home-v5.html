@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Диспетчер · v5</title>
+  <link rel="stylesheet" href="v5.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Диспетчер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Ресурсы</a><a href="#">Операторы</a><a href="#">Доки</a><a href="index.html">Все v4</a></nav>
+    <div class="profile"><div><strong>Елена Баранова</strong><span>смена 08:00-20:00</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Ресурсы смены · 14:44</h1><p>3 оператора, 3 дока. На 15:20 конфликт по крану 16 т: док №2 против склада металла.</p></div>
+      <div class="actions"><button class="btn primary">Отдать кран доку №2</button><button class="btn">Сообщить операторам</button></div>
+    </div>
+
+    <div class="lane-board">
+      <section class="lane"><h3>Док №1 · Павлов</h3><div class="meta">31 рабочий · 4 мастера</div><div class="ticket"><strong>Резерв +2 чел.</strong><span>после 15:10, если разгрузка не съедет</span></div><div class="ticket"><strong>Окно крана</strong><span>свободно после 17:00</span></div></section>
+      <section class="lane"><h3>Док №2 · Кузнецова</h3><div class="meta">27 рабочих · 4 мастера</div><div class="ticket"><strong>Кран 16 т</strong><span>15:20-16:10, иначе накладка после 18:00</span></div><div class="ticket"><strong>Фото WR-1842</strong><span>ждет пересъем, может сдвинуть грунтовку</span></div></section>
+      <section class="lane"><h3>Док №3 · Романова</h3><div class="meta">22 рабочих · 4 мастера</div><div class="ticket"><strong>Круги 125 мм</strong><span>склад обещает 15:05, без заявки в ERP</span></div><div class="ticket"><strong>Р-646</strong><span>нет на участке, запрос от мастера</span></div></section>
+    </div>
+
+    <div class="layout-2" style="margin-top:16px;">
+      <section class="panel">
+        <div class="panel-title"><h2>Конфликты</h2><span>решить до 15:00</span></div>
+        <table class="table"><thead><tr><th>Ресурс</th><th>Кому нужен</th><th>Окно</th><th>Цена задержки</th><th>Статус</th></tr></thead><tbody><tr><td>Кран 16 т</td><td>док №2 / склад</td><td>15:20-16:10</td><td>+2,5 часа по накладке</td><td><span class="status red">решить</span></td></tr><tr><td>Маляры</td><td>док №1 / док №2</td><td>17:30?</td><td>зависит от ветра</td><td><span class="status yellow">наблюдать</span></td></tr><tr><td>Резерв</td><td>док №2</td><td>после 15:10</td><td>+2 рабочих</td><td><span class="status green">почти готов</span></td></tr></tbody></table>
+      </section>
+      <aside class="panel">
+        <div class="panel-title"><h2>Журнал связи</h2><span>операторы</span></div>
+        <div class="log"><div class="log-item"><div class="log-time">14:42</div><div>Кузнецова подтвердила готовность зоны под кран.</div></div><div class="log-item"><div class="log-time">14:28</div><div>Павлов обещает резерв, но просит не забирать сварщика.</div></div><div class="log-item"><div class="log-time">14:07</div><div>Склад металла прислал заявку без приоритета.</div></div></div>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>
+

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рабочее место диспетчера</title>
+  <link rel="stylesheet" href="prototype-home.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top-nav">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg>
+        </div>
+        <div>
+          <strong>Верфь-Ремонт</strong>
+          <span>Рабочее место диспетчера</span>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Разделы диспетчера">
+        <a class="tab active" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 16v-5"></path><path d="M12 16V8"></path><path d="M16 16v-7"></path></svg>
+          График доков
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.1-3.1a6 6 0 0 1-7.8 7.8l-6.7 6.7a2.1 2.1 0 0 1-3-3l6.7-6.7a6 6 0 0 1 7.8-7.8l-3.1 3.1Z"></path></svg>
+          Ресурсы
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Операторы
+        </a>
+        <a class="tab" href="#">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>
+          Сообщения
+        </a>
+      </nav>
+      <div class="role-head">
+        <div><strong>Елена Баранова</strong><span>Диспетчер производства</span></div>
+        <div><strong>Смена 08:00 - 20:00</strong><span>1 мая 2026</span></div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="hero">
+        <article class="panel current">
+          <div class="eyeline">
+            <span class="status">3 дока · 3 оператора · 12 мастеров</span>
+            <span>Следующая сверка с операторами: 15:00</span>
+          </div>
+
+          <h1>Диспетчер: доки и операторы</h1>
+
+          <div class="location">
+            <span>Площадка: <strong>Северная верфь</strong></span>
+            <span>/</span>
+            <span>Фокус: <strong>док №2 и крановая зона</strong></span>
+            <span>/</span>
+            <span>Горизонт: <strong>текущая смена</strong></span>
+          </div>
+
+          <div class="now-step">
+            <div class="step-num">2</div>
+            <div>
+              <span>Что перестроить сейчас</span>
+              <strong>Согласовать с оператором дока №2 крановую зону и перераспределить резерв между операторами доков.</strong>
+            </div>
+          </div>
+
+          <div class="micro">
+            <div><span>Операторы</span><strong>3 дока · 3 человека</strong></div>
+            <div><span>Мастера через операторов</span><strong>12 человек</strong></div>
+            <div><span>Конфликт</span><strong>Кран 16 т</strong></div>
+          </div>
+        </article>
+
+        <aside class="panel side-card">
+          <div class="contact">
+            <div class="avatar">ДЛ</div>
+            <div>
+              <strong>Мария Кузнецова</strong>
+              <span>Оператор Северного дока №2</span>
+            </div>
+          </div>
+
+          <div class="alert">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"></path><path d="M12 9v5"></path><path d="M12 18h.01"></path></svg>
+            <div>
+              <strong>Конфликт ресурсов</strong>
+              Оператор дока №2 запросил кран 16 т на 15:20, но ресурс уже стоит в плане склада.
+            </div>
+          </div>
+
+          <ul class="small-list">
+            <li><span>Операторов в смене</span><strong>3</strong></li>
+            <li><span>Доков на оператора</span><strong>1</strong></li>
+            <li><span>Просрочки</span><strong>2 операции</strong></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="sections">
+        <article class="panel section">
+          <h2>Операторы и критичные перемещения</h2>
+          <div class="queue">
+            <div class="task-row">
+              <div>
+                <h3>Мария Кузнецова · Северный док №2</h3>
+                <p>Кран 16 т нужен к 15:20, иначе сдвиг грунтовки на 40 минут</p>
+              </div>
+              <span class="tag yellow">Решить</span>
+            </div>
+            <div class="task-row">
+              <div>
+                <h3>Игорь Павлов · Южный док №1</h3>
+                <p>Может отдать двух рабочих в резерв через своего оператора после 15:10</p>
+              </div>
+              <span class="tag green">Готово</span>
+            </div>
+            <div class="task-row">
+              <div>
+                <h3>Анна Романова · Восточный док №3</h3>
+                <p>Ждет выдачу кругов 125 мм для мастера слесарного участка</p>
+              </div>
+              <span class="tag">Ожидает</span>
+            </div>
+          </div>
+
+          <details>
+            <summary>Показать план до конца смены</summary>
+            <div class="details-grid">
+              <div>
+                <h3>До 17:00</h3>
+                <p>Сверить планы операторов, назначить крановую зону, перераспределить резерв и обновить диспетчерский график.</p>
+              </div>
+              <div>
+                <h3>Риски</h3>
+                <p>Ветер после 18:00 может сдвинуть наружную окраску, резервная задача - подготовка внутреннего борта.</p>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <aside class="panel section">
+          <h2>Загрузка доков</h2>
+          <div class="mini-map" aria-label="Загрузка доков">
+            <div class="dock-row"><span>Док №1</span><div class="bar"><span style="width:64%"></span></div><strong>64%</strong></div>
+            <div class="dock-row"><span>Док №2</span><div class="bar"><span style="width:86%"></span></div><strong>86%</strong></div>
+            <div class="dock-row"><span>Док №3</span><div class="bar"><span style="width:52%"></span></div><strong>52%</strong></div>
+          </div>
+          <button class="btn" style="width:100%; margin-top:14px;">Открыть график</button>
+        </aside>
+      </section>
+    </main>
+
+    <div class="command-bar" aria-label="Действия диспетчера">
+      <div class="command-inner">
+        <button class="btn primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M17 3h4v4"></path><path d="M21 3 14 10"></path><path d="M7 21H3v-4"></path><path d="M3 21l7-7"></path></svg>
+          Переназначить ресурс
+        </button>
+        <button class="btn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+          Открыть операторов
+        </button>
+        <button class="btn warn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"></path></svg>
+          Сообщить операторам
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

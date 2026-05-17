@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ · v6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Администратор</span></div></div>
+    <nav class="nav"><a class="active" href="#">Users</a><a href="#">Audit</a><a href="#">Docks</a><a href="index.html">Все v6</a></nav>
+    <div class="profile"><div><strong>role: ADMIN</strong><span>полный доступ</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Пользователи, роли и доки</h1><p>Текущая модель пользователя: роль, enabled, опциональный dock. Иерархии `reportsTo` нет, поэтому админ не может настроить “рабочий под мастером” системно.</p></div>
+      <div class="actions"><button class="btn primary">Создать пользователя</button><button class="btn">Сбросить пароль</button></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>Users</h2><span>/api/users</span></div>
+        <table class="table"><thead><tr><th>ID</th><th>Email</th><th>ФИО</th><th>Role</th><th>Dock</th><th>Enabled</th></tr></thead><tbody><tr><td>1</td><td>admin@shipyard.local</td><td>Admin User</td><td>ADMIN</td><td>-</td><td>true</td></tr><tr><td>2</td><td>operator@shipyard.local</td><td>Dock Operator</td><td>OPERATOR</td><td>Dock #1</td><td>true</td></tr><tr><td>3</td><td>client@shipyard.local</td><td>Client User</td><td>CLIENT</td><td>-</td><td>true</td></tr></tbody></table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel"><div class="panel-title"><h2>Audit logs</h2><span>/api/audit-logs</span></div><table class="table"><tbody><tr><td>CREATE / REPAIR / userId 7</td><td>operator@mail.com</td></tr><tr><td>PATCH / WORK_ITEM / userId 11</td><td>worker@mail.com</td></tr></tbody></table></section>
+        <section class="note"><strong>Ограничение модели</strong>Можно назначить пользователю dock, но нельзя назначить мастера оператору или рабочего мастеру.</section>
+      </aside>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-title"><h2>Что реально есть в API</h2><span>для проектирования UI</span></div>
+      <div class="api-list">
+        <div class="api-line"><strong>WorkItem</strong><span>category, name, description, status, estimatedHours, actualHours, isMandatory, isDiscovered, notes.</span></div>
+        <div class="api-line"><strong>Issue</strong><span>issueType, description, impact, status, reportedBy, reportedAt, resolvedAt.</span></div>
+        <div class="api-line"><strong>Downtime</strong><span>dockName, reason, startDate, endDate, expectedEndDate, notes.</span></div>
+        <div class="api-line"><strong>User</strong><span>role, enabled, dock. Нет supervisor / reportsTo.</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мастер · v5</title>
+  <link rel="stylesheet" href="v5.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark"><svg class="icon" viewBox="0 0 24 24"><path d="M4 17h16l-2 3H6l-2-3Z"></path><path d="M8 17V8l4-3 4 3v9"></path><path d="M9 11h6"></path></svg></div><div><strong>Верфь-Ремонт</strong><span>Мастер</span></div></div>
+    <nav class="nav"><a class="active" href="#">Посты</a><a href="#">Фото</a><a href="#">Склад</a><a href="index.html">Все v4</a></nav>
+    <div class="profile"><div><strong>Алексей Орлов</strong><span>оператор: Кузнецова · док №2</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Сварочный участок · журнал мастера</h1><p>8 рабочих. Нужно закрыть два наряда оператору до 15:00, но одно фото отклонено и на посту №2 заканчиваются круги.</p></div>
+      <div class="actions"><button class="btn primary">Отдать оператору</button><button class="btn">Заявка на склад</button></div>
+    </div>
+
+    <div class="filters"><span class="field">Посты: все</span><span class="field">Статус: проблемы</span><span class="field">До: 17:00</span></div>
+
+    <div class="layout-2" style="margin-top:14px;">
+      <section class="panel">
+        <div class="panel-title"><h2>Рабочие / наряды</h2><span>обновлено 14:41</span></div>
+        <table class="table">
+          <thead><tr><th>Рабочий</th><th>Пост</th><th>Наряд</th><th>Материал</th><th>Фото</th><th>Отдать оператору</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Иван Петров</strong><span class="muted">WR-1842</span></td><td>№1</td><td>зачистка шва</td><td>круг 1 шт.</td><td><span class="status red">откл.</span></td><td>после пересъема</td></tr>
+            <tr><td><strong>Олег Соколов</strong><span class="muted">WR-1843</span></td><td>№2</td><td>дочистка кромки</td><td><span class="status yellow">круги до 15:05</span></td><td>нет</td><td>15:20?</td></tr>
+            <tr><td><strong>Роман Беляев</strong><span class="muted">WR-1844</span></td><td>№2</td><td>снятие брызг</td><td>ок</td><td><span class="status green">принято</span></td><td>готово</td></tr>
+            <tr><td><strong>Денис Морозов</strong><span class="muted">WR-1845</span></td><td>№3</td><td>подготовка грунта</td><td>нет Р-646</td><td>не требуется</td><td>не готово</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="stack">
+        <section class="note red"><strong>Для Кузнецовой</strong>До 15:00 можно отдать только WR-1844. WR-1842 ждет фото с линейкой, WR-1843 зависит от склада.</section>
+        <section class="panel">
+          <div class="panel-title"><h2>Фото-очередь</h2><span>3 файла</span></div>
+          <div class="artifact-grid">
+            <div class="artifact"><div class="thumb"></div><strong>WR1842_after1</strong><span>отклонено</span></div>
+            <div class="artifact"><div class="thumb"></div><strong>WR1844_edge</strong><span>принято</span></div>
+            <div class="artifact"><div class="thumb doc"></div><strong>НД-77</strong><span>допуск высота</span></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>
+

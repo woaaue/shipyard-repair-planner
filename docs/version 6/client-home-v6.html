@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Клиент · v6</title>
+  <link rel="stylesheet" href="v6.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">VR</div><div><strong>Верфь-Ремонт</strong><span>Клиент</span></div></div>
+    <nav class="nav"><a class="active" href="#">Заявки</a><a href="#">Ремонты</a><a href="#">Работы</a><a href="#">Уведомления</a><a href="index.html">Все v6</a></nav>
+    <div class="profile"><div><strong>clientId: 12</strong><span>роль CLIENT</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <div class="head">
+      <div><h1>Заявки и ремонт клиента</h1><p>Экран строится из `/api/repair-requests?clientId=12`, `/api/repairs`, `/api/work-items` и `/api/notifications`.</p></div>
+      <div class="actions"><button class="btn primary">Создать заявку</button></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><span>Заявка</span><strong>SUBMITTED</strong></div>
+      <div class="metric"><span>Ремонт</span><strong>IN_PROGRESS</strong></div>
+      <div class="metric"><span>Прогресс</span><strong>58%</strong></div>
+      <div class="metric"><span>Стоимость</span><strong>2 840 000</strong></div>
+    </div>
+
+    <div class="layout-2">
+      <section class="panel">
+        <div class="panel-title"><h2>RepairRequest</h2><span>/api/repair-requests</span></div>
+        <table class="table">
+          <thead><tr><th>ID</th><th>Судно</th><th>Даты</th><th>Стоимость</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr><td>91</td><td><strong>Анна Мария</strong><span class="muted">shipId: 20</span></td><td>req 02.05 / sched 05.05</td><td>2 840 000</td><td><span class="state">SUBMITTED</span></td></tr>
+            <tr><td>88</td><td><strong>Северный Ветер</strong><span class="muted">shipId: 18</span></td><td>req 18.04 / sched 19.04</td><td>1 260 000</td><td><span class="state">COMPLETED</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-title"><h2>Repair</h2><span>/api/repairs</span></div>
+          <table class="table"><tbody><tr><td>dockName</td><td><strong>Северный док №2</strong></td></tr><tr><td>progressPercentage</td><td>58</td></tr><tr><td>status</td><td><span class="state">IN_PROGRESS</span></td></tr><tr><td>notes</td><td class="muted">Комментарий ремонта, если заполнен.</td></tr></tbody></table>
+        </section>
+        <section class="note"><strong>Ограничение v6</strong>Клиентский экран не показывает `Issue`: текущий `SecurityConfig` не дает CLIENT доступ к `/api/issues`.</section>
+      </aside>
+    </div>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-title"><h2>WorkItems по заявке</h2><span>/api/work-items?repairRequestId=91</span></div>
+      <table class="table"><thead><tr><th>ID</th><th>Категория</th><th>Работа</th><th>План/факт</th><th>Комментарий</th><th>Статус</th></tr></thead><tbody><tr><td>501</td><td>HULL</td><td><strong>Зачистка шва</strong><span class="muted">description из WorkItem</span></td><td>4 / 3 ч</td><td>notes мастера</td><td><span class="state">IN_PROGRESS</span></td></tr><tr><td>502</td><td>PAINTING</td><td><strong>Грунтовка</strong><span class="muted">после завершения HULL</span></td><td>6 / 0 ч</td><td>-</td><td><span class="state">PENDING</span></td></tr></tbody></table>
+    </section>
+  </main>
+</body>
+</html>
