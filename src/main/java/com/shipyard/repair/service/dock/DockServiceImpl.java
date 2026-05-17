@@ -8,7 +8,9 @@ import com.shipyard.repair.embeddable.DockDimensions;
 import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.Repair;
 import com.shipyard.repair.entity.Shipyard;
+import com.shipyard.repair.enums.DockStatus;
 import com.shipyard.repair.enums.RepairStatus;
+import com.shipyard.repair.enums.ShipyardStatus;
 import com.shipyard.repair.exception.BadRequestException;
 import com.shipyard.repair.exception.ErrorCode;
 import com.shipyard.repair.exception.ResourceNotFoundException;
@@ -16,12 +18,14 @@ import com.shipyard.repair.mapper.dock.DockMapper;
 import com.shipyard.repair.repository.DockRepository;
 import com.shipyard.repair.repository.RepairRepository;
 import com.shipyard.repair.repository.ShipyardRepository;
+import com.shipyard.repair.service.audit.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,6 +36,7 @@ public class DockServiceImpl implements DockService {
     private final DockRepository dockRepository;
     private final ShipyardRepository shipyardRepository;
     private final RepairRepository repairRepository;
+    private final AuditLogService auditLogService;
 
     @Override
     public List<DockResponse> getDocks() {
@@ -57,6 +62,9 @@ public class DockServiceImpl implements DockService {
     public DockResponse createDock(CreateDockRequest request) {
         Shipyard shipyard = shipyardRepository.findById(request.shipyardId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SHIPYARD_NOT_FOUND));
+        if (!isActiveShipyard(shipyard)) {
+            throw new BadRequestException(ErrorCode.SHIPYARD_INACTIVE_FOR_DOCK);
+        }
 
         Dock dock = dockMapper.toEntity(request);
         dock.setShipyard(shipyard);
@@ -74,8 +82,24 @@ public class DockServiceImpl implements DockService {
 
         Dock dock = dockRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.DOCK_NOT_FOUND));
+        String oldName = dock.getName();
+        DockStatus oldStatus = dock.getStatus();
+        Integer oldShipyardId = dock.getShipyard() == null ? null : dock.getShipyard().getId();
+        Integer oldLength = dock.getDimensions() == null ? null : dock.getDimensions().getMaxLength();
+        Integer oldWidth = dock.getDimensions() == null ? null : dock.getDimensions().getMaxWidth();
+        Integer oldDraft = dock.getDimensions() == null ? null : dock.getDimensions().getMaxDraft();
         Shipyard shipyard = shipyardRepository.findById(request.shipyardId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SHIPYARD_NOT_FOUND));
+        if (!isActiveShipyard(shipyard)) {
+            boolean sameShipyard = dock.getShipyard() != null && dock.getShipyard().getId() == shipyard.getId();
+            if (!sameShipyard) {
+                throw new BadRequestException(ErrorCode.SHIPYARD_INACTIVE_FOR_DOCK);
+            }
+        }
+
+        if (isDockDeactivation(dock.getStatus(), request.status()) && hasActiveRepairs(id)) {
+            throw new BadRequestException(ErrorCode.DOCK_DEACTIVATION_HAS_ACTIVE_REPAIRS);
+        }
 
         DockDimensions dimensions = new DockDimensions();
         dimensions.setMaxLength(request.dimensions().maxLength());
@@ -88,6 +112,13 @@ public class DockServiceImpl implements DockService {
         dock.setShipyard(shipyard);
 
         Dock savedDock = dockRepository.save(dock);
+        String action = oldStatus != request.status() ? "STATUS_CHANGE" : "UPDATE";
+        auditLogService.log(
+                action,
+                "DOCK",
+                savedDock.getId(),
+                buildDockUpdateDetails(oldName, oldStatus, oldShipyardId, oldLength, oldWidth, oldDraft, request)
+        );
         return dockMapper.toDto(savedDock);
     }
 
@@ -176,5 +207,61 @@ public class DockServiceImpl implements DockService {
             return repair.getRepairRequest().getRequestedEndDate();
         }
         return resolveStartDate(repair);
+    }
+
+    private boolean isDockDeactivation(DockStatus currentStatus, DockStatus targetStatus) {
+        return isActiveDockStatus(currentStatus) && !isActiveDockStatus(targetStatus);
+    }
+
+    private boolean isActiveDockStatus(DockStatus status) {
+        return status == DockStatus.AVAILABLE || status == DockStatus.OCCUPIED;
+    }
+
+    private boolean hasActiveRepairs(Integer dockId) {
+        return repairRepository.findByDockId(dockId).stream()
+                .map(Repair::getStatus)
+                .anyMatch(this::isActiveRepairStatus);
+    }
+
+    private boolean isActiveShipyard(Shipyard shipyard) {
+        return shipyard.getStatus() == ShipyardStatus.ACTIVE;
+    }
+
+    private boolean isActiveRepairStatus(RepairStatus status) {
+        return status != RepairStatus.COMPLETED && status != RepairStatus.CANCELLED;
+    }
+
+    private String buildDockUpdateDetails(
+            String oldName,
+            DockStatus oldStatus,
+            Integer oldShipyardId,
+            Integer oldLength,
+            Integer oldWidth,
+            Integer oldDraft,
+            UpdateDockRequest request
+    ) {
+        StringBuilder details = new StringBuilder();
+        appendChange(details, "name", oldName, request.name());
+        appendChange(details, "status", oldStatus, request.status());
+        appendChange(details, "shipyardId", oldShipyardId, request.shipyardId());
+        appendChange(details, "maxLength", oldLength, request.dimensions().maxLength());
+        appendChange(details, "maxWidth", oldWidth, request.dimensions().maxWidth());
+        appendChange(details, "maxDraft", oldDraft, request.dimensions().maxDraft());
+        String value = details.toString();
+        return value.isBlank() ? "no_changes" : value;
+    }
+
+    private void appendChange(StringBuilder details, String field, Object oldValue, Object newValue) {
+        if (Objects.equals(oldValue, newValue)) {
+            return;
+        }
+        if (details.length() > 0) {
+            details.append("; ");
+        }
+        details.append(field)
+                .append(":")
+                .append(oldValue == null ? "null" : oldValue)
+                .append("->")
+                .append(newValue == null ? "null" : newValue);
     }
 }

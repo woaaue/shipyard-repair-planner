@@ -28,6 +28,14 @@ public class RepairRequest {
     @JoinColumn(name = "client_id", nullable = false)
     private User client;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_dock_id")
+    private Dock assignedDock;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_operator_id")
+    private User assignedOperator;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RepairRequestStatus status;
@@ -61,6 +69,12 @@ public class RepairRequest {
 
     @Column(length = 500)
     private String notes;
+
+    @Column(name = "rejection_reason", length = 200)
+    private String rejectionReason;
+
+    @Column(name = "rejection_note", length = 500)
+    private String rejectionNote;
 
     @Column(name = "client_accepted", nullable = false)
     private boolean clientAccepted;

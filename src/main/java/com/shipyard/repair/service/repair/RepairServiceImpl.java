@@ -7,6 +7,7 @@ import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.entity.Repair;
 import com.shipyard.repair.entity.RepairRequest;
 import com.shipyard.repair.entity.User;
+import com.shipyard.repair.enums.RepairRequestStatus;
 import com.shipyard.repair.enums.RepairStatus;
 import com.shipyard.repair.enums.UserRole;
 import com.shipyard.repair.exception.BadRequestException;
@@ -16,11 +17,16 @@ import com.shipyard.repair.repository.DockRepository;
 import com.shipyard.repair.repository.RepairRepository;
 import com.shipyard.repair.repository.RepairRequestRepository;
 import com.shipyard.repair.repository.UserRepository;
+import com.shipyard.repair.repository.WorkItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,10 +37,12 @@ public class RepairServiceImpl implements RepairService {
     private final RepairRequestRepository repairRequestRepository;
     private final DockRepository dockRepository;
     private final UserRepository userRepository;
+    private final WorkItemRepository workItemRepository;
 
     @Override
     public List<RepairResponse> getRepairs(Integer dockId, Integer repairRequestId, RepairStatus status, Integer operatorId) {
-        return selectRepairs(dockId, repairRequestId, status, operatorId).stream()
+        Optional<User> currentUser = resolveCurrentUser();
+        return applyRoleScope(selectRepairs(dockId, repairRequestId, status, operatorId), currentUser).stream()
                 .filter(r -> dockId == null || r.getDock().getId() == dockId)
                 .filter(r -> repairRequestId == null || r.getRepairRequest().getId() == repairRequestId)
                 .filter(r -> status == null || r.getStatus() == status)
@@ -70,6 +78,9 @@ public class RepairServiceImpl implements RepairService {
         }
         Repair repair = repairRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND));
+        if (!hasAccessToRepair(repair, resolveCurrentUser())) {
+            throw new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND);
+        }
         return toResponse(repair);
     }
 
@@ -80,6 +91,7 @@ public class RepairServiceImpl implements RepairService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_REQUEST_NOT_FOUND));
         Dock dock = dockRepository.findById(request.dockId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.DOCK_NOT_FOUND));
+        ensureCanMutateRepair(dock);
         User operator = resolveOperator(request.operatorId());
 
         Repair repair = new Repair();
@@ -98,10 +110,12 @@ public class RepairServiceImpl implements RepairService {
         }
         Repair existing = repairRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND));
+        ensureCanMutateRepair(existing.getDock());
         RepairRequest repairRequest = repairRequestRepository.findById(request.repairRequestId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_REQUEST_NOT_FOUND));
         Dock dock = dockRepository.findById(request.dockId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.DOCK_NOT_FOUND));
+        ensureCanMutateRepair(dock);
         User operator = resolveOperator(request.operatorId());
 
         applyRequest(existing, request.status(), request.actualStartDate(),
@@ -119,8 +133,10 @@ public class RepairServiceImpl implements RepairService {
         }
         Repair existing = repairRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND));
+        ensureCanMutateRepair(existing.getDock());
         existing.setStatus(status);
         Repair saved = repairRepository.save(existing);
+        syncRequestStatusWithRepair(saved);
         return toResponse(saved);
     }
 
@@ -132,6 +148,7 @@ public class RepairServiceImpl implements RepairService {
         }
         Repair existing = repairRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND));
+        ensureCanMutateRepair(existing.getDock());
         existing.setOperator(resolveOperator(operatorId));
         Repair saved = repairRepository.save(existing);
         return toResponse(saved);
@@ -146,6 +163,9 @@ public class RepairServiceImpl implements RepairService {
         if (!repairRepository.existsById(id)) {
             throw new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND);
         }
+        Repair existing = repairRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REPAIR_NOT_FOUND));
+        ensureCanMutateRepair(existing.getDock());
         repairRepository.deleteById(id);
     }
 
@@ -211,5 +231,112 @@ public class RepairServiceImpl implements RepairService {
                 ? ""
                 : " " + user.getPatronymic();
         return (user.getLastName() + " " + user.getFirstName() + patronymic).trim();
+    }
+
+    private Optional<User> resolveCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof String principalString && "anonymousUser".equals(principalString)) {
+            return Optional.empty();
+        }
+        return userRepository.findByEmail(authentication.getName());
+    }
+
+    private List<Repair> applyRoleScope(List<Repair> source, Optional<User> maybeUser) {
+        if (maybeUser.isEmpty()) {
+            return source;
+        }
+        User user = maybeUser.get();
+        if (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.DISPATCHER) {
+            return source;
+        }
+        return source.stream()
+                .filter(repair -> hasAccessToRepair(repair, maybeUser))
+                .toList();
+    }
+
+    private boolean hasAccessToRepair(Repair repair, Optional<User> maybeUser) {
+        if (maybeUser.isEmpty()) {
+            return true;
+        }
+        User user = maybeUser.get();
+        UserRole role = user.getRole();
+
+        if (role == UserRole.ADMIN || role == UserRole.DISPATCHER) {
+            return true;
+        }
+        if (role == UserRole.CLIENT) {
+            return repair.getRepairRequest() != null
+                    && repair.getRepairRequest().getClient() != null
+                    && repair.getRepairRequest().getClient().getId() == user.getId();
+        }
+        if (role == UserRole.OPERATOR) {
+            if (repair.getOperator() != null && repair.getOperator().getId() == user.getId()) {
+                return true;
+            }
+            return user.getDock() != null
+                    && repair.getDock() != null
+                    && repair.getDock().getId() == user.getDock().getId();
+        }
+        if (role == UserRole.MASTER || role == UserRole.WORKER) {
+            if (role == UserRole.WORKER) {
+                return workItemRepository.findByRepairId(repair.getId()).stream()
+                        .anyMatch(item -> item.getAssignee() != null && item.getAssignee().getId() == user.getId());
+            }
+            return user.getDock() != null
+                    && repair.getDock() != null
+                    && repair.getDock().getId() == user.getDock().getId();
+        }
+        return false;
+    }
+
+    private void syncRequestStatusWithRepair(Repair repair) {
+        RepairRequest request = repair.getRepairRequest();
+        if (request == null) {
+            return;
+        }
+
+        RepairRequestStatus current = request.getStatus();
+        if (current == RepairRequestStatus.REJECTED
+                || current == RepairRequestStatus.CANCELLED
+                || current == RepairRequestStatus.CLIENT_ACCEPTED) {
+            return;
+        }
+
+        RepairRequestStatus target = current;
+        if (repair.getStatus() == RepairStatus.COMPLETED) {
+            target = RepairRequestStatus.COMPLETED;
+        } else if (repair.getStatus() == RepairStatus.IN_PROGRESS || repair.getStatus() == RepairStatus.STARTED) {
+            target = RepairRequestStatus.IN_PROGRESS;
+        } else if (repair.getStatus() == RepairStatus.SCHEDULED && current != RepairRequestStatus.APPROVED) {
+            target = RepairRequestStatus.APPROVED;
+        }
+
+        if (target != current) {
+            request.setStatus(target);
+            repairRequestRepository.save(request);
+        }
+    }
+
+    private void ensureCanMutateRepair(Dock targetDock) {
+        Optional<User> maybeUser = resolveCurrentUser();
+        if (maybeUser.isEmpty()) {
+            return;
+        }
+        User user = maybeUser.get();
+        UserRole role = user.getRole();
+        if (role == UserRole.ADMIN || role == UserRole.DISPATCHER) {
+            return;
+        }
+        if ((role == UserRole.OPERATOR || role == UserRole.MASTER)
+                && user.getDock() != null
+                && targetDock != null
+                && user.getDock().getId() == targetDock.getId()) {
+            return;
+        }
+        throw new AccessDeniedException("Access denied");
     }
 }

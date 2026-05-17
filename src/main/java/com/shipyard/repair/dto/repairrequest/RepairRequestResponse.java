@@ -12,6 +12,10 @@ public record RepairRequestResponse(
         String shipName,
         Integer clientId,
         String clientName,
+        Integer assignedDockId,
+        String assignedDockName,
+        Integer assignedOperatorId,
+        String assignedOperatorName,
         RepairRequestStatus status,
         LocalDate requestedStartDate,
         LocalDate requestedEndDate,
@@ -23,6 +27,8 @@ public record RepairRequestResponse(
         BigDecimal totalCost,
         String description,
         String notes,
+        String rejectionReason,
+        String rejectionNote,
         boolean clientAccepted,
         LocalDateTime clientAcceptedAt,
         String clientAcceptanceNote,
@@ -35,6 +41,10 @@ public record RepairRequestResponse(
             String shipName,
             Integer clientId,
             String clientName,
+            Integer assignedDockId,
+            String assignedDockName,
+            Integer assignedOperatorId,
+            String assignedOperatorName,
             RepairRequestStatus status,
             LocalDate requestedStartDate,
             LocalDate requestedEndDate,
@@ -46,11 +56,13 @@ public record RepairRequestResponse(
             BigDecimal totalCost,
             String description,
             String notes,
+            String rejectionReason,
+            String rejectionNote,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
-        this(id, shipId, shipName, clientId, clientName, status, requestedStartDate, requestedEndDate,
+        this(id, shipId, shipName, clientId, clientName, assignedDockId, assignedDockName, assignedOperatorId, assignedOperatorName, status, requestedStartDate, requestedEndDate,
                 scheduledStartDate, scheduledEndDate, estimatedDurationDays, contingencyDays, actualDurationDays,
-                totalCost, description, notes, false, null, null, createdAt, updatedAt);
+                totalCost, description, notes, rejectionReason, rejectionNote, false, null, null, createdAt, updatedAt);
     }
 }

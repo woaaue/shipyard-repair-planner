@@ -134,7 +134,13 @@ class RepairRequestServiceImplTest {
         when(repairRequestRepository.findById(4)).thenReturn(Optional.of(existing));
         when(repairRequestRepository.save(existing)).thenReturn(existing);
 
-        RepairRequestResponse response = repairRequestService.updateStatus(4, RepairRequestStatus.CANCELLED);
+        RepairRequestResponse response = repairRequestService.updateStatus(
+                4,
+                RepairRequestStatus.CANCELLED,
+                null,
+                null,
+                null
+        );
 
         assertEquals(RepairRequestStatus.CANCELLED, response.status());
     }
@@ -187,6 +193,44 @@ class RepairRequestServiceImplTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> repairRequestService.acceptByClient(12, "another@mail.com", "note"));
+    }
+
+    @Test
+    void resubmitByClient_Success() {
+        RepairRequest existing = buildRepairRequest(13);
+        existing.setStatus(RepairRequestStatus.REJECTED);
+        existing.setRejectionReason("No dock capacity");
+        existing.setRejectionNote("Try next week");
+        existing.setAssignedDock(null);
+        existing.setAssignedOperator(null);
+
+        User currentClient = existing.getClient();
+        currentClient.setEmail("client@mail.com");
+
+        when(repairRequestRepository.findById(13)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("client@mail.com")).thenReturn(Optional.of(currentClient));
+        when(repairRequestRepository.save(existing)).thenReturn(existing);
+
+        RepairRequestResponse response = repairRequestService.resubmitByClient(13, "client@mail.com", "Updated slot");
+
+        assertEquals(RepairRequestStatus.SUBMITTED, response.status());
+        assertNull(response.rejectionReason());
+        assertTrue(response.notes().contains("Повторная подача"));
+    }
+
+    @Test
+    void resubmitByClient_NotRejected_Throws() {
+        RepairRequest existing = buildRepairRequest(14);
+        existing.setStatus(RepairRequestStatus.UNDER_REVIEW);
+
+        User currentClient = existing.getClient();
+        currentClient.setEmail("client@mail.com");
+
+        when(repairRequestRepository.findById(14)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("client@mail.com")).thenReturn(Optional.of(currentClient));
+
+        assertThrows(BadRequestException.class,
+                () -> repairRequestService.resubmitByClient(14, "client@mail.com", "note"));
     }
 
     private RepairRequest buildRepairRequest(int id) {

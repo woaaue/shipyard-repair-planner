@@ -8,6 +8,7 @@ import com.shipyard.repair.controller.DowntimeController;
 import com.shipyard.repair.controller.IssueController;
 import com.shipyard.repair.controller.NotificationController;
 import com.shipyard.repair.controller.RepairRequestController;
+import com.shipyard.repair.controller.ShipyardController;
 import com.shipyard.repair.controller.UserController;
 import com.shipyard.repair.controller.WorkItemController;
 import com.shipyard.repair.dto.audit.AuditLogResponse;
@@ -16,11 +17,14 @@ import com.shipyard.repair.dto.dock.DockResponse;
 import com.shipyard.repair.dto.downtime.DowntimeResponse;
 import com.shipyard.repair.dto.issue.IssueResponse;
 import com.shipyard.repair.dto.repairrequest.RepairRequestResponse;
+import com.shipyard.repair.dto.shipyard.ShipyardAddressResponse;
+import com.shipyard.repair.dto.shipyard.ShipyardResponse;
 import com.shipyard.repair.dto.user.UserResponse;
 import com.shipyard.repair.dto.workitem.WorkItemResponse;
 import com.shipyard.repair.entity.Dock;
 import com.shipyard.repair.enums.DockStatus;
 import com.shipyard.repair.enums.RepairRequestStatus;
+import com.shipyard.repair.enums.ShipyardStatus;
 import com.shipyard.repair.enums.UserRole;
 import com.shipyard.repair.enums.WorkCategory;
 import com.shipyard.repair.enums.WorkItemStatus;
@@ -30,6 +34,7 @@ import com.shipyard.repair.service.audit.AuditLogService;
 import com.shipyard.repair.service.downtime.DowntimeService;
 import com.shipyard.repair.service.issue.IssueService;
 import com.shipyard.repair.service.notification.NotificationService;
+import com.shipyard.repair.service.shipyard.ShipyardService;
 import com.shipyard.repair.service.user.UserService;
 import com.shipyard.repair.service.workitem.WorkItemService;
 import jakarta.servlet.FilterChain;
@@ -69,7 +74,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         AuditLogController.class,
         NotificationController.class,
         IssueController.class,
-        DowntimeController.class
+        DowntimeController.class,
+        ShipyardController.class
 })
 @AutoConfigureMockMvc
 @Import({SecurityConfig.class, LegacyApiDeprecationHeaderFilter.class, AccessControlTest.TestSecurityBeans.class})
@@ -98,6 +104,9 @@ class AccessControlTest {
 
     @MockitoBean
     private DowntimeService downtimeService;
+
+    @MockitoBean
+    private ShipyardService shipyardService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -170,6 +179,10 @@ class AccessControlTest {
                 "North Wind",
                 12,
                 "Client User",
+                null,
+                null,
+                null,
+                null,
                 RepairRequestStatus.SUBMITTED,
                 LocalDate.of(2026, 5, 2),
                 null,
@@ -180,6 +193,8 @@ class AccessControlTest {
                 0,
                 null,
                 "Hull checks",
+                null,
+                null,
                 null,
                 LocalDateTime.of(2026, 4, 24, 12, 0),
                 LocalDateTime.of(2026, 4, 24, 12, 0)
@@ -222,6 +237,10 @@ class AccessControlTest {
                 "North Wind",
                 12,
                 "Client User",
+                null,
+                null,
+                null,
+                null,
                 RepairRequestStatus.CLIENT_ACCEPTED,
                 LocalDate.of(2026, 5, 2),
                 null,
@@ -232,6 +251,8 @@ class AccessControlTest {
                 0,
                 null,
                 "Hull checks",
+                null,
+                null,
                 null,
                 true,
                 LocalDateTime.of(2026, 5, 12, 10, 0),
@@ -260,6 +281,109 @@ class AccessControlTest {
                         .content("""
                                 {
                                   "note": "Accepted"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void repairRequestStatusUpdate_forDispatcher_allowed() throws Exception {
+        RepairRequestResponse response = new RepairRequestResponse(
+                91,
+                20,
+                "North Wind",
+                12,
+                "Client User",
+                2,
+                "Док-2",
+                7,
+                "Оператор Олег",
+                RepairRequestStatus.APPROVED,
+                LocalDate.of(2026, 5, 2),
+                null,
+                null,
+                null,
+                12,
+                2,
+                0,
+                null,
+                "Hull checks",
+                null,
+                null,
+                null,
+                false,
+                null,
+                null,
+                LocalDateTime.of(2026, 4, 24, 12, 0),
+                LocalDateTime.of(2026, 4, 24, 13, 0)
+        );
+        when(repairRequestService.updateStatus(eq(91), eq(RepairRequestStatus.APPROVED), eq(2), eq(null), eq(null)))
+                .thenReturn(response);
+
+        mockMvc.perform(patch("/api/repair-requests/{id}/status", 91)
+                        .with(SecurityMockMvcRequestPostProcessors.user("dispatcher@mail.com").roles("DISPATCHER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "status": "APPROVED",
+                                  "assignedDockId": 2
+                                }
+                                """))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void repairRequestResubmit_forClient_allowed() throws Exception {
+        RepairRequestResponse response = new RepairRequestResponse(
+                91,
+                20,
+                "North Wind",
+                12,
+                "Client User",
+                null,
+                null,
+                null,
+                null,
+                RepairRequestStatus.SUBMITTED,
+                LocalDate.of(2026, 5, 2),
+                null,
+                null,
+                null,
+                12,
+                2,
+                0,
+                null,
+                "Hull checks",
+                "Need slot adjustment",
+                null,
+                null,
+                false,
+                null,
+                null,
+                LocalDateTime.of(2026, 4, 24, 12, 0),
+                LocalDateTime.of(2026, 5, 12, 10, 0)
+        );
+        when(repairRequestService.resubmitByClient(eq(91), eq("client@mail.com"), eq("Need slot adjustment"))).thenReturn(response);
+
+        mockMvc.perform(patch("/api/repair-requests/{id}/resubmit", 91)
+                        .with(SecurityMockMvcRequestPostProcessors.user("client@mail.com").roles("CLIENT"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "note": "Need slot adjustment"
+                                }
+                                """))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void repairRequestResubmit_forDispatcher_forbidden() throws Exception {
+        mockMvc.perform(patch("/api/repair-requests/{id}/resubmit", 91)
+                        .with(SecurityMockMvcRequestPostProcessors.user("dispatcher@mail.com").roles("DISPATCHER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "note": "Need slot adjustment"
                                 }
                                 """))
                 .andExpect(status().isForbidden());
@@ -319,7 +443,7 @@ class AccessControlTest {
         dock.setId(2);
         dock.setName("Dock 2");
 
-        DockResponse response = new DockResponse(2, "Dock 2", new DockDimensionsResponse(200, 35, 10), DockStatus.AVAILABLE);
+        DockResponse response = new DockResponse(2, "Dock 2", new DockDimensionsResponse(200, 35, 10), DockStatus.AVAILABLE, 1);
         when(dockService.createDock(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/docks")
@@ -469,5 +593,85 @@ class AccessControlTest {
                                 }
                                 """))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void shipyardCreate_forDispatcher_forbidden() throws Exception {
+        mockMvc.perform(post("/api/shipyards")
+                        .with(SecurityMockMvcRequestPostProcessors.user("dispatcher@mail.com").roles("DISPATCHER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "name": "Новая верфь",
+                                  "status": "ACTIVE",
+                                  "shipyardAddress": {
+                                    "city": "Владивосток",
+                                    "street": "Портовая 1",
+                                    "postalCode": "690000"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shipyardCreate_forAdmin_created() throws Exception {
+        ShipyardResponse response = new ShipyardResponse(
+                10,
+                "Новая верфь",
+                new ShipyardAddressResponse("Владивосток", "Портовая 1", "690000"),
+                ShipyardStatus.ACTIVE
+        );
+        when(shipyardService.createShipyard(any())).thenReturn(response);
+
+        mockMvc.perform(post("/api/shipyards")
+                        .with(SecurityMockMvcRequestPostProcessors.user("admin@mail.com").roles("ADMIN"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "name": "Новая верфь",
+                                  "status": "ACTIVE",
+                                  "shipyardAddress": {
+                                    "city": "Владивосток",
+                                    "street": "Портовая 1",
+                                    "postalCode": "690000"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void shipyardStatusPatch_forDispatcher_forbidden() throws Exception {
+        mockMvc.perform(patch("/api/shipyards/{id}/status", 10)
+                        .with(SecurityMockMvcRequestPostProcessors.user("dispatcher@mail.com").roles("DISPATCHER"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "status": "MAINTENANCE"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shipyardStatusPatch_forAdmin_ok() throws Exception {
+        ShipyardResponse response = new ShipyardResponse(
+                10,
+                "Новая верфь",
+                new ShipyardAddressResponse("Владивосток", "Портовая 1", "690000"),
+                ShipyardStatus.MAINTENANCE
+        );
+        when(shipyardService.updateShipyardStatus(eq(10), eq(ShipyardStatus.MAINTENANCE))).thenReturn(response);
+
+        mockMvc.perform(patch("/api/shipyards/{id}/status", 10)
+                        .with(SecurityMockMvcRequestPostProcessors.user("admin@mail.com").roles("ADMIN"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "status": "MAINTENANCE"
+                                }
+                                """))
+                .andExpect(status().isOk());
     }
 }

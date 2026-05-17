@@ -6,5 +6,6 @@ public record DockResponse(
         int id,
         String name,
         DockDimensionsResponse dimensions,
-        DockStatus status
+        DockStatus status,
+        Integer shipyardId
 ) {}

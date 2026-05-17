@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -96,6 +97,10 @@ class RepairFlowScenarioTest {
                 "Aurora",
                 7,
                 "Client A",
+                null,
+                null,
+                null,
+                null,
                 RepairRequestStatus.SUBMITTED,
                 LocalDate.of(2026, 4, 25),
                 null,
@@ -107,6 +112,8 @@ class RepairFlowScenarioTest {
                 null,
                 "Dock repair",
                 null,
+                null,
+                null,
                 LocalDateTime.of(2026, 4, 22, 10, 0),
                 LocalDateTime.of(2026, 4, 22, 10, 0)
         );
@@ -117,6 +124,10 @@ class RepairFlowScenarioTest {
                 "Aurora",
                 7,
                 "Client A",
+                null,
+                null,
+                null,
+                null,
                 RepairRequestStatus.APPROVED,
                 LocalDate.of(2026, 4, 25),
                 null,
@@ -127,6 +138,8 @@ class RepairFlowScenarioTest {
                 0,
                 null,
                 "Dock repair",
+                null,
+                null,
                 null,
                 LocalDateTime.of(2026, 4, 22, 10, 0),
                 LocalDateTime.of(2026, 4, 22, 12, 0)
@@ -198,7 +211,7 @@ class RepairFlowScenarioTest {
 
         when(repairRequestService.createRepairRequest(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(createdRequest);
-        when(repairRequestService.updateStatus(eq(101), eq(RepairRequestStatus.APPROVED)))
+        when(repairRequestService.updateStatus(eq(101), eq(RepairRequestStatus.APPROVED), isNull(), isNull(), isNull()))
                 .thenReturn(approvedRequest);
         when(repairService.createRepair(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(createdRepair);
@@ -309,6 +322,10 @@ class RepairFlowScenarioTest {
                 "Baltic Star",
                 12,
                 "Client B",
+                null,
+                null,
+                null,
+                null,
                 RepairRequestStatus.REJECTED,
                 LocalDate.of(2026, 6, 1),
                 null,
@@ -319,7 +336,9 @@ class RepairFlowScenarioTest {
                 0,
                 null,
                 "Scope mismatch",
+                null,
                 "Need more details",
+                null,
                 LocalDateTime.of(2026, 4, 24, 10, 0),
                 LocalDateTime.of(2026, 4, 24, 11, 0)
         );
@@ -330,6 +349,10 @@ class RepairFlowScenarioTest {
                 "Baltic Star",
                 12,
                 "Client B",
+                null,
+                null,
+                null,
+                null,
                 RepairRequestStatus.CANCELLED,
                 LocalDate.of(2026, 6, 1),
                 null,
@@ -341,13 +364,15 @@ class RepairFlowScenarioTest {
                 null,
                 "Scope mismatch",
                 "Cancelled by client",
+                null,
+                null,
                 LocalDateTime.of(2026, 4, 24, 10, 0),
                 LocalDateTime.of(2026, 4, 24, 11, 30)
         );
 
-        when(repairRequestService.updateStatus(eq(901), eq(RepairRequestStatus.REJECTED)))
+        when(repairRequestService.updateStatus(eq(901), eq(RepairRequestStatus.REJECTED), isNull(), isNull(), isNull()))
                 .thenReturn(rejectedRequest);
-        when(repairRequestService.updateStatus(eq(901), eq(RepairRequestStatus.CANCELLED)))
+        when(repairRequestService.updateStatus(eq(901), eq(RepairRequestStatus.CANCELLED), isNull(), isNull(), isNull()))
                 .thenReturn(cancelledRequest);
 
         repairRequestMvc.perform(patch("/api/repair-requests/{id}/status", 901)

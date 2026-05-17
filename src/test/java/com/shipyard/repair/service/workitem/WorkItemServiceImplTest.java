@@ -188,11 +188,15 @@ class WorkItemServiceImplTest {
 
     @Test
     void deleteWorkItem_Success() {
+        WorkItem existing = buildWorkItem(1);
         when(workItemRepository.existsById(1)).thenReturn(true);
+        when(workItemRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(workItemRepository.findByRepairId(3)).thenReturn(List.of());
 
         workItemService.deleteWorkItem(1);
 
         verify(workItemRepository).deleteById(1);
+        verify(repairRepository).save(existing.getRepair());
     }
 
     @Test

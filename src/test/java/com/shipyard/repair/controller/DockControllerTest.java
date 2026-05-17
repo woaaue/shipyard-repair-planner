@@ -118,7 +118,8 @@ class DockControllerTest {
                 2,
                 "Dry Dock 2",
                 new DockDimensionsResponse(220, 35, 12),
-                DockStatus.AVAILABLE
+                DockStatus.AVAILABLE,
+                1
         );
 
         when(dockService.getDock(2)).thenReturn(response);

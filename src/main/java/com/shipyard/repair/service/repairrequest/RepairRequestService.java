@@ -17,9 +17,11 @@ public interface RepairRequestService {
 
     RepairRequestResponse updateRepairRequest(Integer id, UpdateRepairRequest request);
 
-    RepairRequestResponse updateStatus(Integer id, RepairRequestStatus status);
+    RepairRequestResponse updateStatus(Integer id, RepairRequestStatus status, Integer assignedDockId, String rejectionReason, String rejectionNote);
 
     RepairRequestResponse acceptByClient(Integer id, String clientEmail, String note);
+
+    RepairRequestResponse resubmitByClient(Integer id, String clientEmail, String note);
 
     void deleteRepairRequest(Integer id);
 }

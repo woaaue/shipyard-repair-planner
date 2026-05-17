@@ -2,6 +2,8 @@ package com.shipyard.repair.controller;
 
 import com.shipyard.repair.dto.shipyard.CreateShipyardRequest;
 import com.shipyard.repair.dto.shipyard.ShipyardResponse;
+import com.shipyard.repair.dto.shipyard.UpdateShipyardRequest;
+import com.shipyard.repair.dto.shipyard.UpdateShipyardStatusRequest;
 import com.shipyard.repair.service.shipyard.ShipyardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,9 +38,21 @@ public class ShipyardController {
                 .body(shipyardService.createShipyard(createShipyardRequest));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ShipyardResponse> deleteShipyardById(@PathVariable Integer id) {
-        shipyardService.deleteShipyard(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    @PutMapping("/{id}")
+    public ResponseEntity<ShipyardResponse> updateShipyard(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateShipyardRequest updateShipyardRequest
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(shipyardService.updateShipyard(id, updateShipyardRequest));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ShipyardResponse> updateShipyardStatus(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateShipyardStatusRequest updateShipyardStatusRequest
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(shipyardService.updateShipyardStatus(id, updateShipyardStatusRequest.status()));
     }
 }

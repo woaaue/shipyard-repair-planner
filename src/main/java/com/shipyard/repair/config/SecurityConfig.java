@@ -39,7 +39,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -58,15 +61,18 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
                     .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/users/*/subordinates").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
+                    .requestMatchers(HttpMethod.GET, "/api/admin/**").hasRole("ADMIN")
                     .requestMatchers("/api/users/**").hasRole("ADMIN")
 
                     .requestMatchers(HttpMethod.POST, "/api/repair-requests").hasAnyRole("CLIENT", "ADMIN", "DISPATCHER")
-                    .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/*/status").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR")
                     .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/*/acceptance").hasAnyRole("CLIENT", "ADMIN")
+                    .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/*/resubmit").hasAnyRole("CLIENT", "ADMIN")
+                    .requestMatchers(HttpMethod.PATCH, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
                     .requestMatchers(HttpMethod.PUT, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
                     .requestMatchers(HttpMethod.DELETE, "/api/repair-requests/**").hasAnyRole("ADMIN", "DISPATCHER")
 
@@ -87,13 +93,13 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/docks/**").hasAnyRole("ADMIN", "DISPATCHER")
                     .requestMatchers(HttpMethod.DELETE, "/api/docks/**").hasAnyRole("ADMIN", "DISPATCHER")
 
-                    .requestMatchers(HttpMethod.POST, "/api/ships").hasAnyRole("ADMIN", "DISPATCHER")
+                    .requestMatchers(HttpMethod.POST, "/api/ships").hasAnyRole("ADMIN", "DISPATCHER", "CLIENT")
                     .requestMatchers(HttpMethod.PUT, "/api/ships/**").hasAnyRole("ADMIN", "DISPATCHER")
                     .requestMatchers(HttpMethod.DELETE, "/api/ships/**").hasAnyRole("ADMIN", "DISPATCHER")
 
                     .requestMatchers(HttpMethod.POST, "/api/shipyards").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/api/shipyards/**").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/shipyards/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PATCH, "/api/shipyards/**").hasRole("ADMIN")
 
                     .requestMatchers(HttpMethod.GET, "/api/audit-logs/**").hasAnyRole("ADMIN", "DISPATCHER", "OPERATOR", "MASTER")
                     .requestMatchers(HttpMethod.GET, "/api/notifications/**").authenticated()

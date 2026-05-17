@@ -4,11 +4,14 @@ import com.shipyard.repair.dto.dock.CreateDockRequest;
 import com.shipyard.repair.dto.dock.DockResponse;
 import com.shipyard.repair.entity.Dock;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface DockMapper {
 
+    @Mapping(target = "shipyardId", source = "shipyard.id")
     DockResponse toDto(Dock entity);
+
     Dock toEntity(CreateDockRequest request);
 }

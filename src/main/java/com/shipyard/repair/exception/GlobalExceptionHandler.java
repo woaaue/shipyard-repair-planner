@@ -2,6 +2,7 @@ package com.shipyard.repair.exception;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,6 +24,18 @@ public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
 
+    private String resolveMessage(ErrorCode errorCode, Object[] args) {
+        try {
+            return messageSource.getMessage(
+                    errorCode.getMessageCode(),
+                    args,
+                    Locale.getDefault()
+            );
+        } catch (NoSuchMessageException ignored) {
+            return errorCode.getMessageCode();
+        }
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -36,7 +49,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResourceException(DuplicateResourceException ex) {
-        String message = messageSource.getMessage(ex.getErrorCode().getMessageCode(), null, Locale.getDefault());
+        String message = resolveMessage(ex.getErrorCode(), null);
         ErrorResponse error = new ErrorResponse(message, ex.getErrorCode().name(), System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -44,7 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        String message = messageSource.getMessage(ex.getErrorCode().getMessageCode(), null, Locale.getDefault());
+        String message = resolveMessage(ex.getErrorCode(), null);
         ErrorResponse error = new ErrorResponse(message, ex.getErrorCode().name(), System.currentTimeMillis());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
@@ -53,10 +66,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         ErrorCode errorCode = ErrorCode.TYPE_MISMATCH;
-        String message = messageSource.getMessage(
-                errorCode.getMessageCode(),
-                new Object[]{ex.getName(), ex.getRequiredType().getSimpleName()},
-                Locale.getDefault());
+        String message = resolveMessage(errorCode, new Object[]{ex.getName(), ex.getRequiredType().getSimpleName()});
 
         ErrorResponse error = new ErrorResponse(message, errorCode.name(), System.currentTimeMillis());
         return ResponseEntity.badRequest().body(error);
@@ -65,7 +75,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParams(MissingServletRequestParameterException ex) {
         ErrorCode errorCode = ErrorCode.MISSING_PARAMETER;
-        String message = messageSource.getMessage(errorCode.getMessageCode(), new Object[]{ex.getParameterName()}, Locale.getDefault());
+        String message = resolveMessage(errorCode, new Object[]{ex.getParameterName()});
         ErrorResponse error = new ErrorResponse(
             message,
             errorCode.name(),
@@ -77,7 +87,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         ErrorCode errorCode = ErrorCode.INVALID_JSON;
-        String message = messageSource.getMessage(errorCode.getMessageCode(), null, Locale.getDefault());
+        String message = resolveMessage(errorCode, null);
         ErrorResponse error = new ErrorResponse(
                 message,
                 errorCode.name(),
@@ -99,7 +109,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
         ErrorCode errorCode = ex.getErrorCode();
-        String message = messageSource.getMessage(ex.getErrorCode().getMessageCode(), null, Locale.getDefault());
+        String message = resolveMessage(ex.getErrorCode(), ex.getMessageArgs());
         ErrorResponse error = new ErrorResponse(
             message,
             errorCode.name(),

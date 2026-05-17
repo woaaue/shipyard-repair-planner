@@ -3,6 +3,7 @@ package com.shipyard.repair.controller;
 import com.shipyard.repair.dto.repairrequest.CreateRepairRequest;
 import com.shipyard.repair.dto.repairrequest.RepairRequestResponse;
 import com.shipyard.repair.dto.repairrequest.UpdateRepairRequestAcceptanceRequest;
+import com.shipyard.repair.dto.repairrequest.UpdateRepairRequestResubmitRequest;
 import com.shipyard.repair.dto.repairrequest.UpdateRepairRequest;
 import com.shipyard.repair.dto.repairrequest.UpdateRepairRequestStatusRequest;
 import com.shipyard.repair.enums.RepairRequestStatus;
@@ -57,7 +58,13 @@ public class RepairRequestController {
             @Valid @RequestBody UpdateRepairRequestStatusRequest request
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(repairRequestService.updateStatus(id, request.status()));
+                .body(repairRequestService.updateStatus(
+                        id,
+                        request.status(),
+                        request.assignedDockId(),
+                        request.rejectionReason(),
+                        request.rejectionNote()
+                ));
     }
 
     @PatchMapping("/{id}/acceptance")
@@ -68,6 +75,16 @@ public class RepairRequestController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(repairRequestService.acceptByClient(id, authentication.getName(), request.note()));
+    }
+
+    @PatchMapping("/{id}/resubmit")
+    public ResponseEntity<RepairRequestResponse> resubmitByClient(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateRepairRequestResubmitRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(repairRequestService.resubmitByClient(id, authentication.getName(), request.note()));
     }
 
     @DeleteMapping("/{id}")

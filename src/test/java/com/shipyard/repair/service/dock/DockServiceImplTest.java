@@ -12,12 +12,15 @@ import com.shipyard.repair.entity.Ship;
 import com.shipyard.repair.entity.Shipyard;
 import com.shipyard.repair.enums.DockStatus;
 import com.shipyard.repair.enums.RepairStatus;
+import com.shipyard.repair.enums.ShipyardStatus;
 import com.shipyard.repair.exception.BadRequestException;
+import com.shipyard.repair.exception.ErrorCode;
 import com.shipyard.repair.exception.ResourceNotFoundException;
 import com.shipyard.repair.mapper.dock.DockMapper;
 import com.shipyard.repair.repository.DockRepository;
 import com.shipyard.repair.repository.RepairRepository;
 import com.shipyard.repair.repository.ShipyardRepository;
+import com.shipyard.repair.service.audit.AuditLogService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,6 +48,8 @@ class DockServiceImplTest {
     private ShipyardRepository shipyardRepository;
     @Mock
     private RepairRepository repairRepository;
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private DockServiceImpl dockService;
@@ -61,8 +66,8 @@ class DockServiceImplTest {
         dock2.setId(2);
         dock2.setName("Южный");
 
-        DockResponse response1 = new DockResponse(1, "Северный", null, null);
-        DockResponse response2 = new DockResponse(2, "Южный", null, null);
+        DockResponse response1 = new DockResponse(1, "Северный", null, null, null);
+        DockResponse response2 = new DockResponse(2, "Южный", null, null, null);
 
         when(dockRepository.findAll()).thenReturn(List.of(dock1, dock2));
         when(dockMapper.toDto(dock1)).thenReturn(response1);
@@ -93,7 +98,7 @@ class DockServiceImplTest {
         dock.setId(1);
         dock.setName("Северный");
 
-        DockResponse response = new DockResponse(1, "Северный", null, null);
+        DockResponse response = new DockResponse(1, "Северный", null, null, null);
 
         when(dockRepository.findById(1)).thenReturn(Optional.of(dock));
         when(dockMapper.toDto(dock)).thenReturn(response);
@@ -164,13 +169,14 @@ class DockServiceImplTest {
         Shipyard shipyard = new Shipyard();
         shipyard.setId(1);
         shipyard.setName("Основная верфь");
+        shipyard.setStatus(ShipyardStatus.ACTIVE);
 
         Dock dock = new Dock();
         dock.setId(1);
         dock.setName("Северный-1");
         dock.setShipyard(shipyard);
 
-        DockResponse response = new DockResponse(1, "Северный-1", null, DockStatus.AVAILABLE);
+        DockResponse response = new DockResponse(1, "Северный-1", null, DockStatus.AVAILABLE, 1);
 
         when(shipyardRepository.findById(1)).thenReturn(Optional.of(shipyard));
         when(dockMapper.toEntity(request)).thenReturn(dock);
@@ -209,21 +215,44 @@ class DockServiceImplTest {
     }
 
     @Test
+    void createDock_InactiveShipyard_ThrowsBadRequest() {
+        DockDimensionsRequest dimensions = new DockDimensionsRequest(100, 20, 10);
+        CreateDockRequest request = new CreateDockRequest(
+                "Северный-1", dimensions, DockStatus.AVAILABLE, 1
+        );
+
+        Shipyard shipyard = new Shipyard();
+        shipyard.setId(1);
+        shipyard.setStatus(ShipyardStatus.MAINTENANCE);
+
+        when(shipyardRepository.findById(1)).thenReturn(Optional.of(shipyard));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> dockService.createDock(request));
+
+        assertEquals(ErrorCode.SHIPYARD_INACTIVE_FOR_DOCK, exception.getErrorCode());
+        verify(dockRepository, never()).save(any());
+    }
+
+    @Test
     void updateDock_Success() {
         Dock existing = new Dock();
         existing.setId(1);
         existing.setName("Old Dock");
+        existing.setStatus(DockStatus.AVAILABLE);
 
         DockDimensionsRequest dimensions = new DockDimensionsRequest(120, 25, 9);
         UpdateDockRequest request = new UpdateDockRequest("New Dock", dimensions, DockStatus.MAINTENANCE, 2);
 
         Shipyard shipyard = new Shipyard();
         shipyard.setId(2);
+        shipyard.setStatus(ShipyardStatus.ACTIVE);
 
-        DockResponse response = new DockResponse(1, "New Dock", null, DockStatus.MAINTENANCE);
+        DockResponse response = new DockResponse(1, "New Dock", null, DockStatus.MAINTENANCE, 2);
 
         when(dockRepository.findById(1)).thenReturn(Optional.of(existing));
         when(shipyardRepository.findById(2)).thenReturn(Optional.of(shipyard));
+        when(repairRepository.findByDockId(1)).thenReturn(List.of());
         when(dockRepository.save(existing)).thenReturn(existing);
         when(dockMapper.toDto(existing)).thenReturn(response);
 
@@ -232,6 +261,63 @@ class DockServiceImplTest {
         assertEquals("New Dock", result.name());
         assertEquals(DockStatus.MAINTENANCE, result.status());
         verify(dockRepository).save(existing);
+    }
+
+    @Test
+    void updateDock_DeactivationWithActiveRepairs_ThrowsBadRequest() {
+        Dock existing = new Dock();
+        existing.setId(1);
+        existing.setName("Dock 1");
+        existing.setStatus(DockStatus.AVAILABLE);
+
+        DockDimensionsRequest dimensions = new DockDimensionsRequest(120, 25, 9);
+        UpdateDockRequest request = new UpdateDockRequest("Dock 1", dimensions, DockStatus.MAINTENANCE, 2);
+
+        Shipyard shipyard = new Shipyard();
+        shipyard.setId(2);
+        shipyard.setStatus(ShipyardStatus.ACTIVE);
+
+        Repair activeRepair = new Repair();
+        activeRepair.setStatus(RepairStatus.IN_PROGRESS);
+
+        when(dockRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(shipyardRepository.findById(2)).thenReturn(Optional.of(shipyard));
+        when(repairRepository.findByDockId(1)).thenReturn(List.of(activeRepair));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> dockService.updateDock(1, request));
+
+        assertEquals(ErrorCode.DOCK_DEACTIVATION_HAS_ACTIVE_REPAIRS, exception.getErrorCode());
+        verify(dockRepository, never()).save(any());
+    }
+
+    @Test
+    void updateDock_AssignInactiveShipyard_ThrowsBadRequest() {
+        Dock existing = new Dock();
+        existing.setId(1);
+        existing.setName("Dock 1");
+        existing.setStatus(DockStatus.AVAILABLE);
+
+        Shipyard currentShipyard = new Shipyard();
+        currentShipyard.setId(1);
+        currentShipyard.setStatus(ShipyardStatus.ACTIVE);
+        existing.setShipyard(currentShipyard);
+
+        DockDimensionsRequest dimensions = new DockDimensionsRequest(120, 25, 9);
+        UpdateDockRequest request = new UpdateDockRequest("Dock 1", dimensions, DockStatus.AVAILABLE, 2);
+
+        Shipyard inactiveTargetShipyard = new Shipyard();
+        inactiveTargetShipyard.setId(2);
+        inactiveTargetShipyard.setStatus(ShipyardStatus.MAINTENANCE);
+
+        when(dockRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(shipyardRepository.findById(2)).thenReturn(Optional.of(inactiveTargetShipyard));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> dockService.updateDock(1, request));
+
+        assertEquals(ErrorCode.SHIPYARD_INACTIVE_FOR_DOCK, exception.getErrorCode());
+        verify(dockRepository, never()).save(any());
     }
 
     @Test

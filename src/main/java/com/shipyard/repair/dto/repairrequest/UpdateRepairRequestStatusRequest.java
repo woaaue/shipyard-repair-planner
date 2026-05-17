@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotNull;
 
 public record UpdateRepairRequestStatusRequest(
         @NotNull(message = "Status is required")
-        RepairRequestStatus status
+        RepairRequestStatus status,
+        Integer assignedDockId,
+        String rejectionReason,
+        String rejectionNote
 ) {
 }
