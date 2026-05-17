@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Clock } from 'lucide-react';
-import Card from '../components/ui/Card';
+import { CheckCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { getWorkItems, updateWorkItemStatus, type WorkItemResponse } from '../services/workItems';
 import { getRepairs } from '../services/repairs';
@@ -9,6 +8,15 @@ import { getRepairRequests } from '../services/repairRequests';
 import { getSubordinates } from '../services/users';
 import { useAuth } from '../context/AuthContext';
 import { WORK_REVIEW_STATUS_LABELS, WORK_STATUS_LABELS } from '../constants/labels';
+import V7PageHeader from '../components/v7/V7PageHeader';
+import V7Panel from '../components/v7/V7Panel';
+import V7PanelTitle from '../components/v7/V7PanelTitle';
+import V7StateText from '../components/v7/V7StateText';
+import {
+  canMarkWorkItemCompleted,
+  getWorkItemUiState,
+  isWorkItemCompleted,
+} from '../domain/workflow/workItemWorkflow';
 
 type TaskRow = WorkItemResponse & {
   repairEntityId: number | null;
@@ -53,7 +61,7 @@ export default function Tasks() {
           ...item,
           repairEntityId: repair?.id ?? null,
           operatorId: repair?.operatorId ?? null,
-          shipName: request?.shipName ?? `Repair Request #${item.repairRequestId}`,
+          shipName: request?.shipName ?? `Заявка #${item.repairRequestId}`,
           dock: repair?.dock ?? '-',
         };
       });
@@ -102,10 +110,19 @@ export default function Tasks() {
   }, [tasks, subordinateIds, dispatcherOperatorIds, user]);
 
   const pendingTasks = useMemo(
-    () => visibleTasks.filter((task) => task.status === 'PENDING' || task.status === 'IN_PROGRESS'),
+    () =>
+      visibleTasks.filter((task) => {
+        if (user?.role === 'worker') {
+          return !isWorkItemCompleted(task);
+        }
+        return !isWorkItemCompleted(task) && task.reviewStatus !== 'PENDING_REVIEW';
+      }),
+    [visibleTasks, user?.role]
+  );
+  const completedTasks = useMemo(
+    () => visibleTasks.filter((task) => task.reviewStatus === 'APPROVED'),
     [visibleTasks]
   );
-  const completedTasks = useMemo(() => visibleTasks.filter((task) => task.status === 'COMPLETED'), [visibleTasks]);
   const pendingReviewTasks = useMemo(
     () => visibleTasks.filter((task) => task.reviewStatus === 'PENDING_REVIEW'),
     [visibleTasks]
@@ -135,22 +152,19 @@ export default function Tasks() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">{user?.role === 'worker' ? 'Мои задачи' : 'Задачи'}</h1>
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-yellow-500" />
+      <V7PageHeader
+        title={user?.role === 'worker' ? 'Мои работы' : 'Работы и проверка'}
+        description="Рабочий контур задач с фильтрами по исполнителю и статусу проверки."
+        actions={
+          <div className="flex gap-2 text-sm text-[var(--muted)]">
             <span>{visiblePendingTasks.length} в работе</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-500" />
             <span>{completedTasks.length} выполнено</span>
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
-      {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
+      {error && <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)]">{error}</div>}
+      {loading && <div className="px-4 py-3 rounded-lg border bg-[var(--soft)] border-[var(--line)] text-[var(--muted)]">Загрузка...</div>}
 
       <div
         className={`grid grid-cols-1 ${
@@ -159,11 +173,8 @@ export default function Tasks() {
             : 'lg:grid-cols-2'
         } gap-6`}
       >
-        <Card>
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-yellow-500" />
-            Задачи в работе ({visiblePendingTasks.length})
-          </h2>
+        <V7Panel>
+          <V7PanelTitle title={`Задачи в работе (${visiblePendingTasks.length})`} />
           <div className="space-y-3">
             {visiblePendingTasks.length === 0 ? (
               <div className="text-gray-500 text-center py-4">Нет активных задач</div>
@@ -171,52 +182,60 @@ export default function Tasks() {
               visiblePendingTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  className="p-4 border border-[var(--line)] rounded-lg hover:shadow-md transition-shadow bg-white"
                 >
                   <div className="flex items-start justify-between mb-2 gap-2">
                     <div>
                       <div className="font-medium">{task.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-[var(--muted)]">
                         {task.shipName} • {task.dock}
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                      {WORK_STATUS_LABELS[task.status] ?? task.status}
-                    </span>
+                    <V7StateText
+                      value={
+                        getWorkItemUiState(task) === 'PENDING_REVIEW'
+                          ? 'НА ПРОВЕРКЕ'
+                          : getWorkItemUiState(task) === 'COMPLETED'
+                            ? 'ВЫПОЛНЕНО'
+                            : WORK_STATUS_LABELS[task.status] ?? task.status
+                      }
+                    />
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-[var(--muted)]">
                     Проверка: {WORK_REVIEW_STATUS_LABELS[task.reviewStatus] ?? task.reviewStatus}
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-[var(--muted)]">
                       {task.actualHours || task.estimatedHours}ч / план {task.estimatedHours}ч
                     </div>
-                    {user?.role === 'worker' && (
-                      <Button size="sm" onClick={() => void handleCompleteTask(task.id)}>
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Выполнить
+                    <div className="flex items-center gap-2 ml-auto">
+                      {user?.role === 'worker' && canMarkWorkItemCompleted(user.role, task, user.id) && (
+                        <Button size="sm" onClick={() => void handleCompleteTask(task.id)}>
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Выполнить
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => navigate(`/repairs/${task.repairEntityId ?? 0}/tasks/${task.id}`)}
+                      >
+                        Открыть
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => navigate(`/repairs/${task.repairEntityId ?? 0}/tasks/${task.id}`)}
-                    >
-                      Открыть
-                    </Button>
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </Card>
+        </V7Panel>
 
         {(user?.role === 'master' || user?.role === 'operator' || user?.role === 'dispatcher') && (
-          <Card>
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
-              На проверке ({visiblePendingReviewTasks.length})
-            </h2>
+          <V7Panel>
+            <V7PanelTitle
+              title={`На проверке (${visiblePendingReviewTasks.length})`}
+             
+            />
             <div className="space-y-3">
               {visiblePendingReviewTasks.length === 0 ? (
                 <div className="text-gray-500 text-center py-4">Нет задач на проверке</div>
@@ -224,10 +243,10 @@ export default function Tasks() {
                 visiblePendingReviewTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  className="p-4 border border-[var(--line)] rounded-lg hover:shadow-md transition-shadow bg-white"
                   >
                     <div className="font-medium">{task.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">
+                    <div className="text-sm text-[var(--muted)] mt-1">
                       {task.assigneeFullName || 'Не назначен'} • {task.shipName}
                     </div>
                     <div className="flex justify-end mt-3">
@@ -243,14 +262,11 @@ export default function Tasks() {
                 ))
               )}
             </div>
-          </Card>
+          </V7Panel>
         )}
 
-        <Card>
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            Выполненные задачи ({completedTasks.length})
-          </h2>
+        <V7Panel>
+          <V7PanelTitle title={`Выполненные (${completedTasks.length})`} />
           <div className="space-y-3">
             {completedTasks.length === 0 ? (
               <div className="text-gray-500 text-center py-4">Нет выполненных задач</div>
@@ -258,18 +274,19 @@ export default function Tasks() {
               completedTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="p-4 border rounded-lg bg-green-50 cursor-pointer"
+                  className="p-4 border border-[var(--line)] rounded-lg bg-[var(--soft)] cursor-pointer"
                   onClick={() => navigate(`/repairs/${task.repairEntityId ?? 0}/tasks/${task.id}`)}
                 >
-                  <div className="font-medium line-through text-gray-500">{task.name}</div>
-                  <div className="text-sm text-gray-500 mt-1">{task.shipName}</div>
-                  <div className="text-sm text-gray-600 mt-2">{task.actualHours || task.estimatedHours}ч</div>
+                  <div className="font-medium line-through text-[var(--muted)]">{task.name}</div>
+                  <div className="text-sm text-[var(--muted)] mt-1">{task.shipName}</div>
+                  <div className="text-sm text-[var(--ink)] mt-2">{task.actualHours || task.estimatedHours}ч</div>
                 </div>
               ))
             )}
           </div>
-        </Card>
+        </V7Panel>
       </div>
     </div>
   );
 }
+

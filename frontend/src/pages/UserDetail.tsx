@@ -1,20 +1,16 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Shield, MapPin, Calendar, UserX, RefreshCw, ShieldCheck } from 'lucide-react';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { useAuth, type User as AuthUser } from '../context/AuthContext';
 import { blockUser, getSubordinates, getUser, getUsers, resetPassword, unblockUser, updateUser } from '../services/users';
+import V7PageHeader from '../components/v7/V7PageHeader';
+import V7Panel from '../components/v7/V7Panel';
+import V7PanelTitle from '../components/v7/V7PanelTitle';
+import { ROLE_UI_LABELS } from '../constants/labels';
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Администратор',
-  dispatcher: 'Диспетчер',
-  operator: 'Оператор дока',
-  master: 'Мастер участка',
-  worker: 'Рабочий',
-  client: 'Владелец судна',
-};
+const ROLE_LABELS: Record<string, string> = ROLE_UI_LABELS;
 
 function getInitials(fullName: string): string {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -79,13 +75,13 @@ export default function UserDetail() {
   }, [currentUser?.id, userId]);
 
   if (isLoading) {
-    return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
+    return <div className="text-center py-12 text-[var(--muted)]">Загрузка...</div>;
   }
 
   if (!user) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Пользователь не найден</h2>
+        <h2 className="text-xl font-semibold text-[var(--ink)]">Пользователь не найден</h2>
         <Button onClick={() => navigate('/users')} className="mt-4">
           Вернуться к списку
         </Button>
@@ -106,8 +102,8 @@ export default function UserDetail() {
   if (!canAccessUser) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Доступ ограничен</h2>
-        <p className="text-gray-600 mt-2">Вы можете просматривать только свой профиль и своих подчиненных.</p>
+        <h2 className="text-xl font-semibold text-[var(--ink)]">Доступ ограничен</h2>
+        <p className="text-[var(--muted)] mt-2">Вы можете просматривать только свой профиль и своих подчиненных.</p>
         <Button onClick={() => navigate('/users')} className="mt-4">
           Вернуться к списку
         </Button>
@@ -187,65 +183,60 @@ export default function UserDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/users')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">{user.fullName}</h1>
-        <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">{ROLE_LABELS[user.role] || user.role}</span>
-      </div>
+      <V7PageHeader
+        title={user.fullName}
+        description={`Профиль пользователя · ${ROLE_LABELS[user.role] || user.role}`}
+        actions={
+          <Button variant="secondary" onClick={() => navigate('/users')} icon={ArrowLeft}>
+            К списку
+          </Button>
+        }
+      />
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
+      {error && <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)]">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Контактная информация
-            </h2>
+          <V7Panel>
+            <V7PanelTitle title="Контактная информация" extra={<Mail className="h-4 w-4 text-[var(--muted)]" />} />
             <div className="space-y-4">
               <div>
-                <div className="text-sm text-gray-500">Email</div>
+                <div className="text-sm text-[var(--muted)]">Email</div>
                 <div className="font-medium">{user.email}</div>
               </div>
             </div>
-          </Card>
+          </V7Panel>
 
-          <Card>
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Информация о роли
-            </h2>
+          <V7Panel>
+            <V7PanelTitle title="Информация о роли" extra={<Shield className="h-4 w-4 text-[var(--muted)]" />} />
             <div className="space-y-4">
               <div>
-                <div className="text-sm text-gray-500">Роль</div>
+                <div className="text-sm text-[var(--muted)]">Роль</div>
                 <div className="font-medium">{ROLE_LABELS[user.role] || user.role}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Док</div>
+                <div className="text-sm text-[var(--muted)]">Док</div>
                 <div className="font-medium">{user.dock || 'Не привязан'}</div>
               </div>
-              <div>
-                <div className="text-sm text-gray-500">Руководитель</div>
-                <div className="font-medium">{user.reportsToFullName || 'Не назначен'}</div>
-              </div>
+              {user.role !== 'dispatcher' && (
+                <div>
+                  <div className="text-sm text-[var(--muted)]">Руководитель</div>
+                  <div className="font-medium">{user.reportsToFullName || 'Не назначен'}</div>
+                </div>
+              )}
             </div>
-          </Card>
+          </V7Panel>
 
           {canEdit && requiredSupervisorRole && (
-            <Card>
-              <h2 className="font-semibold mb-4">Подчиненность</h2>
+            <V7Panel>
+              <V7PanelTitle title="Подчиненность" />
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Руководитель ({ROLE_LABELS[requiredSupervisorRole]})</label>
+                  <label className="block text-sm font-medium text-[var(--muted)] mb-1">Руководитель ({ROLE_LABELS[requiredSupervisorRole]})</label>
                   <select
                     value={selectedSupervisor}
                     onChange={(event) => setSelectedSupervisor(event.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                   >
                     <option value="">Не назначен</option>
                     {supervisorCandidates.map((candidate) => (
@@ -259,55 +250,58 @@ export default function UserDetail() {
                   Сохранить руководителя
                 </Button>
               </div>
-            </Card>
+            </V7Panel>
           )}
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <V7Panel>
             <div className="text-center">
-              <div className="h-24 w-24 bg-blue-100 rounded-full flex items-center justify-center text-3xl font-bold text-blue-700 mx-auto mb-4">
+              <div className="h-24 w-24 bg-[var(--soft)] border border-[var(--line)] rounded-full flex items-center justify-center text-3xl font-bold text-[var(--ink)] mx-auto mb-4">
                 {getInitials(user.fullName)}
               </div>
               <h2 className="text-xl font-semibold">{user.fullName}</h2>
-              <p className="text-gray-500">{ROLE_LABELS[user.role] || user.role}</p>
+              <p className="text-[var(--muted)]">{ROLE_LABELS[user.role] || user.role}</p>
             </div>
-          </Card>
+          </V7Panel>
 
-          <Card>
+          <V7Panel>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 text-gray-600">
+              <div className="flex items-center gap-3 text-[var(--muted)]">
                 <Calendar className="h-4 w-4" />
                 <span className="text-sm">Активен</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-600">
+              <div className="flex items-center gap-3 text-[var(--muted)]">
                 <MapPin className="h-4 w-4" />
-                <span className="text-sm">{user.dock || 'Нет'}</span>
+                <span className="text-sm">{user.dock || 'Док не назначен'}</span>
               </div>
             </div>
-          </Card>
+          </V7Panel>
 
           {canEdit && (
-            <Card>
-              <h2 className="font-semibold mb-4">Действия</h2>
+            <V7Panel>
+              <V7PanelTitle title="Действия" />
               <div className="space-y-2">
-                <Button variant="secondary" className="w-full" disabled>
-                  Редактирование недоступно
-                </Button>
-                <Button variant="danger" className="w-full" onClick={() => setShowBlockModal(true)} disabled={isActionLoading}>
-                  <UserX className="h-4 w-4 mr-2" />
-                  Заблокировать
-                </Button>
-                <Button variant="secondary" className="w-full" onClick={() => setShowUnblockModal(true)} disabled={isActionLoading}>
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  Разблокировать
-                </Button>
+                <div className="rounded-lg border border-[var(--line)] bg-[var(--soft)] px-3 py-2 text-sm text-[var(--muted)]">
+                  Статус учетной записи: <span className="font-semibold text-[var(--ink)]">{user.enabled === false ? 'Заблокирована' : 'Активна'}</span>
+                </div>
+                {user.enabled === false ? (
+                  <Button variant="secondary" className="w-full" onClick={() => setShowUnblockModal(true)} disabled={isActionLoading}>
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    Разблокировать
+                  </Button>
+                ) : (
+                  <Button variant="danger" className="w-full" onClick={() => setShowBlockModal(true)} disabled={isActionLoading}>
+                    <UserX className="h-4 w-4 mr-2" />
+                    Заблокировать
+                  </Button>
+                )}
                 <Button variant="secondary" className="w-full" onClick={() => setShowResetModal(true)} disabled={isActionLoading}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Сбросить пароль
                 </Button>
               </div>
-            </Card>
+            </V7Panel>
           )}
         </div>
       </div>
@@ -315,7 +309,7 @@ export default function UserDetail() {
       {showBlockModal && (
         <Modal isOpen={showBlockModal} onClose={() => setShowBlockModal(false)} title="Блокировка пользователя" icon={UserX}>
           <div className="text-center">
-            <p className="text-gray-600 mb-4">Подтвердите блокировку пользователя.</p>
+            <p className="text-[var(--muted)] mb-4">Подтвердите блокировку пользователя.</p>
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1" onClick={() => setShowBlockModal(false)} disabled={isActionLoading}>
                 Отмена
@@ -331,7 +325,7 @@ export default function UserDetail() {
       {showUnblockModal && (
         <Modal isOpen={showUnblockModal} onClose={() => setShowUnblockModal(false)} title="Разблокировка пользователя" icon={ShieldCheck}>
           <div className="text-center">
-            <p className="text-gray-600 mb-4">Подтвердите разблокировку пользователя.</p>
+            <p className="text-[var(--muted)] mb-4">Подтвердите разблокировку пользователя.</p>
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1" onClick={() => setShowUnblockModal(false)} disabled={isActionLoading}>
                 Отмена
@@ -347,9 +341,9 @@ export default function UserDetail() {
       {showResetModal && (
         <Modal isOpen={showResetModal} onClose={() => { setShowResetModal(false); setTempPassword(''); }} title="Сброс пароля" icon={RefreshCw}>
           <div className="text-center">
-            <p className="text-gray-600 mb-4">Будет сгенерирован временный пароль.</p>
+            <p className="text-[var(--muted)] mb-4">Будет сгенерирован временный пароль.</p>
             {tempPassword && (
-              <div className="bg-gray-100 p-3 rounded-lg mb-4 font-mono text-lg">{tempPassword}</div>
+              <div className="bg-[var(--soft)] border border-[var(--line)] p-3 rounded-lg mb-4 font-mono text-lg">{tempPassword}</div>
             )}
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1" onClick={() => { setShowResetModal(false); setTempPassword(''); }} disabled={isActionLoading}>
@@ -365,3 +359,4 @@ export default function UserDetail() {
     </div>
   );
 }
+

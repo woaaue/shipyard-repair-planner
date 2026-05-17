@@ -26,10 +26,10 @@ export default function Button({
   const baseClasses = 'font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2';
   
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2',
-    outline: 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+    primary: 'bg-[var(--blue)] text-white hover:bg-[var(--blue-strong)] active:bg-[var(--blue-strong)] focus:ring-2 focus:ring-[var(--blue)] focus:ring-offset-2',
+    secondary: 'bg-[var(--soft)] text-[var(--ink)] border border-[var(--line)] hover:bg-white focus:ring-2 focus:ring-[var(--line-strong)] focus:ring-offset-2',
+    danger: 'bg-[#b44a4a] text-white hover:bg-[#9d3f3f] active:bg-[#8d3737] focus:ring-2 focus:ring-[#b44a4a] focus:ring-offset-2',
+    outline: 'bg-white text-[var(--ink)] border border-[var(--line-strong)] hover:bg-[var(--soft)] focus:ring-2 focus:ring-[var(--blue)] focus:ring-offset-2'
   };
 
   const sizeClasses = {

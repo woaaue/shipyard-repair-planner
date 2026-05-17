@@ -1,14 +1,16 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { Ship } from '../types/repair';
 import DataTable from '../components/ui/DataTable';
-import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import ShipForm from '../components/forms/ShipForm';
-import { Search, Filter, Ship as ShipIcon, Plus, Download } from 'lucide-react';
+import { Search, Filter, Ship as ShipIcon, Plus } from 'lucide-react';
 import { createShip, getShips } from '../services/ships';
 import { useAuth } from '../context/AuthContext';
+import V7StateText from '../components/v7/V7StateText';
+import V7PageHeader from '../components/v7/V7PageHeader';
+import V7Panel from '../components/v7/V7Panel';
+import V7PanelTitle from '../components/v7/V7PanelTitle';
 
 export default function Ships() {
   const { user } = useAuth();
@@ -97,8 +99,8 @@ export default function Ships() {
       sortable: true,
       cell: (value: string, ship: Ship) => (
         <div className="flex items-center">
-          <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-            <ShipIcon className="h-5 w-5 text-blue-600" />
+          <div className="h-10 w-10 bg-[var(--soft)] border border-[var(--line)] rounded-lg flex items-center justify-center mr-3">
+            <ShipIcon className="h-5 w-5 text-[var(--ink)]" />
           </div>
           <div>
             <p className="font-semibold text-gray-900">{value}</p>
@@ -120,9 +122,7 @@ export default function Ships() {
       sortable: true,
       align: 'center' as const,
       cell: (value: string) => (
-        <div className="flex justify-center">
-          <StatusBadge status={value} size="sm" />
-        </div>
+        <div className="flex justify-center"><V7StateText value={String(value).toUpperCase()} /></div>
       )
     },
     {
@@ -169,52 +169,52 @@ export default function Ships() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Суда</h1>
-          <p className="text-gray-600">Управление флотом и планирование ремонтов</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" icon={Download}>Экспорт</Button>
-          {canCreateShip && (
-            <Button variant="primary" icon={Plus} onClick={() => setShowShipForm(true)}>
-              Добавить судно
-            </Button>
-          )}
-        </div>
-      </div>
+      <V7PageHeader
+        title="Суда"
+        description="Управление флотом и планирование ремонтов"
+        actions={
+          <>
+            {canCreateShip && (
+              <Button variant="primary" icon={Plus} onClick={() => setShowShipForm(true)}>
+                Добавить судно
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
+        <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)]">{error}</div>
       )}
       {isLoading && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка судов...</div>
+        <div className="px-4 py-3 rounded-lg border bg-[var(--soft)] border-[var(--line)] text-[var(--muted)]">Загрузка судов...</div>
       )}
 
-      <Card>
+      <V7Panel>
+        <V7PanelTitle title="Фильтры и поиск" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Поиск судна</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-2">Поиск судна</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Название, IMO, владелец..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Статус</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-2">Статус</label>
             <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)] appearance-none"
               >
                 {uniqueStatuses.map((status) => (
                   <option key={status} value={status}>
@@ -226,26 +226,17 @@ export default function Ships() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Статистика</label>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-blue-600">{ships.length}</p>
-                <p className="text-sm text-blue-800">Всего</p>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-orange-600">{ships.filter(s => s.status === 'в ремонте').length}</p>
-                <p className="text-sm text-orange-800">В ремонте</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-green-600">{ships.filter(s => s.status === 'в плавании').length}</p>
-                <p className="text-sm text-green-800">В плавании</p>
-              </div>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-2">Сводка</label>
+            <div className="rounded-lg border border-[var(--line)] bg-[var(--soft)] px-3 py-2 text-sm text-[var(--muted)]">
+              Всего: {ships.length} · В ремонте: {ships.filter((s) => s.status === 'в ремонте').length} · В плавании:{' '}
+              {ships.filter((s) => s.status === 'в плавании').length}
             </div>
           </div>
         </div>
-      </Card>
+      </V7Panel>
 
-      <Card title={`Суда (${filteredShips.length})`}>
+      <V7Panel>
+        <V7PanelTitle title={`Суда (${filteredShips.length})`} />
         <DataTable
           data={filteredShips}
           columns={columns}
@@ -255,16 +246,7 @@ export default function Ships() {
           onSort={handleSort}
           className="mt-4"
         />
-      </Card>
-
-      <div className="bg-gray-50 rounded-lg p-4">
-        <p className="text-sm font-medium text-gray-700 mb-2">Легенда статусов:</p>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge status="в ремонте" />
-          <StatusBadge status="ожидает" />
-          <StatusBadge status="в плавании" />
-        </div>
-      </div>
+      </V7Panel>
 
       {showShipForm && (
         <ShipForm
@@ -275,3 +257,4 @@ export default function Ships() {
     </div>
   );
 }
+

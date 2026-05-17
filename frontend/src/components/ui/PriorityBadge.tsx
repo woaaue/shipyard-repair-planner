@@ -11,38 +11,26 @@ export default function PriorityBadge({ priority, size = 'md' }: PriorityBadgePr
     const configs = {
       'низкий': {
         icon: CheckCircle,
-        iconColor: 'text-green-500',
-        bgColor: 'bg-green-50',
-        textColor: 'text-green-800',
-        borderColor: 'border-green-200'
+        iconColor: 'text-[var(--muted)]'
       },
       'средний': {
         icon: Info,
-        iconColor: 'text-blue-500',
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-800',
-        borderColor: 'border-blue-200'
+        iconColor: 'text-[var(--muted)]'
       },
       'высокий': {
         icon: AlertCircle,
-        iconColor: 'text-orange-500',
-        bgColor: 'bg-orange-50',
-        textColor: 'text-orange-800',
-        borderColor: 'border-orange-200'
+        iconColor: 'text-[var(--muted)]'
       },
       'критический': {
         icon: AlertTriangle,
-        iconColor: 'text-red-500',
-        bgColor: 'bg-red-50',
-        textColor: 'text-red-800',
-        borderColor: 'border-red-200'
+        iconColor: 'text-[var(--muted)]'
       }
     };
 
     return configs[priority as keyof typeof configs] || configs.средний;
   };
 
-  const { icon: Icon, iconColor, bgColor, textColor, borderColor } = getPriorityConfig(priority);
+  const { icon: Icon, iconColor } = getPriorityConfig(priority);
   
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-xs',
@@ -58,11 +46,11 @@ export default function PriorityBadge({ priority, size = 'md' }: PriorityBadgePr
 
   return (
     <div className={`
-      inline-flex items-center gap-2 rounded-full font-medium
-      ${bgColor} ${textColor} ${borderColor} ${sizeClasses[size]}
+      inline-flex items-center gap-2 rounded-md font-medium
+      bg-[var(--soft)] text-[var(--ink)] border-[var(--line)] ${sizeClasses[size]}
       border
       transition-all duration-200
-      hover:scale-[1.02] hover:shadow-sm
+      hover:bg-white
     `}>
       <Icon className={`${iconColor} ${iconSize[size]}`} />
       <span className="font-semibold capitalize">{priority}</span>

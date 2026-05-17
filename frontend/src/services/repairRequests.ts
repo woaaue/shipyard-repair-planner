@@ -17,6 +17,10 @@ export interface RepairRequestResponse {
   shipName: string;
   clientId: number;
   clientName: string;
+  assignedDockId?: number | null;
+  assignedDockName?: string | null;
+  assignedOperatorId?: number | null;
+  assignedOperatorName?: string | null;
   status: RepairRequestStatus;
   requestedStartDate: string | null;
   requestedEndDate: string | null;
@@ -28,6 +32,8 @@ export interface RepairRequestResponse {
   totalCost: number | null;
   description: string | null;
   notes: string | null;
+  rejectionReason?: string | null;
+  rejectionNote?: string | null;
   clientAccepted: boolean;
   clientAcceptedAt: string | null;
   clientAcceptanceNote: string | null;
@@ -87,9 +93,14 @@ export const updateRepairRequest = async (
 
 export const updateRepairRequestStatus = async (
   id: number,
-  status: RepairRequestStatus
+  payload: {
+    status: RepairRequestStatus;
+    assignedDockId?: number;
+    rejectionReason?: string;
+    rejectionNote?: string;
+  }
 ): Promise<RepairRequestResponse> => {
-  const response = await api.patch<RepairRequestResponse>(`/repair-requests/${id}/status`, { status });
+  const response = await api.patch<RepairRequestResponse>(`/repair-requests/${id}/status`, payload);
   return response.data;
 };
 
@@ -98,6 +109,14 @@ export const acceptRepairRequestByClient = async (
   note?: string
 ): Promise<RepairRequestResponse> => {
   const response = await api.patch<RepairRequestResponse>(`/repair-requests/${id}/acceptance`, { note: note ?? null });
+  return response.data;
+};
+
+export const resubmitRepairRequestByClient = async (
+  id: number,
+  note?: string
+): Promise<RepairRequestResponse> => {
+  const response = await api.patch<RepairRequestResponse>(`/repair-requests/${id}/resubmit`, { note: note ?? null });
   return response.data;
 };
 

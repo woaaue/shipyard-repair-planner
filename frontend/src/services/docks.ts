@@ -4,14 +4,18 @@ export interface Dock {
   id: number;
   name: string;
   length: number;
+  width: number;
+  draft: number;
   capacity: number;
-  status: 'active' | 'maintenance' | 'inactive';
+  status: 'active' | 'inactive';
+  shipyardId?: number | null;
 }
 
 export interface DockUpsertInput {
   name: string;
   length: number;
-  capacity: number;
+  width: number;
+  draft: number;
   status: Dock['status'];
   shipyardId: number;
 }
@@ -27,6 +31,7 @@ interface BackendDockResponse {
     maxDraft: number;
   };
   status: BackendDockStatus;
+  shipyardId?: number | null;
 }
 
 interface BackendCreateDockRequest {
@@ -74,23 +79,28 @@ export interface DockScheduleItem {
 const statusToUi: Record<BackendDockStatus, Dock['status']> = {
   AVAILABLE: 'active',
   OCCUPIED: 'active',
-  MAINTENANCE: 'maintenance',
+  MAINTENANCE: 'inactive',
   REPAIR: 'inactive',
 };
 
 const uiToStatus: Record<Dock['status'], BackendDockStatus> = {
   active: 'AVAILABLE',
-  maintenance: 'MAINTENANCE',
   inactive: 'REPAIR',
 };
 
 function mapBackendToUiDock(dock: BackendDockResponse): Dock {
+  const maxLength = dock.dimensions?.maxLength ?? 0;
+  const maxWidth = dock.dimensions?.maxWidth ?? 0;
+  const maxDraft = dock.dimensions?.maxDraft ?? 0;
   return {
     id: dock.id,
     name: dock.name,
-    length: dock.dimensions?.maxLength ?? 0,
-    capacity: Math.round((dock.dimensions?.maxLength ?? 0) * (dock.dimensions?.maxWidth ?? 0)),
+    length: maxLength,
+    width: maxWidth,
+    draft: maxDraft,
+    capacity: Math.round(maxLength * maxWidth),
     status: statusToUi[dock.status] ?? 'active',
+    shipyardId: dock.shipyardId ?? null,
   };
 }
 
@@ -99,8 +109,8 @@ function mapUiToBackendDock(data: DockUpsertInput): BackendCreateDockRequest {
     name: data.name,
     dimensions: {
       maxLength: data.length,
-      maxWidth: Math.max(1, Math.round(data.capacity / Math.max(data.length, 1))),
-      maxDraft: 10,
+      maxWidth: data.width,
+      maxDraft: data.draft,
     },
     status: uiToStatus[data.status] ?? 'AVAILABLE',
     shipyardId: data.shipyardId,
@@ -131,7 +141,8 @@ export const updateDock = async (id: number, data: Partial<DockUpsertInput>): Pr
   const merged: DockUpsertInput = {
     name: data.name ?? currentDock.name,
     length: data.length ?? currentDock.length,
-    capacity: data.capacity ?? currentDock.capacity,
+    width: data.width ?? currentDock.width,
+    draft: data.draft ?? currentDock.draft,
     status: data.status ?? currentDock.status,
     shipyardId: data.shipyardId,
   };

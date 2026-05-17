@@ -4,6 +4,15 @@ import { getUsers } from '../services/users';
 import { getRepairs } from '../services/repairs';
 import { getRepairRequests } from '../services/repairRequests';
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Администратор',
+  dispatcher: 'Диспетчер',
+  operator: 'Оператор дока',
+  master: 'Мастер участка',
+  worker: 'Рабочий',
+  client: 'Клиент',
+};
+
 export interface SearchResult {
   type: 'ship' | 'repair' | 'user';
   id: number;
@@ -83,7 +92,7 @@ export function useGlobalSearch() {
           type: 'user',
           id: user.id,
           title: user.fullName,
-          subtitle: user.role,
+          subtitle: ROLE_LABELS[user.role] ?? user.role,
           url: `/users/${user.id}`,
         });
       });

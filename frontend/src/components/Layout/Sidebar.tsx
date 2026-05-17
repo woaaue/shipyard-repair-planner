@@ -23,7 +23,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const getNavigation = () => {
     const items = [
-      { name: 'Дашборд', href: '/', icon: LayoutDashboard, roles: ['admin', 'dispatcher', 'operator', 'master', 'worker', 'client'] },
+      { name: 'Главная', href: '/', icon: LayoutDashboard, roles: ['admin', 'dispatcher', 'operator', 'master', 'worker', 'client'] },
       { name: 'Мой док', href: '/my-dock', icon: Anchor, roles: ['operator'] },
       { name: 'Суда', href: '/ships', icon: Ship, roles: ['admin', 'dispatcher', 'operator', 'master'] },
       { name: 'Ремонты', href: '/repairs', icon: Wrench, roles: ['admin', 'dispatcher', 'operator', 'master', 'client'] },
@@ -47,21 +47,21 @@ export default function Sidebar({ onClose }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col h-full">
-      <div className="p-6 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+    <aside className="w-64 border-r border-[var(--line)] bg-[var(--nav)] text-white flex flex-col h-full">
+      <div className="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center">
+          <div className="h-10 w-10 bg-white/10 rounded-lg flex items-center justify-center">
             <Ship className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-xl font-bold">Док-План</h1>
-            <p className="text-sm text-gray-400">Судоремонт</p>
+            <p className="text-sm text-slate-300">Судоремонт</p>
           </div>
         </div>
         
         <button 
           onClick={onClose}
-          className="lg:hidden text-gray-400 hover:text-white"
+          className="lg:hidden text-slate-300 hover:text-white"
         >
           <X className="h-6 w-6" />
         </button>
@@ -83,8 +83,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      ? 'bg-white text-[var(--nav)]'
+                      : 'text-slate-200 hover:bg-white/10 hover:text-white'
                   }`
                 }
               >
@@ -96,7 +96,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         </div>
       </nav>
 
-      <div className="p-4 border-t border-gray-800 flex-shrink-0">
+      <div className="p-4 border-t border-white/10 flex-shrink-0">
         <button 
           onClick={() => {
             handleLogout();
@@ -104,7 +104,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               onClose();
             }
           }}
-          className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg w-full transition-colors"
+          className="flex items-center space-x-3 px-4 py-3 text-slate-200 hover:bg-white/10 hover:text-white rounded-lg w-full transition-colors"
         >
           <LogOut className="h-5 w-5" />
           <span>Выйти</span>

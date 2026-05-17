@@ -80,7 +80,7 @@ export default function ProgressCircle({
       {showLabel && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <div className={`font-bold text-s ${currentColor.text}`}>
+            <div className={`font-bold text-[13px] leading-none ${currentColor.text}`}>
               {progress}%
             </div>
             {label && (

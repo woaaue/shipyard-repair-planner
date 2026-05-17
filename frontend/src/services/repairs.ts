@@ -33,6 +33,18 @@ interface BackendRepairResponse {
   updatedAt: string;
 }
 
+interface BackendRepairRequestLookup {
+  id: number;
+  shipName: string;
+  requestedStartDate?: string | null;
+  requestedEndDate?: string | null;
+  scheduledStartDate?: string | null;
+  scheduledEndDate?: string | null;
+}
+
+const PRIORITY_NOTE_PREFIX = '[priority]:';
+const PRIORITY_VALUES: ExtendedRepair['priority'][] = ['низкий', 'средний', 'высокий', 'критический'];
+
 interface BackendCreateRepairRequest {
   repairRequestId: number;
   dockId: number;
@@ -59,16 +71,22 @@ const statusToUi: Record<BackendRepairStatus, ExtendedRepair['status']> = {
   CANCELLED: 'отменён',
 };
 
-function mapBackendToUiRepair(repair: BackendRepairResponse): ExtendedRepair {
-  const defaultDate = new Date().toISOString().slice(0, 10);
+function mapBackendToUiRepair(repair: BackendRepairResponse, requestMeta?: BackendRepairRequestLookup): ExtendedRepair {
+  const shipName = requestMeta?.shipName?.trim() || `Заявка #${repair.repairRequestId}`;
+  const plannedStartDate = requestMeta?.scheduledStartDate ?? requestMeta?.requestedStartDate ?? null;
+  const plannedEndDate = requestMeta?.scheduledEndDate ?? requestMeta?.requestedEndDate ?? null;
+  const effectiveStartDate = repair.actualStartDate ?? plannedStartDate ?? '';
+  const effectiveEndDate = repair.actualEndDate ?? plannedEndDate ?? '';
 
   return {
     id: repair.id,
     shipId: repair.repairRequestId,
-    shipName: `Repair Request #${repair.repairRequestId}`,
-    dock: repair.dockName || `Dock #${repair.dockId}`,
-    startDate: repair.actualStartDate ?? defaultDate,
-    endDate: repair.actualEndDate ?? defaultDate,
+    shipName,
+    dock: repair.dockName || `Док #${repair.dockId}`,
+    startDate: effectiveStartDate,
+    endDate: effectiveEndDate,
+    plannedStartDate: plannedStartDate ?? undefined,
+    plannedEndDate: plannedEndDate ?? undefined,
     status: statusToUi[repair.status] ?? 'запланирован',
     progress: repair.progressPercentage ?? 0,
     budget: repair.totalCost ?? 0,
@@ -77,11 +95,41 @@ function mapBackendToUiRepair(repair: BackendRepairResponse): ExtendedRepair {
     operatorId: repair.operatorId ?? undefined,
     operatorFullName: repair.operatorFullName ?? undefined,
     repairType: 'Текущий ремонт',
-    priority: 'средний',
+    priority: getPriorityFromNotes(repair.notes),
     actualStartDate: repair.actualStartDate ?? undefined,
     actualEndDate: repair.actualEndDate ?? undefined,
     tasks: [],
   };
+}
+
+function getPriorityFromNotes(notes: string | null): ExtendedRepair['priority'] {
+  if (!notes) return 'средний';
+  const line = notes
+    .split(/\r?\n/)
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(PRIORITY_NOTE_PREFIX));
+  if (!line) return 'средний';
+  const value = line.slice(PRIORITY_NOTE_PREFIX.length).trim().toLowerCase();
+  return PRIORITY_VALUES.includes(value as ExtendedRepair['priority'])
+    ? (value as ExtendedRepair['priority'])
+    : 'средний';
+}
+
+function withPriorityInNotes(
+  notes: string | null,
+  priority: ExtendedRepair['priority']
+): string {
+  const cleaned = (notes ?? '')
+    .split(/\r?\n/)
+    .filter((part) => !part.trim().startsWith(PRIORITY_NOTE_PREFIX))
+    .join('\n')
+    .trim();
+
+  if (cleaned.length === 0) {
+    return `${PRIORITY_NOTE_PREFIX} ${priority}`;
+  }
+
+  return `${cleaned}\n${PRIORITY_NOTE_PREFIX} ${priority}`;
 }
 
 function mapUiToBackendRepair(data: Partial<ExtendedRepair>): BackendCreateRepairRequest {
@@ -109,28 +157,70 @@ export const getRepairs = async (filters?: RepairFilters): Promise<ExtendedRepai
   if (typeof filters?.repairRequestId === 'number') params.append('repairRequestId', String(filters.repairRequestId));
   if (filters?.status) params.append('status', filters.status);
 
-  const response = await api.get<BackendRepairResponse[]>('/repairs', { params });
-  return response.data.map(mapBackendToUiRepair);
+  const [repairsResponse, requestsResponse] = await Promise.all([
+    api.get<BackendRepairResponse[]>('/repairs', { params }),
+    api.get<BackendRepairRequestLookup[]>('/repair-requests'),
+  ]);
+
+  const requestById = new Map<number, BackendRepairRequestLookup>(
+    requestsResponse.data.map((request) => [request.id, request])
+  );
+
+  return repairsResponse.data.map((repair) =>
+    mapBackendToUiRepair(repair, requestById.get(repair.repairRequestId))
+  );
 };
 
 export const getRepair = async (id: number): Promise<ExtendedRepair> => {
   const response = await api.get<BackendRepairResponse>(`/repairs/${id}`);
-  return mapBackendToUiRepair(response.data);
+  try {
+    const requestResponse = await api.get<BackendRepairRequestLookup>(
+      `/repair-requests/${response.data.repairRequestId}`
+    );
+    return mapBackendToUiRepair(response.data, requestResponse.data);
+  } catch {
+    return mapBackendToUiRepair(response.data);
+  }
 };
+
+async function getRepairRaw(id: number): Promise<BackendRepairResponse> {
+  const response = await api.get<BackendRepairResponse>(`/repairs/${id}`);
+  return response.data;
+}
 
 export const createRepair = async (data: Partial<ExtendedRepair>): Promise<ExtendedRepair> => {
   const response = await api.post<BackendRepairResponse>('/repairs', mapUiToBackendRepair(data));
-  return mapBackendToUiRepair(response.data);
+  return getRepair(response.data.id);
 };
 
 export const updateRepair = async (id: number, data: Partial<ExtendedRepair>): Promise<ExtendedRepair> => {
   const response = await api.put<BackendRepairResponse>(`/repairs/${id}`, mapUiToBackendRepair(data));
-  return mapBackendToUiRepair(response.data);
+  return getRepair(response.data.id);
 };
 
 export const updateRepairStatus = async (id: number, status: BackendRepairStatus): Promise<ExtendedRepair> => {
   const response = await api.patch<BackendRepairResponse>(`/repairs/${id}/status`, { status });
-  return mapBackendToUiRepair(response.data);
+  return getRepair(response.data.id);
+};
+
+export const updateRepairPriority = async (
+  id: number,
+  priority: ExtendedRepair['priority']
+): Promise<ExtendedRepair> => {
+  const current = await getRepairRaw(id);
+  const payload: BackendCreateRepairRequest = {
+    repairRequestId: current.repairRequestId,
+    dockId: current.dockId,
+    status: current.status,
+    actualStartDate: current.actualStartDate,
+    actualEndDate: current.actualEndDate,
+    progressPercentage: current.progressPercentage,
+    totalCost: current.totalCost,
+    notes: withPriorityInNotes(current.notes, priority),
+  };
+
+  const response = await api.put<BackendRepairResponse>(`/repairs/${id}`, payload);
+  return getRepair(response.data.id);
 };
 
 export const deleteRepair = async (id: number): Promise<void> => {
@@ -142,7 +232,7 @@ export const updateRepairOperator = async (
   operatorId: number | null
 ): Promise<ExtendedRepair> => {
   const response = await api.patch<BackendRepairResponse>(`/repairs/${id}/operator`, { operatorId });
-  return mapBackendToUiRepair(response.data);
+  return getRepair(response.data.id);
 };
 
 export const getRepairsByDock = async (dockId: number): Promise<ExtendedRepair[]> => {

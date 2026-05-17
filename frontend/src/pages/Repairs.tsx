@@ -2,22 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { ExtendedRepair } from '../types/repair';
 import DataTable from '../components/ui/DataTable';
-import StatusBadge from '../components/ui/StatusBadge';
-import PriorityBadge from '../components/ui/PriorityBadge';
 import ProgressCircle from '../components/ui/ProgressCircle';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import RepairRequestForm, { type RepairRequestFormData } from '../components/forms/RepairRequestForm';
 import {
   Search,
   Filter,
-  Wrench,
-  Download,
   Plus,
   Ship,
-  DollarSign,
   Users,
-  BarChart3,
 } from 'lucide-react';
 import { acceptRepairRequestByClient, createRepairRequest, getRepairRequests } from '../services/repairRequests';
 import { getRepairs, updateRepairOperator } from '../services/repairs';
@@ -26,10 +19,14 @@ import { useAuth } from '../context/AuthContext';
 import { createShip, getShips } from '../services/ships';
 import { getSubordinates } from '../services/users';
 import { REPAIR_REQUEST_STATUS_LABELS, WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
+import V7PageHeader from '../components/v7/V7PageHeader';
+import V7Panel from '../components/v7/V7Panel';
+import V7PanelTitle from '../components/v7/V7PanelTitle';
+import V7StateText from '../components/v7/V7StateText';
+import { formatDateRangeRu, normalizeDateOnly } from '../utils/repairDates';
 
 function toDateString(input?: string | null): string {
-  if (!input) return new Date().toISOString().slice(0, 10);
-  return input.slice(0, 10);
+  return normalizeDateOnly(input) ?? '';
 }
 
 export default function Repairs() {
@@ -90,12 +87,24 @@ export default function Repairs() {
           .map((item) => ({
             id: item.id,
             name: item.name,
-            completed: item.status === 'COMPLETED',
+            completed: item.reviewStatus === 'APPROVED',
             estimatedHours: item.estimatedHours,
             actualHours: item.actualHours,
             worker: item.assigneeFullName || 'Не назначен',
             reviewStatus: item.reviewStatus,
           }));
+
+        const completedTasks = tasks.filter((task) => task.completed).length;
+        let progressFromTasks =
+          tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : repair.progress;
+
+        if (repair.status === 'завершён') {
+          progressFromTasks = 100;
+        }
+
+        if (repair.status === 'отменён') {
+          progressFromTasks = 0;
+        }
 
         return {
           ...repair,
@@ -106,8 +115,15 @@ export default function Repairs() {
           requestStatus: request?.status ?? undefined,
           clientAccepted: request?.clientAccepted ?? false,
           acceptanceAction: '',
-          startDate: toDateString(repair.actualStartDate ?? repair.startDate),
-          endDate: toDateString(repair.actualEndDate ?? repair.endDate),
+          startDate: toDateString(
+            repair.actualStartDate ?? repair.startDate ?? request?.scheduledStartDate ?? request?.requestedStartDate
+          ),
+          endDate: toDateString(
+            repair.actualEndDate ?? repair.endDate ?? request?.scheduledEndDate ?? request?.requestedEndDate
+          ),
+          plannedStartDate: toDateString(request?.scheduledStartDate ?? request?.requestedStartDate),
+          plannedEndDate: toDateString(request?.scheduledEndDate ?? request?.requestedEndDate),
+          progress: progressFromTasks,
           tasks,
         } as ExtendedRepair;
       });
@@ -145,7 +161,7 @@ export default function Repairs() {
   const handleAddRepairRequest = async (repairData: RepairRequestFormData) => {
     if (!user?.id) {
       setError('Не удалось определить пользователя для создания заявки');
-      return;
+      throw new Error('User is not defined');
     }
 
     setError(null);
@@ -179,10 +195,12 @@ export default function Repairs() {
       setShowRepairForm(false);
       setSearchParams({});
       await loadRepairs();
-    } catch {
+    } catch (error) {
       setError('Не удалось создать заявку на ремонт');
+      throw error;
     }
   };
+
 
   const filteredRepairs = useMemo(() => {
     let result = [...repairs];
@@ -251,8 +269,6 @@ export default function Repairs() {
         repair.tasks.length > 0 &&
         repair.tasks.every((task) => task.reviewStatus === 'APPROVED')
     ).length;
-    const totalBudget = repairs.reduce((sum, repair) => sum + repair.budget, 0);
-    const totalSpent = repairs.reduce((sum, repair) => sum + repair.spent, 0);
     return {
       total,
       inProgress,
@@ -260,9 +276,6 @@ export default function Repairs() {
       completed,
       unassignedOperators,
       readyForAcceptance,
-      totalBudget,
-      totalSpent,
-      budgetUtilization: totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0,
     };
   }, [repairs]);
 
@@ -273,8 +286,8 @@ export default function Repairs() {
       sortable: true,
       cell: (value: string, repair: ExtendedRepair) => (
         <div className="flex items-center">
-          <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-            <Ship className="h-5 w-5 text-blue-600" />
+          <div className="h-10 w-10 bg-[var(--soft)] border border-[var(--line)] rounded-lg flex items-center justify-center mr-3">
+            <Ship className="h-5 w-5 text-[var(--ink)]" />
           </div>
           <div>
             <p className="font-semibold text-gray-900">{value}</p>
@@ -332,7 +345,7 @@ export default function Repairs() {
       cell: (value: string, repair: ExtendedRepair) => (
         <div className="space-y-2">
           <div className="font-medium text-gray-900">{value}</div>
-          <PriorityBadge priority={repair.priority} size="sm" />
+          <div className="text-xs text-[var(--muted)]">Приоритет: {repair.priority}</div>
         </div>
       ),
     },
@@ -342,9 +355,7 @@ export default function Repairs() {
       sortable: true,
       align: 'center' as const,
       cell: (value: string) => (
-        <div className="flex justify-center">
-          <StatusBadge status={value} size="sm" />
-        </div>
+        <div className="flex justify-center"><V7StateText value={value.toUpperCase()} /></div>
       ),
     },
     {
@@ -354,26 +365,12 @@ export default function Repairs() {
       align: 'center' as const,
       cell: (_value: string, repair: ExtendedRepair) => (
         <div className="text-center">
-          <div className="font-semibold text-gray-900">
-            {new Date(repair.startDate).toLocaleDateString('ru-RU')} → {new Date(repair.endDate).toLocaleDateString('ru-RU')}
-          </div>
+          <div className="font-semibold text-gray-900">{formatDateRangeRu(repair.startDate, repair.endDate)}</div>
         </div>
       ),
     },
     {
-      header: 'Бюджет',
-      accessor: 'budget' as keyof ExtendedRepair,
-      sortable: true,
-      align: 'center' as const,
-      cell: (value: number, repair: ExtendedRepair) => (
-        <div className="text-center">
-          <div className="font-semibold text-gray-900">{(value / 1000000).toFixed(1)}M ₽</div>
-          <div className="text-xs text-gray-600">Израсходовано: {(repair.spent / 1000000).toFixed(1)}M ₽</div>
-        </div>
-      ),
-    },
-    {
-      header: 'Менеджер',
+      header: 'Оператор ремонта',
       accessor: 'manager' as keyof ExtendedRepair,
       sortable: true,
       cell: (value: string, repair: ExtendedRepair) => (
@@ -393,8 +390,8 @@ export default function Repairs() {
           </select>
         ) : (
           <div className="flex items-center">
-            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-              <Users className="h-4 w-4 text-blue-600" />
+            <div className="h-8 w-8 bg-[var(--soft)] border border-[var(--line)] rounded-full flex items-center justify-center mr-2">
+              <Users className="h-4 w-4 text-[var(--ink)]" />
             </div>
             <span className="font-medium text-gray-900">
               {user?.role === 'client' ? 'Назначен верфью' : value}
@@ -407,13 +404,13 @@ export default function Repairs() {
 
   if (user?.role === 'client') {
     columns.push({
-      header: 'Приемка',
+      header: 'Приемка клиента',
       accessor: 'acceptanceAction' as keyof ExtendedRepair,
       sortable: false,
       align: 'center' as const,
       cell: (_value: string, repair: ExtendedRepair) => {
         if (repair.clientAccepted) {
-          return <span className="text-xs font-medium text-green-700">Принято</span>;
+          return <span className="text-xs font-medium text-[var(--ink)]">Принято</span>;
         }
 
         const readyForAcceptance =
@@ -469,93 +466,79 @@ export default function Repairs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-            <Wrench className="h-6 w-6 mr-2 text-blue-500" />
-            Ремонты
-          </h1>
-          <p className="text-gray-600">Управление и отслеживание ремонтных работ</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" icon={Download}>
-            Экспорт
-          </Button>
-          <Button variant="primary" icon={Plus} onClick={() => setShowRepairForm(true)}>
-            Новая заявка
-          </Button>
-        </div>
-      </div>
+      <V7PageHeader
+        title="Ремонты и распределение"
+        description="Сводный журнал ремонтов, заявок и рабочих задач."
+        actions={
+          <div className="flex gap-2">
+            {user?.role === 'dispatcher' && (
+              <Button variant="outline" onClick={() => navigate('/requests')}>Заявки</Button>
+            )}
+            {user?.role === 'client' && (
+              <Button variant="primary" icon={Plus} onClick={() => setShowRepairForm(true)}>Новая заявка</Button>
+            )}
+          </div>
+        }
+      />
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
-      {loading && <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">Загрузка...</div>}
+      {error && <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)]">{error}</div>}
+      {loading && <div className="px-4 py-3 rounded-lg border bg-[var(--soft)] border-[var(--line)] text-[var(--muted)]">Загрузка...</div>}
 
-      <div className={`grid grid-cols-2 gap-4 ${user?.role === 'dispatcher' || user?.role === 'client' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
-        <Card>
-          <div className="text-center p-4">
-            <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-            <p className="text-sm text-gray-600">Всего ремонтов</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center p-4">
-            <p className="text-2xl font-bold text-gray-800">{stats.inProgress}</p>
-            <p className="text-sm text-gray-600">В работе</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center p-4">
-            <p className="text-2xl font-bold text-gray-800">{stats.planned}</p>
-            <p className="text-sm text-gray-600">Запланировано</p>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center p-4">
-            <p className="text-2xl font-bold text-gray-800">{stats.completed}</p>
-            <p className="text-sm text-gray-600">Завершено</p>
-          </div>
-        </Card>
+      <div className={`grid grid-cols-2 gap-3 ${user?.role === 'dispatcher' || user?.role === 'client' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+        <div className="rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.97)] px-3 py-3">
+          <span className="block text-xs text-[var(--muted)]">Всего ремонтов</span>
+          <strong className="mt-1 block text-xl leading-tight text-[var(--ink)]">{stats.total}</strong>
+        </div>
+        <div className="rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.97)] px-3 py-3">
+          <span className="block text-xs text-[var(--muted)]">В работе</span>
+          <strong className="mt-1 block text-xl leading-tight text-[var(--ink)]">{stats.inProgress}</strong>
+        </div>
+        <div className="rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.97)] px-3 py-3">
+          <span className="block text-xs text-[var(--muted)]">Запланировано</span>
+          <strong className="mt-1 block text-xl leading-tight text-[var(--ink)]">{stats.planned}</strong>
+        </div>
+        <div className="rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.97)] px-3 py-3">
+          <span className="block text-xs text-[var(--muted)]">Завершено</span>
+          <strong className="mt-1 block text-xl leading-tight text-[var(--ink)]">{stats.completed}</strong>
+        </div>
         {user?.role === 'dispatcher' && (
-          <Card>
-            <div className="text-center p-4">
-              <p className="text-2xl font-bold text-amber-700">{stats.unassignedOperators}</p>
-              <p className="text-sm text-gray-600">Без оператора</p>
-            </div>
-          </Card>
+          <div className="rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.97)] px-3 py-3">
+            <span className="block text-xs text-[var(--muted)]">Без оператора</span>
+            <strong className="mt-1 block text-xl leading-tight text-[var(--ink)]">{stats.unassignedOperators}</strong>
+          </div>
         )}
         {user?.role === 'client' && (
-          <Card>
-            <div className="text-center p-4">
-              <p className="text-2xl font-bold text-emerald-700">{stats.readyForAcceptance}</p>
-              <p className="text-sm text-gray-600">К приемке</p>
-            </div>
-          </Card>
+          <div className="rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.97)] px-3 py-3">
+            <span className="block text-xs text-[var(--muted)]">К приемке</span>
+            <strong className="mt-1 block text-xl leading-tight text-[var(--ink)]">{stats.readyForAcceptance}</strong>
+          </div>
         )}
       </div>
 
-      <Card title="Фильтры и поиск">
+      <V7Panel>
+        <V7PanelTitle title="Фильтры и поиск" />
         <div className={`grid grid-cols-1 gap-4 ${user?.role === 'dispatcher' || user?.role === 'client' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Поиск</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-2">Поиск</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Судно, док, менеджер..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Судно, док, оператор..."
+                className="w-full pl-10 pr-4 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Статус</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-2">Статус</label>
             <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               >
                 {uniqueStatuses.map((status) => (
                   <option key={status} value={status}>
@@ -566,11 +549,11 @@ export default function Repairs() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Док</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-2">Док</label>
             <select
               value={dockFilter}
               onChange={(e) => setDockFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             >
               {uniqueDocks.map((dock) => (
                 <option key={dock} value={dock}>
@@ -593,7 +576,7 @@ export default function Repairs() {
           )}
           {user?.role === 'client' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Приемка</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Приемка клиента</label>
               <Button
                 variant={showReadyForAcceptanceOnly ? 'primary' : 'outline'}
                 className="w-full"
@@ -604,12 +587,13 @@ export default function Repairs() {
             </div>
           )}
         </div>
-      </Card>
+      </V7Panel>
 
-      <Card
-        title={`Ремонты (${filteredRepairs.length})`}
-        actions={
-          <div className="flex items-center gap-2">
+      <V7Panel>
+        <V7PanelTitle
+          title={`Ремонты (${filteredRepairs.length})`}
+         
+          extra={
             <Button
               variant="outline"
               size="sm"
@@ -623,9 +607,8 @@ export default function Repairs() {
             >
               Сбросить фильтры
             </Button>
-          </div>
-        }
-      >
+          }
+        />
         <DataTable
           data={filteredRepairs}
           columns={columns}
@@ -636,20 +619,7 @@ export default function Repairs() {
           className="mt-4"
           emptyMessage="Ремонты не найдены"
         />
-      </Card>
-
-      <Card>
-        <div className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-700">
-            <DollarSign className="h-5 w-5 text-green-600" />
-            <span>Бюджет: {(stats.totalBudget / 1000000).toFixed(1)}M ₽</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-700">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
-            <span>Использование: {stats.budgetUtilization}%</span>
-          </div>
-        </div>
-      </Card>
+      </V7Panel>
 
       {showRepairForm && (
         <RepairRequestForm
@@ -662,3 +632,4 @@ export default function Repairs() {
     </div>
   );
 }
+

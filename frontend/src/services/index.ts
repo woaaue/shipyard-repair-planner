@@ -59,4 +59,7 @@ export type { IssueResponse, CreateIssuePayload } from './issues';
 export { getDowntimes, createDowntime, finishDowntime } from './downtimes';
 export type { DowntimeResponse, CreateDowntimePayload } from './downtimes';
 
+export { exportReport, downloadBlob } from './reports';
+export type { ReportType, ReportPeriod, ReportFormat, ExportReportParams } from './reports';
+
 export { default as api } from './api';

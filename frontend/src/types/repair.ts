@@ -18,6 +18,8 @@ export interface Repair {
   dock: string;
   startDate: string;
   endDate: string;
+  plannedStartDate?: string;
+  plannedEndDate?: string;
   status: 'в работе' | 'завершён' | 'отменён' | 'запланирован';
   progress: number;
   budget: number;
@@ -37,7 +39,7 @@ export interface RepairTask {
   estimatedHours: number;
   actualHours?: number;
   worker: string;
-  reviewStatus?: 'NOT_REVIEWED' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
+  reviewStatus?: 'NOT_SUBMITTED' | 'NOT_REVIEWED' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 }
 
 export type RepairType =

@@ -14,7 +14,12 @@ export type WorkCategory =
   | 'OTHER';
 
 export type WorkItemStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-export type WorkItemReviewStatus = 'NOT_REVIEWED' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
+export type WorkItemReviewStatus =
+  | 'NOT_SUBMITTED'
+  | 'NOT_REVIEWED'
+  | 'PENDING_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED';
 
 export interface WorkItemResponse {
   id: number;
@@ -39,6 +44,7 @@ export interface WorkItemResponse {
 export interface WorkItemPayload {
   repairRequestId: number;
   repairId?: number | null;
+  assigneeId?: number | null;
   category: WorkCategory;
   name: string;
   description?: string | null;

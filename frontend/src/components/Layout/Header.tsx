@@ -6,6 +6,7 @@ import { useGlobalSearch } from '../../hooks/useGlobalSearch';
 import { getNotifications } from '../../services/notifications';
 import SearchResults from '../ui/SearchResults';
 import NotificationPanel from '../ui/NotificationPanel';
+import { ROLE_UI_LABELS } from '../../constants/labels';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -26,14 +27,7 @@ export default function Header({ children }: HeaderProps) {
   }, []);
 
   const getRoleLabel = (role: string) => {
-    switch(role) {
-      case 'admin': return 'Администратор';
-      case 'operator': return 'Оператор дока';
-      case 'client': return 'Владелец судна';
-      case 'master': return 'Мастер участка';
-      case 'worker': return 'Рабочий дока';
-      default: return 'Пользователь';
-    }
+    return ROLE_UI_LABELS[role as keyof typeof ROLE_UI_LABELS] ?? 'Пользователь';
   };
 
   const getRoleDetails = () => {
@@ -56,14 +50,14 @@ export default function Header({ children }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 lg:px-6 py-4">
+    <header className="sticky top-0 z-40 border-b px-4 lg:px-6 py-4 border-[var(--line)] bg-[rgba(255,255,255,0.94)] backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center flex-1 max-w-xl gap-4">
           {children}
           
           <div className="flex-1 relative">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               
               <input
                 type="text"
@@ -74,7 +68,7 @@ export default function Header({ children }: HeaderProps) {
                 }}
                 onFocus={() => setShowResults(true)}
                 placeholder="Поиск по судам, ремонтам..."
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-10 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
               
               {query.length > 0 && (
@@ -84,7 +78,7 @@ export default function Header({ children }: HeaderProps) {
                     clearSearch();
                     setShowResults(false);
                   }}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-500"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] hover:text-[var(--blue)]"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -107,11 +101,11 @@ export default function Header({ children }: HeaderProps) {
           <div className="relative">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              className="relative p-2 text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--soft)] rounded-lg"
             >
               <Bell className="h-6 w-6" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] rounded-md flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -127,12 +121,12 @@ export default function Header({ children }: HeaderProps) {
             )}
           </div>
 
-          <div className="hidden lg:block h-8 w-px bg-gray-300"></div>
+              <div className="hidden lg:block h-8 w-px bg-[var(--line)]"></div>
 
           {user ? (
             <div className="flex items-center space-x-3">
               <div className="hidden lg:flex items-center space-x-3">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                <div className={`h-8 w-8 rounded-md flex items-center justify-center ${
                   user.role === 'admin' ? 'bg-blue-100 text-blue-600' :
                   user.role === 'operator' ? 'bg-green-100 text-green-600' :
                   'bg-purple-100 text-purple-600'
@@ -144,8 +138,8 @@ export default function Header({ children }: HeaderProps) {
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{user.fullName}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-[var(--ink)]">{user.fullName}</p>
+                  <p className="text-sm text-[var(--muted)]">
                     {getRoleLabel(user.role)} {getRoleDetails()}
                   </p>
                 </div>
@@ -153,12 +147,12 @@ export default function Header({ children }: HeaderProps) {
             </div>
           ) : (
             <div className="hidden lg:flex items-center space-x-3">
-              <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
+              <div className="h-8 w-8 bg-gray-100 rounded-md flex items-center justify-center">
                 <User className="h-5 w-5 text-gray-600" />
               </div>
               <div>
-                <p className="font-medium text-gray-900">Не авторизован</p>
-                <p className="text-sm text-gray-500">Войдите в систему</p>
+                <p className="font-medium text-[var(--ink)]">Не авторизован</p>
+                <p className="text-sm text-[var(--muted)]">Войдите в систему</p>
               </div>
             </div>
           )}

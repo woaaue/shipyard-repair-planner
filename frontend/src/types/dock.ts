@@ -3,7 +3,7 @@ export interface Dock {
   name: string;
   length: number;
   capacity: number;
-  status: 'active' | 'maintenance' | 'inactive';
+  status: 'active' | 'inactive';
   load: number;
 }
 

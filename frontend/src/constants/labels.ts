@@ -1,5 +1,6 @@
 import type { WorkCategory, WorkItemReviewStatus, WorkItemStatus } from '../services/workItems';
 import type { RepairRequestStatus } from '../services/repairRequests';
+import type { User } from '../context/AuthContext';
 
 export const WORK_CATEGORY_LABELS: Record<WorkCategory, string> = {
   HULL: 'Корпус',
@@ -16,6 +17,7 @@ export const WORK_CATEGORY_LABELS: Record<WorkCategory, string> = {
 };
 
 export const WORK_REVIEW_STATUS_LABELS: Record<WorkItemReviewStatus, string> = {
+  NOT_SUBMITTED: 'Не отправлена на проверку',
   NOT_REVIEWED: 'Не проверялась',
   PENDING_REVIEW: 'Ожидает проверки',
   APPROVED: 'Принято',
@@ -39,6 +41,15 @@ export const REPAIR_REQUEST_STATUS_LABELS: Record<RepairRequestStatus, string> =
   CLIENT_ACCEPTED: 'Принята клиентом',
   COMPLETED: 'Завершена',
   CANCELLED: 'Отменена',
+};
+
+export const ROLE_UI_LABELS: Record<User['role'], string> = {
+  admin: 'Администратор',
+  dispatcher: 'Диспетчер',
+  operator: 'Оператор дока',
+  master: 'Мастер участка',
+  worker: 'Рабочий',
+  client: 'Клиент',
 };
 
 export const UI_STATUS_COMPACT_LABELS: Record<string, string> = {

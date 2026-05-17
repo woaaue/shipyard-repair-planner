@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import AdminOperationsCenter from './pages/AdminOperationsCenter';
 import Tasks from './pages/Tasks';
 import OperatorDock from './pages/OperatorDock';
 import Ships from './pages/Ships';
@@ -20,6 +21,10 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Users from './pages/Users';
 import UserDetail from './pages/UserDetail';
+import DispatcherRequests from './pages/DispatcherRequests';
+import ClientRequests from './pages/ClientRequests';
+import ClientRequestDetail from './pages/ClientRequestDetail';
+import AuditLogs from './pages/AuditLogs';
 import ToastContainer from './components/ui/Toast';
 import './App.css';
 
@@ -49,22 +54,16 @@ function AppRoutes() {
           <Layout />
         </ProtectedRoute>
       }>
-        <Route index element={<Dashboard />} />
+        <Route index element={user?.role === 'admin' ? <AdminOperationsCenter /> : <Dashboard />} />
         <Route path="repairs" element={<Repairs />} />
         <Route path="repairs/:id" element={<RepairDetail />} />
         <Route path="repairs/:repairId/tasks/:taskId" element={<TaskDetail />} />
-        
-        {(user?.role === 'admin' || user?.role === 'dispatcher') && (
-          <>
-            <Route path="ships" element={<Ships />} />
-            <Route path="ships/:id" element={<ShipDetail />} />
-          </>
-        )}
         
         {user?.role === 'admin' && (
           <>
             <Route path="users" element={<Users />} />
             <Route path="users/:id" element={<UserDetail />} />
+            <Route path="audit" element={<AuditLogs />} />
             <Route path="settings" element={<Settings />} />
           </>
         )}
@@ -75,11 +74,25 @@ function AppRoutes() {
             <Route path="reports" element={<Reports />} />
           </>
         )}
+
+        {user?.role === 'dispatcher' && (
+          <Route path="requests" element={<DispatcherRequests />} />
+        )}
         
-        {(user?.role === 'admin' || user?.role === 'dispatcher' || user?.role === 'operator') && (
+        {(user?.role === 'admin' ||
+          user?.role === 'dispatcher' ||
+          user?.role === 'operator' ||
+          user?.role === 'client') && (
           <>
             <Route path="ships" element={<Ships />} />
             <Route path="ships/:id" element={<ShipDetail />} />
+          </>
+        )}
+
+        {user?.role === 'client' && (
+          <>
+            <Route path="my-requests" element={<ClientRequests />} />
+            <Route path="my-requests/:id" element={<ClientRequestDetail />} />
           </>
         )}
         

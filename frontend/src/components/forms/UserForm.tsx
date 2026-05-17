@@ -14,7 +14,7 @@ interface UserFormProps {
     dock?: string;
     shipId?: string;
     reportsToUserId?: number;
-  }) => void;
+  }) => Promise<void> | void;
   docks?: string[];
   users?: User[];
 }
@@ -24,7 +24,7 @@ const ROLES = [
   { value: 'operator', label: 'Оператор дока' },
   { value: 'master', label: 'Мастер участка' },
   { value: 'worker', label: 'Рабочий' },
-  { value: 'client', label: 'Владелец судна' }
+  { value: 'client', label: 'Клиент' }
 ] as const;
 
 const SUPERVISOR_ROLE_BY_ROLE: Partial<Record<User['role'], User['role']>> = {
@@ -34,6 +34,8 @@ const SUPERVISOR_ROLE_BY_ROLE: Partial<Record<User['role'], User['role']>> = {
 };
 
 export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: UserFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -44,15 +46,21 @@ export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: 
     reportsToUserId: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit({
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await onSubmit?.({
         ...formData,
         reportsToUserId: formData.reportsToUserId ? Number(formData.reportsToUserId) : undefined,
       });
+      onClose();
+    } catch {
+      setError('Не удалось создать пользователя');
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   const showDock = ['operator', 'master', 'worker'].includes(formData.role);
@@ -61,51 +69,56 @@ export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: 
   const supervisorCandidates = users.filter((candidate) => candidate.role === requiredSupervisorRole);
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Добавить пользователя" icon={UserPlus}>
+    <Modal isOpen={true} onClose={onClose} title="Добавить пользователя" icon={UserPlus} bodyClassName="p-0">
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {error && (
+          <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)] text-sm">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ФИО *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">ФИО *</label>
             <input
               type="text"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               placeholder="Иванов И.И."
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Email *</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               placeholder="user@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Пароль *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Пароль *</label>
             <input
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               minLength={6}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Роль *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Роль *</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as User['role'] })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               required
             >
               {ROLES.map(r => (
@@ -116,11 +129,11 @@ export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: 
 
           {showDock && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Док *</label>
+              <label className="block text-sm font-medium text-[var(--muted)] mb-1">Док *</label>
               <select
                 value={formData.dock}
                 onChange={(e) => setFormData({ ...formData, dock: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                 required
               >
                 <option value="">Выберите док</option>
@@ -133,12 +146,12 @@ export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: 
 
           {showShipId && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">IMO судна *</label>
+              <label className="block text-sm font-medium text-[var(--muted)] mb-1">IMO судна *</label>
               <input
                 type="number"
                 value={formData.shipId}
                 onChange={(e) => setFormData({ ...formData, shipId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                 placeholder="9456789"
                 required
               />
@@ -147,11 +160,11 @@ export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: 
 
           {requiredSupervisorRole && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Руководитель *</label>
+              <label className="block text-sm font-medium text-[var(--muted)] mb-1">Руководитель *</label>
               <select
                 value={formData.reportsToUserId}
                 onChange={(e) => setFormData({ ...formData, reportsToUserId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                 required
               >
                 <option value="">Выберите руководителя</option>
@@ -165,13 +178,13 @@ export default function UserForm({ onClose, onSubmit, docks = [], users = [] }: 
           )}
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Отмена
           </Button>
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmitting}>
             <Save className="h-4 w-4 mr-2" />
-            Добавить пользователя
+            {isSubmitting ? 'Сохранение...' : 'Добавить пользователя'}
           </Button>
         </div>
       </form>

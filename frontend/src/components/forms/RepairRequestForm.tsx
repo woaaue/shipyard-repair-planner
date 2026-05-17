@@ -123,25 +123,25 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Заявка на ремонт" icon={ClipboardList}>
+    <Modal isOpen={true} onClose={onClose} title="Заявка на ремонт" icon={ClipboardList} bodyClassName="p-0">
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-700">
+        <div className="bg-[var(--soft)] border border-[var(--line)] p-4 rounded-lg text-sm text-[var(--ink)]">
           Заполните заявку на ремонт. Наш менеджер свяжется с вами для уточнения деталей.
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)] text-sm">
             {error}
           </div>
         )}
 
         {allowNewShip && (
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-lg bg-[var(--soft)] border border-[var(--line)] p-1">
             <button
               type="button"
               onClick={() => setMode('existing')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                mode === 'existing' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                mode === 'existing' ? 'bg-white text-[var(--ink)] shadow-sm' : 'text-[var(--muted)] hover:text-[var(--ink)]'
               }`}
             >
               Выбрать судно
@@ -150,7 +150,7 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
               type="button"
               onClick={() => setMode('new')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                mode === 'new' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                mode === 'new' ? 'bg-white text-[var(--ink)] shadow-sm' : 'text-[var(--muted)] hover:text-[var(--ink)]'
               }`}
             >
               Добавить новое
@@ -161,11 +161,11 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
         <div className="space-y-4">
           {mode === 'existing' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Судно *</label>
+              <label className="block text-sm font-medium text-[var(--muted)] mb-1">Судно *</label>
               <select
                 value={formData.shipId}
                 onChange={(e) => setFormData({ ...formData, shipId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               >
                 <option value="">Выберите судно</option>
                 {ships.map((ship) => (
@@ -173,42 +173,42 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
                 ))}
               </select>
               {allowNewShip && ships.length === 0 && (
-                <p className="mt-2 text-sm text-gray-500">У вас пока нет судов. Переключитесь на “Добавить новое”.</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">У вас пока нет судов. Переключитесь на “Добавить новое”.</p>
               )}
             </div>
           ) : (
-            <div className="rounded-lg border border-gray-200 p-4 space-y-4">
-              <div className="flex items-center gap-2 font-medium text-gray-900">
-                <Ship className="h-4 w-4 text-blue-600" />
+            <div className="rounded-lg border border-[var(--line)] p-4 space-y-4">
+              <div className="flex items-center gap-2 font-medium text-[var(--ink)]">
+                <Ship className="h-4 w-4 text-[var(--blue)]" />
                 Новое судно
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Название *</label>
+                  <label className="block text-sm font-medium text-[var(--muted)] mb-1">Название *</label>
                   <input
                     type="text"
                     value={formData.newShip.name}
                     onChange={(e) => setFormData({ ...formData, newShip: { ...formData.newShip, name: e.target.value } })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Рег. номер / IMO *</label>
+                  <label className="block text-sm font-medium text-[var(--muted)] mb-1">Рег. номер / IMO *</label>
                   <input
                     type="text"
                     value={formData.newShip.imo}
                     onChange={(e) => setFormData({ ...formData, newShip: { ...formData.newShip, imo: e.target.value } })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                     minLength={6}
                     maxLength={20}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Тип судна</label>
+                  <label className="block text-sm font-medium text-[var(--muted)] mb-1">Тип судна</label>
                   <select
                     value={formData.newShip.type}
                     onChange={(e) => setFormData({ ...formData, newShip: { ...formData.newShip, type: e.target.value } })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                   >
                     {SHIP_TYPES.map((type) => (
                       <option key={type} value={type}>{type}</option>
@@ -217,32 +217,32 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Длина</label>
+                    <label className="block text-xs font-medium text-[var(--muted)] mb-1">Длина</label>
                     <input
                       type="number"
                       value={formData.newShip.length}
                       onChange={(e) => setFormData({ ...formData, newShip: { ...formData.newShip, length: e.target.value } })}
-                      className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                       min={1}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Ширина</label>
+                    <label className="block text-xs font-medium text-[var(--muted)] mb-1">Ширина</label>
                     <input
                       type="number"
                       value={formData.newShip.width}
                       onChange={(e) => setFormData({ ...formData, newShip: { ...formData.newShip, width: e.target.value } })}
-                      className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                       min={1}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Осадка</label>
+                    <label className="block text-xs font-medium text-[var(--muted)] mb-1">Осадка</label>
                     <input
                       type="number"
                       value={formData.newShip.draft}
                       onChange={(e) => setFormData({ ...formData, newShip: { ...formData.newShip, draft: e.target.value } })}
-                      className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                       min={1}
                     />
                   </div>
@@ -252,11 +252,11 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Тип ремонта *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Тип ремонта *</label>
             <select
               value={formData.repairType}
               onChange={(e) => setFormData({ ...formData, repairType: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               required
             >
               {REPAIR_TYPES.map((type) => (
@@ -266,21 +266,21 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Желаемая дата</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Желаемая дата</label>
             <input
               type="date"
               value={formData.desiredDate}
               onChange={(e) => setFormData({ ...formData, desiredDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Срочность</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Срочность</label>
             <select
               value={formData.urgency}
               onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             >
               <option value="обычный">Обычный</option>
               <option value="срочный">Срочный</option>
@@ -289,19 +289,19 @@ export default function RepairRequestForm({ onClose, onSubmit, ships = [], allow
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Описание необходимых работ *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Описание необходимых работ *</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={5}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               placeholder="Опишите необходимые работы, укажите выявленные проблемы..."
               required
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
           <Button type="button" variant="secondary" onClick={onClose}>
             Отмена
           </Button>

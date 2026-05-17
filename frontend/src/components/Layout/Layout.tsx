@@ -1,72 +1,77 @@
-import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import Header from './Header';
-import Sidebar from './Sidebar';
-import { Menu, X } from 'lucide-react';
+import { Outlet, NavLink } from 'react-router-dom';
+import { Ship, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [sidebarOpen]);
+  const navigation = [
+    { name: 'Главная', href: '/', roles: ['admin', 'dispatcher', 'operator', 'master', 'worker', 'client'] },
+    { name: 'Ремонты', href: '/repairs', roles: ['admin', 'dispatcher', 'operator', 'master', 'client'] },
+    { name: 'Мои заявки', href: '/my-requests', roles: ['client'] },
+    { name: 'Заявки', href: '/requests', roles: ['dispatcher'] },
+    { name: 'Задачи', href: '/tasks', roles: ['dispatcher', 'master', 'worker'] },
+    { name: 'Мой док', href: '/my-dock', roles: ['operator'] },
+    { name: 'Суда', href: '/ships', roles: ['admin', 'dispatcher', 'operator', 'client'] },
+    { name: 'Календарь', href: '/calendar', roles: ['admin', 'dispatcher', 'operator', 'master'] },
+    { name: 'Отчеты', href: '/reports', roles: ['admin', 'dispatcher', 'operator', 'master'] },
+    { name: 'Пользователи', href: '/users', roles: ['admin'] },
+    { name: 'Журнал изменений', href: '/audit', roles: ['admin'] },
+    { name: 'Настройки', href: '/settings', roles: ['admin'] },
+  ].filter((item) => (user ? item.roles.includes(user.role) : false));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Overlay для мобилок */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className="flex">
-        {/* Sidebar - фиксированный на всю высоту и на всю высоту страницы */}
-        <div className={`
-          fixed lg:sticky lg:top-0 lg:h-screen
-          z-50
-          transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 transition-transform duration-300
-          h-full
-        `}>
-          <Sidebar onClose={() => setSidebarOpen(false)} />
-        </div>
-        
-        {/* Основной контент */}
-        <div className="flex-1 flex flex-col min-h-screen w-full">
-          <Header>
-            <button 
-              className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </Header>
-          
-          <main className="flex-1 p-4 lg:p-6 overflow-auto">
-            <Outlet />
-          </main>
-          
-          <footer className="bg-white border-t border-gray-200 px-4 lg:px-6 py-3 lg:py-4">
-            <div className="flex flex-col lg:flex-row items-center justify-between text-sm text-gray-600 gap-2">
-              <div className="text-center lg:text-left">
-                <span className="font-medium">Док-План</span> • Система планирования ремонтов судов
-              </div>
-              <div className="text-center lg:text-right">
-                Версия 1.0.0 • © {new Date().getFullYear()}
-              </div>
+    <div className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[rgba(255,255,255,0.94)] backdrop-blur-sm">
+        <div className="grid gap-3 px-4 py-3 lg:px-6 lg:grid-cols-[240px_minmax(0,1fr)_auto] lg:items-center">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-[8px] bg-[var(--nav)] text-white grid place-items-center">
+              <Ship className="h-5 w-5" />
             </div>
-          </footer>
+            <div>
+              <div className="text-sm font-semibold text-[var(--ink)]">Док-План</div>
+              <div className="text-xs text-[var(--muted)]">Планирование судоремонта</div>
+            </div>
+          </div>
+
+          <nav className="flex items-center gap-2 overflow-x-auto pb-1">
+            {navigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  `inline-flex min-h-[36px] items-center rounded-[7px] px-3 text-sm font-semibold whitespace-nowrap transition-colors ${
+                    isActive
+                      ? 'bg-[var(--nav)] text-white'
+                      : 'text-[var(--muted)] hover:bg-[var(--soft)] hover:text-[var(--ink)]'
+                  }`
+                }
+              >
+                {item.name}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="flex items-center justify-between gap-3 lg:justify-end">
+            <div className="text-right">
+              <div className="text-sm font-semibold text-[var(--ink)]">{user?.fullName ?? 'Пользователь'}</div>
+              <div className="text-xs text-[var(--muted)]">{user?.role ?? ''}</div>
+            </div>
+            <button
+              onClick={() => void logout()}
+              className="inline-flex min-h-[36px] items-center gap-2 rounded-[7px] border border-[var(--line)] bg-white px-3 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--soft)]"
+            >
+              <LogOut className="h-4 w-4" />
+              Выйти
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
+
+      <main className="mx-auto w-[min(1260px,calc(100%-40px))] py-5 flex-1">
+        <Outlet />
+      </main>
+
     </div>
   );
 }

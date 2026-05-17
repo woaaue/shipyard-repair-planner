@@ -1,21 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users as UsersIcon, Plus, Search, MoreVertical } from 'lucide-react';
-import Card from '../components/ui/Card';
+import { Plus, Search, MoreVertical } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth, type User as AuthUser } from '../context/AuthContext';
 import UserForm from '../components/forms/UserForm';
-import { createUser, getSubordinates, getUsers, type UserFilters } from '../services/users';
+import {
+  createUser,
+  getSubordinates,
+  getUsers,
+  type UserFilters,
+} from '../services/users';
 import { getDocks } from '../services/docks';
+import V7PageHeader from '../components/v7/V7PageHeader';
+import V7Panel from '../components/v7/V7Panel';
+import V7PanelTitle from '../components/v7/V7PanelTitle';
+import V7StateText from '../components/v7/V7StateText';
+import { ROLE_UI_LABELS } from '../constants/labels';
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Администратор',
-  dispatcher: 'Диспетчер',
-  operator: 'Оператор дока',
-  master: 'Мастер участка',
-  worker: 'Рабочий',
-  client: 'Владелец судна',
-};
+const ROLE_LABELS: Record<string, string> = ROLE_UI_LABELS;
 
 function getInitials(fullName: string): string {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -35,6 +37,10 @@ export default function Users() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [hierarchyFilter, setHierarchyFilter] = useState<'all' | 'without_supervisor'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | AuthUser['role']>('all');
+  const [dockFilter, setDockFilter] = useState<'all' | string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
+  const [quickIssueFilter, setQuickIssueFilter] = useState<'all' | 'no_supervisor' | 'no_dock' | 'disabled'>('all');
   const [showUserForm, setShowUserForm] = useState(false);
   const canCreateUser =
     currentUser?.role === 'admin' ||
@@ -78,6 +84,19 @@ export default function Users() {
   const filteredUsers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return users.filter((u) => {
+      if (roleFilter !== 'all' && u.role !== roleFilter) return false;
+      if (dockFilter !== 'all' && (u.dock || '-') !== dockFilter) return false;
+      if (statusFilter === 'enabled' && u.enabled === false) return false;
+      if (statusFilter === 'disabled' && u.enabled !== false) return false;
+      if (quickIssueFilter === 'disabled' && u.enabled !== false) return false;
+      if (quickIssueFilter === 'no_supervisor') {
+        const requiresSupervisor = ['worker', 'master', 'operator'].includes(u.role);
+        if (!(requiresSupervisor && !u.reportsToUserId)) return false;
+      }
+      if (quickIssueFilter === 'no_dock') {
+        const requiresDock = ['worker', 'master', 'operator'].includes(u.role);
+        if (!(requiresDock && !u.dock)) return false;
+      }
       if (currentUser?.role === 'operator' && currentUser.dock && u.dock) {
         if (u.dock !== currentUser.dock) return false;
       }
@@ -90,7 +109,20 @@ export default function Users() {
       if (!matchesSearch) return false;
       return true;
     });
-  }, [users, currentUser, hierarchyFilter, searchQuery]);
+  }, [users, currentUser, hierarchyFilter, searchQuery, roleFilter, dockFilter, statusFilter, quickIssueFilter]);
+
+  const problemCounters = useMemo(() => {
+    const noSupervisor = users.filter((u) => ['worker', 'master', 'operator'].includes(u.role) && !u.reportsToUserId).length;
+    const noDock = users.filter((u) => ['worker', 'master', 'operator'].includes(u.role) && !u.dock).length;
+    const disabled = users.filter((u) => u.enabled === false).length;
+    return { noSupervisor, noDock, disabled };
+  }, [users]);
+
+  const dockOptions = useMemo(() => {
+    const items = new Set<string>();
+    users.forEach((u) => items.add(u.dock || '-'));
+    return Array.from(items).sort((a, b) => a.localeCompare(b, 'ru'));
+  }, [users]);
 
   const handleAddUser = async (formData: {
     fullName: string;
@@ -129,96 +161,182 @@ export default function Users() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <UsersIcon className="h-8 w-8 text-gray-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Пользователи</h1>
-        </div>
-        {canCreateUser && (
-          <Button onClick={() => setShowUserForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Добавить пользователя
-          </Button>
-        )}
-      </div>
+      <V7PageHeader
+        title="Пользователи и подчиненность"
+        description="Управление ролями, подчиненностью и структурой команды."
+        actions={
+          canCreateUser ? (
+            <Button onClick={() => setShowUserForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Создать пользователя
+            </Button>
+          ) : null
+        }
+      />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
+        <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)]">{error}</div>
       )}
 
-      <Card>
-        <div className="flex items-center gap-4 mb-6">
+      <V7Panel>
+        <V7PanelTitle title="Контроль структуры и качества" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => setQuickIssueFilter('no_supervisor')}
+            className="text-left rounded-lg border border-[var(--line)] bg-white px-3 py-3 hover:bg-[var(--soft)]"
+          >
+            <div className="text-xs text-[var(--muted)]">Без руководителя</div>
+            <div className="text-xl font-semibold text-[var(--ink)]">{problemCounters.noSupervisor}</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setQuickIssueFilter('no_dock')}
+            className="text-left rounded-lg border border-[var(--line)] bg-white px-3 py-3 hover:bg-[var(--soft)]"
+          >
+            <div className="text-xs text-[var(--muted)]">Без дока</div>
+            <div className="text-xl font-semibold text-[var(--ink)]">{problemCounters.noDock}</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setQuickIssueFilter('disabled')}
+            className="text-left rounded-lg border border-[var(--line)] bg-white px-3 py-3 hover:bg-[var(--soft)]"
+          >
+            <div className="text-xs text-[var(--muted)]">Заблокированные</div>
+            <div className="text-xl font-semibold text-[var(--ink)]">{problemCounters.disabled}</div>
+          </button>
+        </div>
+      </V7Panel>
+
+      <V7Panel>
+        <V7PanelTitle
+          title="Пользователи"
+         
+          extra={<span className="text-xs font-extrabold text-[var(--muted)]">записей: {filteredUsers.length}</span>}
+        />
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <button
+            className={`px-3 py-1.5 text-xs rounded-lg border ${quickIssueFilter === 'all' ? 'border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink)]' : 'border-[var(--line)] text-[var(--muted)]'}`}
+            onClick={() => setQuickIssueFilter('all')}
+          >
+            Все
+          </button>
+          <button
+            className={`px-3 py-1.5 text-xs rounded-lg border ${quickIssueFilter === 'no_supervisor' ? 'border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink)]' : 'border-[var(--line)] text-[var(--muted)]'}`}
+            onClick={() => setQuickIssueFilter('no_supervisor')}
+          >
+            Без руководителя ({problemCounters.noSupervisor})
+          </button>
+          <button
+            className={`px-3 py-1.5 text-xs rounded-lg border ${quickIssueFilter === 'no_dock' ? 'border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink)]' : 'border-[var(--line)] text-[var(--muted)]'}`}
+            onClick={() => setQuickIssueFilter('no_dock')}
+          >
+            Без дока ({problemCounters.noDock})
+          </button>
+          <button
+            className={`px-3 py-1.5 text-xs rounded-lg border ${quickIssueFilter === 'disabled' ? 'border-[var(--line-strong)] bg-[var(--soft)] text-[var(--ink)]' : 'border-[var(--line)] text-[var(--muted)]'}`}
+            onClick={() => setQuickIssueFilter('disabled')}
+          >
+            Заблокированные ({problemCounters.disabled})
+          </button>
+        </div>
+        <div className="flex items-center gap-4 mb-6 flex-wrap">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
             <input
               type="text"
               placeholder="Поиск по имени или email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             />
           </div>
           <select
             value={hierarchyFilter}
             onChange={(e) => setHierarchyFilter(e.target.value as 'all' | 'without_supervisor')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
           >
             <option value="all">Все пользователи</option>
             <option value="without_supervisor">Без руководителя</option>
           </select>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value as 'all' | AuthUser['role'])}
+            className="px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+          >
+            <option value="all">Все роли</option>
+            <option value="admin">Администратор</option>
+            <option value="dispatcher">Диспетчер</option>
+            <option value="operator">Оператор дока</option>
+            <option value="master">Мастер участка</option>
+            <option value="worker">Рабочий</option>
+            <option value="client">Клиент</option>
+          </select>
+          <select
+            value={dockFilter}
+            onChange={(e) => setDockFilter(e.target.value as 'all' | string)}
+            className="px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+          >
+            <option value="all">Все доки</option>
+            {dockOptions.map((dockName) => (
+              <option key={dockName} value={dockName}>
+                {dockName}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'enabled' | 'disabled')}
+            className="px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+          >
+            <option value="all">Любой статус</option>
+            <option value="enabled">Активен</option>
+            <option value="disabled">Отключен</option>
+          </select>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-gray-500">Загрузка...</div>
+          <div className="text-center py-8 text-[var(--muted)]">Загрузка...</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="w-full border-collapse text-[13px]">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ФИО</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Email</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Роль</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Док</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Руководитель</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Статус</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Действия</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-left text-[11px] font-semibold uppercase text-[var(--muted)]">ФИО</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-left text-[11px] font-semibold uppercase text-[var(--muted)]">Email</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-left text-[11px] font-semibold uppercase text-[var(--muted)]">Роль</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-left text-[11px] font-semibold uppercase text-[var(--muted)]">Док</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-left text-[11px] font-semibold uppercase text-[var(--muted)]">Руководитель</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-left text-[11px] font-semibold uppercase text-[var(--muted)]">Статус</th>
+                  <th className="px-3 py-2 border-b border-[var(--line)] text-right text-[11px] font-semibold uppercase text-[var(--muted)]">Действия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                  <tr key={user.id} className="hover:bg-[var(--soft)]">
+                    <td className="px-3 py-2 border-b border-[var(--line)]">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700">
+                        <div className="h-8 w-8 rounded-full bg-[var(--soft)] border border-[var(--line)] flex items-center justify-center text-sm font-semibold text-[var(--ink)]">
                           {getInitials(user.fullName)}
                         </div>
                         <span className="font-medium">{user.fullName}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
-                        {ROLE_LABELS[user.role] || user.role}
-                      </span>
+                    <td className="px-3 py-2 border-b border-[var(--line)] text-[var(--muted)]">{user.email}</td>
+                    <td className="px-3 py-2 border-b border-[var(--line)] text-[var(--ink)]">{ROLE_LABELS[user.role] || user.role}</td>
+                    <td className="px-3 py-2 border-b border-[var(--line)] text-[var(--muted)]">{user.dock || '-'}</td>
+                    <td className="px-3 py-2 border-b border-[var(--line)] text-[var(--muted)]">
+                      {user.role === 'dispatcher' ? '-' : (user.reportsToFullName || '-')}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{user.dock || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{user.reportsToFullName || '-'}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          user.enabled === false ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                        }`}
-                      >
-                        {user.enabled === false ? 'Заблокирован' : 'Активен'}
-                      </span>
+                    <td className="px-3 py-2 border-b border-[var(--line)]">
+                      <V7StateText value={user.enabled === false ? 'DISABLED' : 'ENABLED'} />
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        className="p-1 text-gray-400 hover:text-gray-600"
-                        onClick={() => handleEditUser(user.id)}
-                      >
-                        <MoreVertical className="h-5 w-5" />
-                      </button>
+                    <td className="px-3 py-2 border-b border-[var(--line)] text-right">
+                      <div className="flex items-center justify-end">
+                        <Button size="sm" variant="secondary" onClick={() => handleEditUser(user.id)}>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -228,9 +346,9 @@ export default function Users() {
         )}
 
         {!isLoading && filteredUsers.length === 0 && (
-          <div className="text-center py-8 text-gray-500">Пользователи не найдены</div>
+          <div className="text-center py-8 text-[var(--muted)]">Пользователи не найдены</div>
         )}
-      </Card>
+      </V7Panel>
 
       {showUserForm && (
         <UserForm
@@ -243,3 +361,4 @@ export default function Users() {
     </div>
   );
 }
+

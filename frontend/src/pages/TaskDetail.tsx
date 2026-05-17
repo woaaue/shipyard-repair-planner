@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Clock, FileText } from 'lucide-react';
-import Card from '../components/ui/Card';
+import { ArrowLeft, FileText } from 'lucide-react';
+import axios from 'axios';
 import Button from '../components/ui/Button';
 import { useAuth, type User } from '../context/AuthContext';
-import { getSubordinates } from '../services/users';
+import { getSubordinates, getUsers } from '../services/users';
 import {
   getWorkItem,
   updateWorkItemStatus,
@@ -13,6 +13,26 @@ import {
   type WorkItemResponse,
 } from '../services/workItems';
 import { WORK_CATEGORY_LABELS, WORK_REVIEW_STATUS_LABELS } from '../constants/labels';
+import V7PageHeader from '../components/v7/V7PageHeader';
+import V7Panel from '../components/v7/V7Panel';
+import V7PanelTitle from '../components/v7/V7PanelTitle';
+import V7StateText from '../components/v7/V7StateText';
+import {
+  canMarkWorkItemCompleted,
+  canReviewWorkItem,
+  getWorkItemUiState,
+  isWorkItemCompleted,
+} from '../domain/workflow/workItemWorkflow';
+
+function extractApiErrorMessage(error: unknown): string | null {
+  if (axios.isAxiosError(error)) {
+    const message = (error.response?.data as { message?: string } | undefined)?.message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message;
+    }
+  }
+  return null;
+}
 
 export default function TaskDetail() {
   const { repairId, taskId } = useParams();
@@ -54,21 +74,35 @@ export default function TaskDetail() {
   }, [numericTaskId]);
 
   useEffect(() => {
-    const loadSubordinates = async () => {
-      if (user?.role !== 'master' || typeof user.id !== 'number') {
+    const loadWorkers = async () => {
+      if (!user) {
         setSubordinates([]);
         return;
       }
 
       try {
-        const data = await getSubordinates(user.id);
-        setSubordinates(data.filter((member) => member.role === 'worker'));
+        if (user.role === 'admin') {
+          const workers = await getUsers({ role: 'worker' });
+          setSubordinates(workers);
+          return;
+        }
+
+        if (
+          (user.role === 'master' || user.role === 'operator' || user.role === 'dispatcher') &&
+          typeof user.id === 'number'
+        ) {
+          const data = await getSubordinates(user.id);
+          setSubordinates(data.filter((member) => member.role === 'worker'));
+          return;
+        }
+
+        setSubordinates([]);
       } catch {
         setSubordinates([]);
       }
     };
 
-    void loadSubordinates();
+    void loadWorkers();
   }, [user?.id, user?.role]);
 
   useEffect(() => {
@@ -77,13 +111,13 @@ export default function TaskDetail() {
   }, [task]);
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-600">Загрузка...</div>;
+    return <div className="text-center py-12 text-[var(--muted)]">Загрузка...</div>;
   }
 
   if (!task) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Задача не найдена</h2>
+        <h2 className="text-xl font-semibold text-[var(--ink)]">Задача не найдена</h2>
         <Button onClick={() => navigate('/tasks')} className="mt-4">
           Вернуться к списку
         </Button>
@@ -91,9 +125,18 @@ export default function TaskDetail() {
     );
   }
 
-  const completed = task.status === 'COMPLETED';
-  const canEdit = user?.role === 'master' || user?.role === 'dispatcher' || user?.role === 'admin';
-  const canReview = user?.role === 'master';
+  const completed = isWorkItemCompleted(task);
+  const uiState = getWorkItemUiState(task);
+  const canManageTask =
+    user?.role === 'master' ||
+    user?.role === 'operator' ||
+    user?.role === 'dispatcher' ||
+    user?.role === 'admin';
+  const canComplete = canMarkWorkItemCompleted(user?.role, task, user?.id);
+  const canReview = canManageTask && canReviewWorkItem(user?.role, task);
+  const backToTasks = user?.role === 'worker' || !numericRepairId;
+  const backPath = backToTasks ? '/tasks' : `/repairs/${numericRepairId}`;
+  const backLabel = backToTasks ? 'К задачам' : 'К ремонту';
 
   const handleComplete = async () => {
     setActionError(null);
@@ -101,8 +144,8 @@ export default function TaskDetail() {
     try {
       await updateWorkItemStatus(task.id, 'COMPLETED');
       await loadTask();
-    } catch {
-      setActionError('Не удалось завершить задачу');
+    } catch (error) {
+      setActionError(extractApiErrorMessage(error) ?? 'Не удалось завершить задачу');
     } finally {
       setIsCompleting(false);
     }
@@ -115,8 +158,8 @@ export default function TaskDetail() {
       const assigneeId = selectedAssignee ? Number(selectedAssignee) : null;
       await updateWorkItemAssignee(task.id, assigneeId);
       await loadTask();
-    } catch {
-      setActionError('Не удалось назначить исполнителя');
+    } catch (error) {
+      setActionError(extractApiErrorMessage(error) ?? 'Не удалось назначить исполнителя');
     } finally {
       setIsAssigning(false);
     }
@@ -128,8 +171,8 @@ export default function TaskDetail() {
     try {
       await updateWorkItemReview(task.id, reviewStatus);
       await loadTask();
-    } catch {
-      setActionError('Не удалось обновить результат проверки');
+    } catch (error) {
+      setActionError(extractApiErrorMessage(error) ?? 'Не удалось обновить результат проверки');
     } finally {
       setIsReviewing(false);
     }
@@ -137,109 +180,100 @@ export default function TaskDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(`/repairs/${numericRepairId}`)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Задача: {task.name}</h1>
-      </div>
+      <V7PageHeader
+        title={`Задача: ${task.name}`}
+        description="Карточка задачи"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => navigate(backPath)} icon={ArrowLeft}>
+              {backLabel}
+            </Button>
+            <V7StateText value={completed ? 'ВЫПОЛНЕНО' : uiState === 'PENDING_REVIEW' ? 'НА ПРОВЕРКЕ' : 'В РАБОТЕ'} />
+          </div>
+        }
+      />
 
-      {actionError && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{actionError}</div>}
+      {actionError && <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)]">{actionError}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Описание задачи
-            </h2>
+          <V7Panel>
+            <V7PanelTitle title="Описание задачи" extra={<FileText className="h-4 w-4 text-[var(--muted)]" />} />
             <div className="space-y-4">
               <div>
-                <div className="text-sm text-gray-500">Название</div>
+                <div className="text-sm text-[var(--muted)]">Название</div>
                 <div className="font-medium">{task.name}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Категория</div>
+                <div className="text-sm text-[var(--muted)]">Категория</div>
                 <div className="font-medium">{WORK_CATEGORY_LABELS[task.category] ?? task.category}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Статус</div>
-                <div
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${
-                    completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}
-                >
-                  {completed ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                  {completed ? 'Выполнено' : 'В работе'}
-                </div>
+                <div className="text-sm text-[var(--muted)]">Статус</div>
+                <V7StateText value={completed ? 'ВЫПОЛНЕНО' : uiState === 'PENDING_REVIEW' ? 'НА ПРОВЕРКЕ' : 'В РАБОТЕ'} />
               </div>
               <div>
-                <div className="text-sm text-gray-500">Проверка</div>
+                <div className="text-sm text-[var(--muted)]">Проверка</div>
                 <div className="font-medium">{WORK_REVIEW_STATUS_LABELS[task.reviewStatus] ?? task.reviewStatus}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Исполнитель</div>
+                <div className="text-sm text-[var(--muted)]">Исполнитель</div>
                 <div className="font-medium">{task.assigneeFullName || 'Не назначен'}</div>
               </div>
               {task.description && (
                 <div>
-                  <div className="text-sm text-gray-500">Описание</div>
+                  <div className="text-sm text-[var(--muted)]">Описание</div>
                   <div className="font-medium">{task.description}</div>
                 </div>
               )}
             </div>
-          </Card>
+          </V7Panel>
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <h2 className="font-semibold mb-4">Время</h2>
+          <V7Panel>
+            <V7PanelTitle title="Время" />
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Плановое</span>
+                <span className="text-[var(--muted)]">Плановое</span>
                 <span className="font-medium">{task.estimatedHours} ч</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Фактическое</span>
+                <span className="text-[var(--muted)]">Фактическое</span>
                 <span className="font-medium">{task.actualHours || 0} ч</span>
               </div>
               {(task.actualHours || 0) > task.estimatedHours && (
-                <div className="pt-3 border-t text-orange-600">
+                <div className="pt-3 border-t border-[var(--line)] text-[var(--muted)]">
                   Превышение: {(task.actualHours || 0) - task.estimatedHours} ч
                 </div>
               )}
             </div>
-          </Card>
+          </V7Panel>
 
-          {canEdit && (
-            <Card>
-              <h2 className="font-semibold mb-4">Действия</h2>
+          {canComplete && (
+            <V7Panel>
+              <V7PanelTitle title="Действия" />
               <div className="space-y-2">
-                {!completed && (
-                  <Button className="w-full" onClick={() => void handleComplete()} disabled={isCompleting}>
-                    {isCompleting ? 'Обновление...' : 'Отметить выполненной'}
-                  </Button>
-                )}
-                <Button variant="secondary" className="w-full" disabled>
-                  Редактирование недоступно
+                <Button className="w-full" onClick={() => void handleComplete()} disabled={isCompleting}>
+                  {isCompleting ? 'Обновление...' : 'Отметить выполненной'}
                 </Button>
+                <div className="text-xs text-[var(--muted)] px-1">
+                  Если нужно изменить название, описание или время, обратитесь к мастеру.
+                </div>
               </div>
-            </Card>
+            </V7Panel>
           )}
 
           {canReview && (
-            <Card>
-              <h2 className="font-semibold mb-4">Назначение и проверка</h2>
+            <V7Panel>
+              <V7PanelTitle title="Назначение и проверка" />
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Исполнитель</label>
+                  <label className="block text-sm text-[var(--muted)] mb-1">Исполнитель</label>
                   <select
                     value={selectedAssignee}
                     onChange={(event) => setSelectedAssignee(event.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)]"
                   >
                     <option value="">Не назначен</option>
                     {subordinates.map((member) => (
@@ -261,19 +295,19 @@ export default function TaskDetail() {
                   <Button
                     variant="secondary"
                     onClick={() => void handleReview('REJECTED')}
-                    disabled={isReviewing || task.reviewStatus !== 'PENDING_REVIEW'}
+                    disabled={isReviewing || !canReviewWorkItem(user?.role, task)}
                   >
                     Вернуть
                   </Button>
                   <Button
                     onClick={() => void handleReview('APPROVED')}
-                    disabled={isReviewing || task.reviewStatus !== 'PENDING_REVIEW'}
+                    disabled={isReviewing || !canReviewWorkItem(user?.role, task)}
                   >
                     Принять
                   </Button>
                 </div>
               </div>
-            </Card>
+            </V7Panel>
           )}
         </div>
       </div>

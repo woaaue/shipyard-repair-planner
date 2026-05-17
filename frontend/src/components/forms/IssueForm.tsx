@@ -22,6 +22,7 @@ const ISSUE_TYPES = [
 const ISSUE_IMPACTS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
 
 export default function IssueForm({ onClose, onSubmit, repairId }: IssueFormProps) {
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     repairId: repairId ? String(repairId) : '',
     issueType: ISSUE_TYPES[0] as string,
@@ -33,9 +34,10 @@ export default function IssueForm({ onClose, onSubmit, repairId }: IssueFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     const resolvedRepairId = repairId ?? Number(formData.repairId);
     if (!resolvedRepairId || Number.isNaN(resolvedRepairId)) {
-      window.alert('Repair ID is required.');
+      setError('Укажите ID ремонта.');
       return;
     }
 
@@ -55,28 +57,33 @@ export default function IssueForm({ onClose, onSubmit, repairId }: IssueFormProp
       }
       onClose();
     } catch {
-      window.alert('Failed to create issue.');
+      setError('Не удалось зарегистрировать проблему.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Report issue" icon={AlertTriangle}>
+    <Modal isOpen={true} onClose={onClose} title="Проблема по ремонту" icon={AlertTriangle} bodyClassName="p-0">
       <form onSubmit={handleSubmit} className="p-6 space-y-4">
-        <div className="bg-orange-50 p-3 rounded-lg text-sm text-orange-700 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          Describe the issue and it will be visible in the system immediately.
+        <div className="bg-[var(--soft)] border border-[var(--line)] p-3 rounded-lg text-sm text-[var(--ink)] flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 text-[var(--muted)]" />
+          Опишите проблему. Она сразу появится в журнале ремонта.
         </div>
+        {error && (
+          <div className="px-4 py-3 rounded-lg border bg-[var(--danger-bg)] border-[var(--danger-line)] text-[var(--danger-ink)] text-sm">
+            {error}
+          </div>
+        )}
 
         {!repairId && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Repair ID *</label>
+            <label className="block text-sm font-medium text-[var(--muted)] mb-1">ID ремонта *</label>
             <input
               type="number"
               value={formData.repairId}
               onChange={(e) => setFormData({ ...formData, repairId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               min={1}
               required
             />
@@ -84,11 +91,11 @@ export default function IssueForm({ onClose, onSubmit, repairId }: IssueFormProp
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Issue type *</label>
+          <label className="block text-sm font-medium text-[var(--muted)] mb-1">Тип проблемы *</label>
           <select
             value={formData.issueType}
             onChange={(e) => setFormData({ ...formData, issueType: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             required
           >
             {ISSUE_TYPES.map((value) => (
@@ -100,23 +107,23 @@ export default function IssueForm({ onClose, onSubmit, repairId }: IssueFormProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+          <label className="block text-sm font-medium text-[var(--muted)] mb-1">Описание *</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Add issue details..."
+            className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+            placeholder="Опишите проблему и контекст..."
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Impact *</label>
+          <label className="block text-sm font-medium text-[var(--muted)] mb-1">Влияние *</label>
           <select
             value={formData.impact}
             onChange={(e) => setFormData({ ...formData, impact: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             required
           >
             {ISSUE_IMPACTS.map((value) => (
@@ -128,23 +135,23 @@ export default function IssueForm({ onClose, onSubmit, repairId }: IssueFormProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Reported by *</label>
+          <label className="block text-sm font-medium text-[var(--muted)] mb-1">Кто сообщил *</label>
           <input
             type="text"
             value={formData.reportedBy}
             onChange={(e) => setFormData({ ...formData, reportedBy: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Operator name"
+            className="w-full px-3 py-2 border rounded-lg border-[var(--line-strong)] bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+            placeholder="ФИО сотрудника"
             required
           />
         </div>
 
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 border-t border-[var(--line)]">
           <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            Отмена
           </Button>
           <Button type="submit" className="flex-1" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isSubmitting ? 'Сохранение...' : 'Сохранить'}
           </Button>
         </div>
       </form>

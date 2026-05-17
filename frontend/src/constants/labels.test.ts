@@ -17,6 +17,7 @@ describe('labels dictionaries', () => {
   });
 
   it('contains all expected work review labels', () => {
+    expect(WORK_REVIEW_STATUS_LABELS.NOT_SUBMITTED).toBe('Не отправлена на проверку');
     expect(WORK_REVIEW_STATUS_LABELS.NOT_REVIEWED).toBe('Не проверялась');
     expect(WORK_REVIEW_STATUS_LABELS.PENDING_REVIEW).toBe('Ожидает проверки');
     expect(WORK_REVIEW_STATUS_LABELS.APPROVED).toBe('Принято');
